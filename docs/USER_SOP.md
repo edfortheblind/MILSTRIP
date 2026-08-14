@@ -325,15 +325,23 @@ python -m milstrip.cli request.txt --json
 
 This is not the Rainbow CSV. Never rename it, convert it manually or upload it.
 
-## 14. Future Phase 2 — not active
+## 14. Phase 2A desktop application — not yet released to operators
 
-After the official contract, tests, audit and owner GO, the launcher will
-validate eligible records, create the exact Rainbow CSV without silent
-overwrite, show its path and row count, transfer it through the approved secure
-protocol, and distinguish local creation from confirmed remote delivery.
+The native Windows review application has been implemented for developer and
+Windows acceptance testing. It offers paste, clipboard, `.txt` open/drag-drop,
+Analyze, Clear, a results grid, canonical details and issue explanations.
 
-Until a released launcher explicitly reports those steps, stop after Phase 1.
-Do not construct a guessed CSV or store FTP credentials in this repository.
+It deliberately creates no file, performs no upload and uses no authentication.
+It is not an operator release until signing, managed-endpoint testing,
+accessibility review, independent audit and HOC GO are complete.
+
+Phase 2B will create the confirmed 76-field pipe-delimited `.txt` after its
+field/source and byte edge-case contracts are supplied. Phase 2C will address
+transfer separately.
+
+Until an approved installer is issued, operators must continue using the
+accepted Phase 1 procedure. Do not distribute an unsigned developer build,
+construct a guessed output or store credentials in this repository.
 
 ## 15. New-workstation acceptance
 

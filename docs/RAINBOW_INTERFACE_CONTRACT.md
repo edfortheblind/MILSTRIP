@@ -1,25 +1,32 @@
 # Rainbow CSV and Transfer Contract
 
-**Status:** Awaiting authoritative layout and connectivity details
+**Status:** 76-field pipe layout and `.txt` extension confirmed; field/source
+and byte edge-case contract pending
 
 **Phase:** 2A (CSV) and 2B (transfer)
 **Do not implement from this template alone.** Every `TBD` requires an
 authoritative answer or accepted sample.
 
-## 1. CSV contract — Phase 2A
+## 1. CSV contract — Phase 2B
+
+Shawn confirmed the supplied six-row artifact as the file layout and `.txt` as
+the operational extension. It is headerless, pipe-delimited and has 76 fields
+per row. Serialization remains blocked because enriched fields are not
+derivable from MILSTRIP and their names/sources are still undefined. See
+`docs/discovery/CSV_SAMPLE_ASSESSMENT.md`.
 
 | Property | Required value | Status/source |
 |---|---|---|
-| Columns, order and data types | TBD | Awaiting official layout |
-| Header row | TBD | Awaiting official layout |
-| Delimiter | TBD | Awaiting official layout |
-| Character encoding / BOM | TBD | Awaiting official layout |
-| Quoting and escaping | TBD | Awaiting official layout |
-| Line ending | TBD | Awaiting official layout |
+| Columns, order and data types | 76 in supplied order; semantics TBD | Source map required |
+| Header row | TBD | None observed; must be confirmed |
+| Delimiter | `|` | Confirmed as part of supplied layout |
+| Character encoding / BOM | TBD | Sample is ASCII/no BOM; must be confirmed |
+| Quoting and escaping | TBD | None exercised in sample |
+| Line ending | TBD | CRLF between rows; final CRLF absent; intent unknown |
 | Trailing-space preservation | TBD | Critical for fixed-width MILSTRIP |
 | Date/time formats and timezone | TBD | Awaiting official layout |
 | Trailer/control rows | TBD | Awaiting official layout |
-| Filename pattern and extension | TBD | Awaiting Rainbow convention |
+| Filename pattern and extension | Pattern TBD; extension `.txt` | Extension confirmed by Shawn |
 | Batch grouping and maximum size | TBD | Awaiting operational rule |
 | A5E/address representation | TBD | Awaiting layout/business rule |
 
@@ -51,7 +58,7 @@ The serializer will be a pure deterministic component. It will accept eligible
 domain records plus explicit export metadata and return exact CSV bytes; it
 will not know FTP credentials or perform network operations.
 
-## 4. Rainbow transfer contract — Phase 2B
+## 4. Rainbow transfer contract — Phase 2C
 
 | Property | DEV/TEST | PROD |
 |---|---|---|

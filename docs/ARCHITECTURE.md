@@ -41,8 +41,8 @@ graph TD
     end
 
     CLI --> engine
-    BUILD -.->|Phase 2A, contract pending| CSV["Rainbow CSV<br/>local export"]
-    CSV -.->|Phase 2B, connectivity pending| FTP["Rainbow FTP endpoint"]
+    BUILD -.->|Phase 2B, contract pending| CSV["Rainbow CSV<br/>local export"]
+    CSV -.->|Phase 2C, connectivity pending| FTP["Rainbow FTP endpoint"]
     FTP -.-> NORMAL["Existing Rainbow / normal process<br/>untouched"]
 
     classDef new fill:#2f855a,color:#fff,stroke:#2f855a
@@ -61,6 +61,20 @@ successful delivery. Everything after that handoff remains the existing
 process and is untouched. See ADR 0003.
 
 ## Phase 2 outbound boundary — contract-first and replaceable
+
+Phase 2A now adds a native presentation layer without changing the integration
+boundary:
+
+```mermaid
+graph LR
+    UI["WinForms desktop UI<br/>paste / open TXT / review"] --> CORE["Milstrip.Core<br/>deterministic port"]
+    CORE -.-> PARITY["Python reference + golden parity"]
+    CORE -.->|Phase 2B; disabled now| SERIALIZER["76-field pipe TXT serializer"]
+```
+
+`Milstrip.Desktop` owns UI and local file selection only. `Milstrip.Core` owns
+deterministic parsing/validation and has no filesystem/network dependency.
+Phase 2A has no exporter, authentication, database or network adapter.
 
 ```mermaid
 graph LR

@@ -7,10 +7,10 @@ of it (`download_ship940` → ADF → `ShipMaster` → Boomi → SCALE).
 
 ## Status
 
-**Phase 1 accepted; Phase 2 planned** — the current release is a local parsing
-CLI with zero database/network access. Phase 2 will create the final Rainbow
-CSV and deliver it to Rainbow's FTP endpoint after its layout and connectivity
-contracts are supplied. The application database is now Phase 3. See
+**Phase 1 accepted; Phase 2A authorized** — the current release is a local
+parsing CLI. The next increment is a native C# Windows review application.
+The confirmed Rainbow target is a 76-field pipe-delimited `.txt`; generation
+waits for its field/source contract. Database work remains Phase 3. See
 [`docs/master.md`](docs/master.md) for current status and
 [`docs/ROADMAP.md`](docs/ROADMAP.md) for what comes next.
 
@@ -40,6 +40,30 @@ to a database and nothing is sent over the network. `--json` is a developer
 diagnostic report, not the Rainbow deliverable. The future operational output
 is CSV; its format will not be invented before the official layout arrives.
 
+## Phase 2A Windows app — developer build
+
+The native C# review application is implemented but not yet a signed/operator
+release. Its independent code audit passed; managed Windows acceptance and
+signing remain open. On Windows with the .NET 10 SDK:
+
+```powershell
+.\scripts\build-windows-desktop.ps1
+dotnet run --project .\src\Milstrip.Desktop\Milstrip.Desktop.csproj
+```
+
+It supports paste, clipboard, `.txt` open/drag-and-drop, analysis and guided
+record review. It intentionally creates no file and performs no upload. The
+operational 76-field `.txt` is Phase 2B.
+
+Build a self-contained unsigned test candidate with:
+
+```powershell
+.\scripts\build-windows-desktop.ps1 -Publish
+```
+
+Do not distribute that candidate to operators as an approved installer. Code
+signing, managed Windows testing and IT/EDR approval remain release gates.
+
 For complete operator instructions, result interpretation, exit codes and
 failure handling, see [`docs/USER_SOP.md`](docs/USER_SOP.md).
 
@@ -53,14 +77,19 @@ failure handling, see [`docs/USER_SOP.md`](docs/USER_SOP.md).
   diagrams, system boundary, legacy integration classification.
 - [`docs/RAINBOW_INTERFACE_CONTRACT.md`](docs/RAINBOW_INTERFACE_CONTRACT.md) —
   Phase 2 CSV/transfer contract template, open fields and acceptance evidence.
+- [`docs/design/WINDOWS_DESKTOP_PROPOSAL.md`](docs/design/WINDOWS_DESKTOP_PROPOSAL.md)
+  — Full architecture proposal for the installable local toolkit and the
+  proposed Phase 4 browser extension.
 - [`docs/DISCOVERY_EVIDENCE.md`](docs/DISCOVERY_EVIDENCE.md) — source-to-claim
   register for SQL, calls, DLM appendices and sanitized malformed-email facts.
+- [`docs/discovery/CSV_SAMPLE_ASSESSMENT.md`](docs/discovery/CSV_SAMPLE_ASSESSMENT.md)
+  — sanitized assessment of Shawn's provisional pipe-delimited examples.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — phased plan (Phase 1 accepted, Rainbow
   CSV/FTP in Phase 2, application database in Phase 3).
-- [`docs/OPEN_QUESTIONS.md`](docs/OPEN_QUESTIONS.md) — ten precise questions,
-  each tagged with which phase it blocks.
-- [`docs/OWNER_QUESTIONNAIRE.md`](docs/OWNER_QUESTIONNAIRE.md) — owner
-  decisions for Rainbow CSV/FTP and the future application database.
+- [`docs/OWNER_QUESTIONNAIRE.md`](docs/OWNER_QUESTIONNAIRE.md) — the single,
+  concise list of pending owner decisions and questions for Shawn.
+- [`docs/OPEN_QUESTIONS.md`](docs/OPEN_QUESTIONS.md) — legacy pointer to the
+  authoritative pending-decision and technical-contract documents.
 - [`docs/USER_SOP.md`](docs/USER_SOP.md) — English operator SOP with the
   current Phase 1 procedure and planned Rainbow CSV/FTP procedure.
 - [`docs/delivery/FINAL_AUDIT.md`](docs/delivery/FINAL_AUDIT.md) — Full focused
@@ -85,6 +114,9 @@ the malformed-email evidence. Static type checking is clean.
 
 ```text
 milstrip/            Phase 1 Python package (domain, intake, parsing, validation, canonical, cli)
+src/                  Phase 2A .NET core and WinForms desktop application
+tools/                Dependency-free C# parity test runner
+scripts/              Windows build/publish helper
 tests/                Tests + real-example fixtures
 run_milstrip.bat       Windows launcher
 docs/                 Design documentation (this project's own)

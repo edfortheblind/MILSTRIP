@@ -12,6 +12,7 @@ contact details or raw operational correspondence into design documentation.
 | `local-discovery/0208.12-v2a8.12 (4).docx` (local only) | DLM AP8.12 | A5_/AF6 layout, Stock or Part Number 8-22, `M` quantity rule, family-specific tail/unit price | Does not decide what the Travis SQL currently supports |
 | `local-discovery/0208.25-v2a8.25 (1).docx` (local only) | DLM AP8.25 | A2_ layout and its distinct positions 67-80 | Contains a duplicated Distribution row in the source; treated as an editorial duplicate |
 | `local-discovery/mail sample with errors.pdf` (local only) | Real intake anomaly, 2026-08-14 | Period/ellipsis spacing contamination, one unique repairable record, one invalid 14-digit numeric identifier requiring DLA correction | Contains personal contact data; only sanitized derived facts enter fixtures/docs |
+| `local-discovery/MILSexamples.csv` and `.txt` (local only) | Shawn-supplied interface examples, 2026-08-14 | One byte-identical artifact: 6 rows, 76 pipe-delimited fields, no header, enriched downstream data | Provenance and Rainbow acceptance are unverified; not an authoritative layout or production golden file |
 
 ## Discovery corrections made 2026-08-14
 

@@ -12,7 +12,8 @@
     { "path": "README.md", "purpose": "Repo overview, quick start, links to everything else" },
     { "path": "docs/master.md", "purpose": "Living status doc — scope, governance profile, phase, outstanding decisions" },
     { "path": "run_milstrip.bat", "purpose": "Windows launcher for the Phase 1 CLI — drag a .txt file onto it or run from a terminal" },
-    { "path": "docs/USER_SOP.md", "purpose": "English operator procedure for installation, execution, statuses, exit codes and troubleshooting" }
+    { "path": "docs/USER_SOP.md", "purpose": "English operator procedure for installation, execution, statuses, exit codes and troubleshooting" },
+    { "path": "src/Milstrip.Desktop", "purpose": "Phase 2A native Windows review application; currently a developer build, not a signed release" }
   ],
   "topLevelSections": [
     {
@@ -29,6 +30,25 @@
         { "path": "milstrip/service.py", "purpose": "Wires extractor -> parser -> normalizer -> validator -> canonical builder into one pipeline" },
         { "path": "milstrip/cli.py", "purpose": "Phase 1 command-line entry point — text or diagnostic JSON, always a dry run" }
       ]
+    },
+    {
+      "path": "src",
+      "type": "code",
+      "purpose": "Phase 2A .NET implementation",
+      "children": [
+        { "path": "src/Milstrip.Core", "purpose": "Deterministic C# parsing, validation and canonicalization core" },
+        { "path": "src/Milstrip.Desktop", "purpose": "English WinForms UI for paste/TXT intake and guided review; no export/network" }
+      ]
+    },
+    {
+      "path": "tools/Milstrip.Core.ParityTests",
+      "type": "tests",
+      "purpose": "Dependency-free C# golden/parity runner"
+    },
+    {
+      "path": "scripts",
+      "type": "build",
+      "purpose": "Windows desktop build and unsigned test-publish helper"
     },
     {
       "path": "tests",
@@ -52,12 +72,15 @@
         { "path": "docs/MILSTRIP_SPEC.md", "purpose": "Field-by-field specification with evidence and confidence levels" },
         { "path": "docs/ARCHITECTURE.md", "purpose": "Current-state and target diagrams, system boundary, legacy integration classification" },
         { "path": "docs/DISCOVERY_EVIDENCE.md", "purpose": "Source-to-claim register and privacy handling for discovery evidence" },
+        { "path": "docs/discovery/CSV_SAMPLE_ASSESSMENT.md", "purpose": "Sanitized structural assessment of Shawn's provisional 76-field pipe-delimited samples" },
         { "path": "docs/ROADMAP.md", "purpose": "Phased plan — Phase 1 accepted; Rainbow CSV/FTP in Phase 2; database in Phase 3" },
         { "path": "docs/RAINBOW_INTERFACE_CONTRACT.md", "purpose": "TBD-safe contract template and acceptance gates for Rainbow CSV and transfer" },
-        { "path": "docs/OPEN_QUESTIONS.md", "purpose": "Ten precise questions, each tagged with which phase it blocks" },
-        { "path": "docs/OWNER_QUESTIONNAIRE.md", "purpose": "Owner decisions for Phase 1 acceptance and future database design" },
+        { "path": "docs/design/WINDOWS_DESKTOP_PROPOSAL.md", "purpose": "Full proposal for the signed Windows toolkit and later private browser extension" },
+        { "path": "docs/OPEN_QUESTIONS.md", "purpose": "Legacy pointer; avoids duplicating active questions" },
+        { "path": "docs/OWNER_QUESTIONNAIRE.md", "purpose": "Single concise list of deferred inputs; no Phase 2A owner decisions remain" },
         { "path": "docs/USER_SOP.md", "purpose": "English operator SOP for the Phase 1 application" },
         { "path": "docs/delivery/FINAL_AUDIT.md", "purpose": "Focused Full audit evidence, verdict and remaining security gate" },
+        { "path": "docs/delivery/PHASE_2A_AUDIT.md", "purpose": "Independent Phase 2A code verdict and deferred Windows release gates" },
         { "path": "docs/adr", "purpose": "Durable architectural decisions, including the Rainbow CSV/FTP delivery boundary" }
       ]
     },

@@ -23,18 +23,18 @@ successful while being rejected, duplicated or misrouted downstream.
 Phase 2 owns the outbound Rainbow handoff and is split into two controlled
 increments:
 
-1. **Phase 2A — CSV contract and local export.** Once the owner supplies the
+1. **Phase 2B — CSV contract and local export.** Once the owner supplies the
    authoritative layout, implement a deterministic serializer that writes the
    exact required CSV to a local output directory. Only eligible records may
    be exported. The parser and CSV serializer remain separate components.
-2. **Phase 2B — Rainbow FTP delivery.** Once connectivity and security details
+2. **Phase 2C — Rainbow FTP delivery.** Once connectivity and security details
    are supplied, add a replaceable transport adapter that transfers an already
    validated CSV, verifies the configured success condition and retains an
    auditable local result. Network delivery is never inferred merely from a
    successful local file write.
 
 The Windows `.bat` launcher will orchestrate parsing, review gating and CSV
-creation only after Phase 2A is implemented and accepted. FTP upload must be
+creation only after Phase 2B is implemented and accepted. FTP upload must be
 an explicit, separately observable operation; whether it is automatic after
 CSV creation or requires operator confirmation remains an owner decision.
 

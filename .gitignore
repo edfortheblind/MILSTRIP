@@ -6,6 +6,10 @@ __pycache__/
 venv/
 *.egg-info/
 
+# .NET build output.
+**/bin/
+**/obj/
+
 # Never commit credentials or environment-specific config.
 .env
 *.local.yaml
