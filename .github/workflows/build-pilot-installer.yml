@@ -1,0 +1,226 @@
+name: Build unsigned pilot installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Installer version (for example, 0.1.0)
+        required: true
+        default: 0.1.0
+        type: string
+      publish_prerelease:
+        description: Publish the tested installer as a GitHub prerelease
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Windows x64 installer
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Validate version
+        id: version
+        shell: pwsh
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          if ($env:REQUESTED_VERSION -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') {
+            throw "Version must contain three or four numeric components, for example 0.1.0."
+          }
+          "value=$env:REQUESTED_VERSION" >> $env:GITHUB_OUTPUT
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v4.3.1
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.13'
+
+      - name: Run Python quality gates
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check pytest==9.1.1 mypy==1.19.1
+          python -m pytest -q
+          python -m mypy milstrip tests
+
+      - name: Restore projects
+        shell: pwsh
+        run: |
+          dotnet restore tools/Milstrip.Core.ParityTests/Milstrip.Core.ParityTests.csproj
+          dotnet restore src/Milstrip.Desktop/Milstrip.Desktop.csproj --runtime win-x64
+
+      - name: Run C# parity tests
+        shell: pwsh
+        run: dotnet run --project tools/Milstrip.Core.ParityTests/Milstrip.Core.ParityTests.csproj --configuration Release --no-restore
+
+      - name: Publish self-contained desktop application
+        shell: pwsh
+        run: >-
+          dotnet publish src/Milstrip.Desktop/Milstrip.Desktop.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --no-restore
+          --output artifacts/publish/win-x64
+          -p:Version=${{ steps.version.outputs.value }}
+          -p:DebugType=None
+          -p:DebugSymbols=false
+
+      - name: Install Inno Setup compiler
+        shell: pwsh
+        run: |
+          $download = Join-Path $env:RUNNER_TEMP "innosetup-6.7.3.exe"
+          $innoDir = Join-Path $env:RUNNER_TEMP "inno-setup-6.7.3"
+          Invoke-WebRequest -Uri "https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe" -OutFile $download
+
+          $expectedHash = "9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732"
+          $actualHash = (Get-FileHash -Algorithm SHA256 $download).Hash.ToLowerInvariant()
+          if ($actualHash -ne $expectedHash) {
+            throw "Inno Setup download hash mismatch. Expected $expectedHash; received $actualHash."
+          }
+
+          $signature = Get-AuthenticodeSignature $download
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'CN=Pyrsys B\.V\.') {
+            throw "Inno Setup Authenticode validation failed. Status: $($signature.Status); signer: $($signature.SignerCertificate.Subject)."
+          }
+
+          $install = Start-Process $download -Wait -PassThru -ArgumentList @(
+            '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$innoDir"
+          )
+          if ($install.ExitCode -ne 0) {
+            throw "Inno Setup installation failed with exit code $($install.ExitCode)."
+          }
+          if (-not (Test-Path (Join-Path $innoDir 'ISCC.exe'))) {
+            throw "Inno Setup compiler was not found after installation."
+          }
+          "INNO_SETUP_DIR=$innoDir" >> $env:GITHUB_ENV
+
+      - name: Compile unsigned pilot installer
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          $compiler = Join-Path $env:INNO_SETUP_DIR "ISCC.exe"
+          New-Item -ItemType Directory -Force artifacts/installer | Out-Null
+          & $compiler "/DAppVersion=$env:APP_VERSION" installer/MILSTRIP.iss
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Verify deliverable and write SHA-256 checksum
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          $installer = "artifacts/installer/MILSTRIP-Setup-$env:APP_VERSION.exe"
+          if (-not (Test-Path $installer)) {
+            throw "Expected installer was not created: $installer"
+          }
+          $hash = (Get-FileHash -Algorithm SHA256 $installer).Hash.ToLowerInvariant()
+          $checksum = "$installer.sha256"
+          "$hash  $(Split-Path -Leaf $installer)" | Set-Content -Encoding ascii $checksum
+          Write-Host "SHA256: $hash"
+
+      - name: Smoke test install, launch, and uninstall
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          $installer = (Resolve-Path "artifacts/installer/MILSTRIP-Setup-$env:APP_VERSION.exe").Path
+          $installDir = Join-Path $env:LOCALAPPDATA "MILSTRIP-Pilot-Smoke"
+          $installLog = Join-Path $env:RUNNER_TEMP "milstrip-install.log"
+          $uninstallLog = Join-Path $env:RUNNER_TEMP "milstrip-uninstall.log"
+
+          $install = Start-Process $installer -Wait -PassThru -ArgumentList @(
+            '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$installDir", "/LOG=$installLog"
+          )
+          if ($install.ExitCode -ne 0) {
+            Get-Content $installLog -ErrorAction SilentlyContinue
+            throw "Silent installation failed with exit code $($install.ExitCode)."
+          }
+
+          $application = Join-Path $installDir "Milstrip.Desktop.exe"
+          $uninstaller = Join-Path $installDir "unins000.exe"
+          if (-not (Test-Path $application) -or -not (Test-Path $uninstaller)) {
+            throw "The installed application or uninstaller is missing."
+          }
+
+          $process = Start-Process $application -PassThru
+          Start-Sleep -Seconds 3
+          if ($process.HasExited) {
+            throw "The installed application exited unexpectedly with code $($process.ExitCode)."
+          }
+          Stop-Process -Id $process.Id -Force
+          $process.WaitForExit()
+
+          $reinstall = Start-Process $installer -Wait -PassThru -ArgumentList @(
+            '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$installDir", "/LOG=$installLog"
+          )
+          if ($reinstall.ExitCode -ne 0 -or -not (Test-Path $application)) {
+            throw "In-place reinstall failed with exit code $($reinstall.ExitCode)."
+          }
+
+          $uninstall = Start-Process $uninstaller -Wait -PassThru -ArgumentList @(
+            '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/LOG=$uninstallLog"
+          )
+          if ($uninstall.ExitCode -ne 0) {
+            Get-Content $uninstallLog -ErrorAction SilentlyContinue
+            throw "Silent uninstall failed with exit code $($uninstall.ExitCode)."
+          }
+          if (Test-Path $application) {
+            throw "The application remained after uninstall."
+          }
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: MILSTRIP-Setup-${{ steps.version.outputs.value }}
+          path: |
+            artifacts/installer/MILSTRIP-Setup-${{ steps.version.outputs.value }}.exe
+            artifacts/installer/MILSTRIP-Setup-${{ steps.version.outputs.value }}.exe.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish optional pilot prerelease
+    if: ${{ inputs.publish_prerelease }}
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download tested installer
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: MILSTRIP-Setup-${{ inputs.version }}
+          path: release-assets
+
+      - name: Create GitHub prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          REPOSITORY: ${{ github.repository }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          gh release create "v${RELEASE_VERSION}-pilot" \
+            --repo "$REPOSITORY" \
+            --target "$TARGET_SHA" \
+            --title "MILSTRIP Review Toolkit ${RELEASE_VERSION} (unsigned pilot)" \
+            --notes "Unsigned pilot build. Windows SmartScreen or organizational security controls may warn or block this installer. Use only for approved pilot testing." \
+            --prerelease \
+            "release-assets/MILSTRIP-Setup-${RELEASE_VERSION}.exe" \
+            "release-assets/MILSTRIP-Setup-${RELEASE_VERSION}.exe.sha256"

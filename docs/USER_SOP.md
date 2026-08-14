@@ -1,382 +1,142 @@
-# MILSTRIP Intake Tool — Windows Operator SOP
+# MILSTRIP Review Toolkit — Pilot User SOP
 
-**Current release:** Phase 1 local validation only
+## 1. What this pilot does
 
-**Future release:** Phase 2 Rainbow CSV creation and secure transfer
+The Windows application lets an operator:
 
-**Audience:** first-time Windows operators and support personnel
+1. paste request/email text or open a `.txt` file;
+2. analyze MILSTRIP records;
+3. review `VALID`, `REQUIRES_REVIEW` and `REJECTED` results; and
+4. view the canonical 80-character record and issues.
 
-## 1. Read this first
+This Phase 2A pilot does **not** create the 76-field Rainbow `.txt`, upload a
+file, connect to a database or read an Outlook mailbox.
 
-This project was developed in a GitHub Codespace. A Codespace is a remote
-computer hosted by GitHub. Files visible there do not automatically exist on
-the operator's Windows computer.
+## 2. Download
 
-Before the tool can run on Windows, the complete approved project must be:
-
-1. committed and pushed from the Codespace to GitHub by the release manager;
-2. downloaded or cloned onto the Windows computer; and
-3. run from the real downloaded folder—not from `C:\Users\<username>` or a
-   sample path such as `C:\path\to\MILSTRIP`.
-
-The current launcher validates input and displays a report. It does **not**
-create a Rainbow CSV, upload a file, use a database or send anything over the
-network. Diagnostic JSON is not a Rainbow deliverable.
-
-## 2. Responsibilities
-
-**Release manager:** run tests, obtain approval, commit and push the approved
-files, and provide the exact release/tag or Git commit ID. Do not distribute an
-unpublished Codespace working folder.
-
-**Operator:** download the approved version, prepare input, run
-`run_milstrip.bat`, review every result and escalate exceptions. The operator
-does not edit Python source code.
-
-## 3. Required handoff information
-
-The release manager must provide:
-
-- repository: `https://github.com/edfortheblind/MILSTRIP`;
-- approved release/tag or full commit ID;
-- confirmation that the operator can access the private repository;
-- sanitized known-valid and known-rejected test files;
-- internal support contact; and
-- confirmation of whether the release is Phase 1 only or includes Phase 2.
-
-## 4. Windows requirements
-
-- Windows 10 or 11 and Python 3.10 or later.
-- Repository access or an approved release ZIP.
-- A writable folder such as `Documents\MILSTRIP`; do not use `Program Files`.
-- Phase 1 needs no database driver, FTP client, GitHub CLI or third-party
-  Python package.
-
-## 5. Install and verify Python
-
-1. Press the Windows key, type `cmd`, and press **Enter**.
-2. Run:
-
-   ```bat
-   python --version
-   ```
-
-3. If it reports Python 3.10 or later, continue to Section 6.
-4. Otherwise install Python from <https://www.python.org/downloads/>.
-5. If asked `Add commands directory to your PATH now? [y/N]`, type `y` and
-   press **Enter**.
-6. Close all terminals, open a new Command Prompt and rerun
-   `python --version`.
-
-Running `python` without `--version` opens the Python prompt. Type `exit()` and
-press **Enter** to leave it.
-
-## 6. Copy the application from GitHub to Windows
-
-Use one method only. Method A is recommended. GitHub CLI is optional.
-
-### Method A — Approved ZIP (recommended)
-
-1. Obtain the approved ZIP from the release manager, or sign in at
-   <https://github.com/edfortheblind/MILSTRIP> with an authorized account.
-2. On GitHub select **Code** → **Download ZIP**.
-3. In Downloads, right-click the ZIP and select **Extract All**.
-4. Extract it under `C:\Users\<your-user>\Documents\MILSTRIP`.
-5. GitHub may name the extracted folder `MILSTRIP-main`; this is normal.
-6. Open folders until these items are visible together:
+1. Sign in to GitHub with an account authorized for the private MILSTRIP repo.
+2. Open <https://github.com/edfortheblind/MILSTRIP/releases>.
+3. Open the approved release marked **Pre-release**.
+4. Under **Assets**, download:
 
    ```text
-   run_milstrip.bat
-   README.md
-   milstrip\
-   docs\
-   tests\
+   MILSTRIP-Setup-<version>.exe
    ```
 
-If they are not together, the wrong folder is open or the ZIP is incomplete.
-Stop and contact support.
+5. Do not download **Source code**. Operators do not need the repository,
+   Python, Git, GitHub CLI, Visual Studio or the .NET SDK.
 
-### Method B — `git clone`
+The pilot installer is unsigned. Windows SmartScreen or company security tools
+may warn, block or quarantine it. If that happens, stop and contact IT. Never
+disable antivirus, EDR or SmartScreen and never create your own exclusion.
 
-Use this only if Git is installed.
+## 3. Install
 
-```bat
-git --version
-cd /d "%USERPROFILE%\Documents"
-git clone https://github.com/edfortheblind/MILSTRIP.git
-cd /d "%USERPROFILE%\Documents\MILSTRIP"
-git rev-parse HEAD
+1. Double-click the downloaded `MILSTRIP-Setup-<version>.exe`.
+2. Confirm the installer name is **MILSTRIP Review Toolkit**.
+3. Keep the default installation folder.
+4. Optionally select **Create a desktop shortcut**.
+5. Select **Install**.
+6. Select **Finish** to open the application.
+
+The pilot installs only for the current Windows user and should not require
+administrator rights.
+
+## 4. Analyze a request
+
+### Paste text
+
+1. Copy the complete request/email text.
+2. Open **MILSTRIP Review Toolkit** from Start Menu or its Desktop shortcut.
+3. Select **Paste Clipboard**.
+4. Select **Analyze**.
+
+### Open a text file
+
+1. Save the original request as a UTF-8 `.txt` file.
+2. Select **Open TXT** and choose the file, or drag it onto the application.
+3. Select **Analyze**.
+
+Do not remove, insert or guess characters to make a request pass. Screenshots,
+PDFs, `.msg` and `.eml` files are not supported by this pilot.
+
+## 5. Review results
+
+Review every row, not only the totals.
+
+- **VALID:** passed local structural validation. It was not database-validated
+  or sent to Rainbow.
+- **REQUIRES_REVIEW:** a person must resolve every warning before the record
+  can proceed.
+- **REJECTED:** must not proceed. Obtain corrected information from an
+  authoritative source and analyze it again.
+
+Select a row to see its canonical record and issue details. Never guess or
+silently remove an NSN digit, DODAAC, quantity, priority, condition code or
+other character.
+
+The red banner must always say:
+
+```text
+Phase 2A review only — no file created or uploaded
 ```
 
-If Git is unavailable, use Method A or install Git for Windows from
-<https://git-scm.com/download/win>. Authenticate in the browser if prompted;
-never put a password or token in the command. The final commit ID must match
-the approved ID supplied by the release manager.
+If the application implies that it created, delivered or uploaded a file,
+stop using it and contact support; that is not approved Phase 2A behavior.
 
-### Method C — GitHub CLI from Command Prompt
+## 6. Clear sensitive content
 
-This is the complete CMD flow for connecting to GitHub, cloning into the
-recommended folder and running the included smoke test.
+After recording the approved result, select **Clear** before processing another
+request or leaving the workstation. The pilot has no telemetry, payload log,
+recent-file history, database or network connection.
 
-1. Open Command Prompt and verify the required commands:
+Follow the organization's normal handling and retention rules for the original
+email and any screenshots or copied results.
 
-   ```bat
-   git --version
-   gh --version
-   ```
+## 7. Troubleshooting
 
-2. If either command is missing, install it, close Command Prompt and open a
-   new one:
+### Windows or EDR blocks the installer
 
-   ```bat
-   winget install --id Git.Git --exact
-   winget install --id GitHub.cli --exact
-   ```
+Stop and contact IT/support. Provide the release version and exact warning.
+Do not bypass the warning or disable security controls.
 
-3. Authenticate through the browser:
+### The clipboard is busy
 
-   ```bat
-   gh auth login --web --git-protocol https
-   gh auth status
-   ```
+Wait a moment and select **Paste Clipboard** again.
 
-4. Clone and enter the application folder:
+### No records are detected
 
-   ```bat
-   cd /d "%USERPROFILE%\Documents"
-   gh repo clone edfortheblind/MILSTRIP MILSTRIP
-   cd /d "%USERPROFILE%\Documents\MILSTRIP"
-   ```
+Confirm that the input contains actual text beginning with an A2_, A5_ or
+AF6-like DIC. Images are not parsed.
 
-5. Verify the folder and approved commit:
+### Input is too large
 
-   ```bat
-   dir run_milstrip.bat
-   dir milstrip
-   git rev-parse HEAD
-   ```
+Split it into smaller `.txt` files without splitting an individual MILSTRIP
+record.
 
-6. Run the included smoke test:
+### A record is over 80 characters or has an invalid identifier
 
-   ```bat
-   run_milstrip.bat samples\known_valid.txt
-   ```
+Do not delete characters. Verify the source and request corrected data.
 
-The result must show one detected record, `VALID`, zero rejected records and
-`Phase 1 only: no Rainbow CSV was created or uploaded.`
+### The application does not open or closes unexpectedly
 
-### Method D — GitHub CLI from PowerShell
+Record the release version, Windows version and displayed message. Do not send
+the raw request unless the approved support process allows it.
 
-This is the equivalent complete PowerShell flow.
+## 8. Uninstall
 
-1. Open PowerShell and verify/install Git and GitHub CLI as described in Method
-   C. Then close and reopen PowerShell.
-2. Authenticate:
+1. Open Windows **Settings** → **Apps** → **Installed apps**.
+2. Find **MILSTRIP Review Toolkit**.
+3. Select **Uninstall** and confirm.
 
-   ```powershell
-   gh auth login --web --git-protocol https
-   gh auth status
-   ```
+## 9. Support information
 
-3. Clone into Documents and enter the repository:
+Provide:
 
-   ```powershell
-   Set-Location "$HOME\Documents"
-   gh repo clone edfortheblind/MILSTRIP MILSTRIP
-   Set-Location "$HOME\Documents\MILSTRIP"
-   ```
+- installer/release version;
+- Windows version;
+- status or MILSTRIP issue codes;
+- whether input was pasted, opened or dragged; and
+- exact installer/application error message.
 
-4. Verify the folder and approved commit:
-
-   ```powershell
-   Get-Item .\run_milstrip.bat
-   Get-Item .\milstrip
-   git rev-parse HEAD
-   ```
-
-5. Run the included smoke test and capture its exit code:
-
-   ```powershell
-   & .\run_milstrip.bat .\samples\known_valid.txt
-   $LASTEXITCODE
-   ```
-
-The expected exit code is `0`. The displayed result requirements are the same
-as Method C.
-
-For both methods, choose GitHub.com, HTTPS and browser authentication. Never
-place a token in this repository, a ticket, an input file or the `.bat` file.
-If the target `MILSTRIP` folder already exists, do not clone over it; follow
-Section 16 or ask support which copy is approved.
-
-## 7. Open Command Prompt in the correct folder
-
-1. In File Explorer, open the folder containing `run_milstrip.bat`.
-2. Click the address bar, type `cmd`, and press **Enter**.
-3. Verify:
-
-   ```bat
-   dir run_milstrip.bat
-   dir milstrip
-   ```
-
-Both must succeed. Never type the literal example
-`cd C:\path\to\MILSTRIP`; it is a placeholder, not a real path.
-
-## 8. Prepare the input
-
-1. Preserve the original email or ticket.
-2. Paste the complete request into Notepad. Do not add, delete or guess
-   MILSTRIP characters to make it pass.
-3. Select **File** → **Save As**.
-4. Name it `request.txt`, select **All files**, and choose **UTF-8** encoding.
-5. For the first run, save it beside `run_milstrip.bat`.
-
-Screenshots, images and PDFs are not direct input. Export or transcribe the
-actual text while preserving every character.
-
-## 9. Run it — recommended method
-
-1. In File Explorer, drag `request.txt` onto `run_milstrip.bat`.
-2. Keep the Command Prompt open.
-3. Confirm it shows `Records detected`, `Valid`, `Requires review` and
-   `Rejected`.
-4. Review every numbered record, not only the totals.
-5. Current Phase 1 must also display:
-
-   ```text
-   Phase 1 only: no Rainbow CSV was created or uploaded.
-   ```
-
-6. Record the result, then press any key to close the window.
-
-Alternatively, from the correct folder run:
-
-```bat
-run_milstrip.bat request.txt
-```
-
-For an input elsewhere, use its real quoted path:
-
-```bat
-run_milstrip.bat "C:\Users\ed.lopez\Documents\Requests\request.txt"
-```
-
-## 10. Interpret the result
-
-- **`VALID`:** passed local structural validation and has an 80-character
-  canonical value. It was not database-validated or sent to Rainbow.
-- **`REQUIRES_REVIEW`:** a person must resolve every warning by comparing the
-  received and canonical values. This is not automatic approval.
-- **`REJECTED`:** must not proceed. Correct it only from an authoritative
-  source. Never guess or remove an NSN digit, DODAAC, quantity, priority,
-  condition code or other character.
-
-## 11. Exit codes
-
-| Code | Meaning | Required action |
-|---:|---|---|
-| `0` | Processed; none rejected | Still resolve every `REQUIRES_REVIEW` |
-| `1` | One or more rejected | Correct from authoritative data and rerun |
-| `2` | Input failure | Check file, encoding, contents and path |
-| `9` | Python unavailable | Repeat Section 5 in a new terminal |
-
-## 12. Common problems
-
-### `The system cannot find the path specified`
-
-A sample path was typed or the folder is elsewhere. Follow Section 7; do not
-guess the path.
-
-### `'run_milstrip.bat' is not recognized`
-
-The terminal is not in the application folder. Follow Section 7 and verify
-with `dir run_milstrip.bat`.
-
-### Python is not found
-
-Repeat Section 5 and open a new terminal after installation.
-
-### GitHub says repository not found or access denied
-
-Use the authorized GitHub account and ask the release manager to confirm
-access. Do not create or share access tokens in chat or email.
-
-### No candidate is detected
-
-Confirm the file is not empty and contains actual text beginning with an A2_,
-A5_ or AF6-like DIC. Images are not parsed.
-
-### The record exceeds 80 characters or has an invalid identifier
-
-Do not delete characters. Verify the source and obtain corrected data from
-DLA/source personnel.
-
-### Dots or ellipses appear in the record
-
-Never replace all punctuation globally. The tool only permits its
-evidence-backed case and marks it for review.
-
-## 13. Diagnostic JSON — developers only
-
-```bat
-python -m milstrip.cli request.txt --json
-```
-
-This is not the Rainbow CSV. Never rename it, convert it manually or upload it.
-
-## 14. Phase 2A desktop application — not yet released to operators
-
-The native Windows review application has been implemented for developer and
-Windows acceptance testing. It offers paste, clipboard, `.txt` open/drag-drop,
-Analyze, Clear, a results grid, canonical details and issue explanations.
-
-It deliberately creates no file, performs no upload and uses no authentication.
-It is not an operator release until signing, managed-endpoint testing,
-accessibility review, independent audit and HOC GO are complete.
-
-Phase 2B will create the confirmed 76-field pipe-delimited `.txt` after its
-field/source and byte edge-case contracts are supplied. Phase 2C will address
-transfer separately.
-
-Until an approved installer is issued, operators must continue using the
-accepted Phase 1 procedure. Do not distribute an unsigned developer build,
-construct a guessed output or store credentials in this repository.
-
-## 15. New-workstation acceptance
-
-Support must record Windows version, `python --version`, approved commit ID,
-tester and date, then verify:
-
-1. `samples\known_valid.txt` → exit `0`, `VALID` and canonical length 80;
-2. known-rejected input → exit `1` and no canonical;
-3. empty input → exit `2` and `MIL-INTAKE-001`;
-4. missing file → exit `2` and `MIL-INTAKE-002`; and
-5. no CSV, database write or network transfer occurred in Phase 1.
-
-The workstation is not accepted until all checks match.
-
-## 16. Update an existing Git clone
-
-Only support or a trained operator should update it:
-
-```bat
-cd /d "%USERPROFILE%\Documents\MILSTRIP"
-git status --short
-```
-
-If output appears, stop; do not discard files. If it is empty:
-
-```bat
-git pull --ff-only
-git rev-parse HEAD
-```
-
-Verify the approved commit ID. For ZIP installations, extract a newly approved
-ZIP into a new versioned folder; do not overwrite the working folder.
-
-## 17. Support information
-
-Provide the release/tag or commit ID, Windows/Python versions, command, exit
-code, issue codes, installation method, and sanitized input shape. Never send
-credentials, tokens, private keys or unnecessary personal information.
+Never send passwords, tokens, private keys or unnecessary personal data.

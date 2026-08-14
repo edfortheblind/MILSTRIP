@@ -1,6 +1,6 @@
 # MILSTRIP Intake Automation — Master Document
 
-**Version:** 0.8 **Date:** 2026-08-14 **Status:** PHASE_2A_CODE_ACCEPTED_WINDOWS_GATE
+**Version:** 0.9 **Date:** 2026-08-14 **Status:** PHASE_2A_PILOT_INSTALLER_BUILD_GATE
 
 Built with the AEKR (AI Engineering Knowledge Repo) workflow — see the root
 `README.md` footer and `meta/OPERATING_PRINCIPLES.md` in the `AEKR` repo for
@@ -104,6 +104,7 @@ credentials, connectivity or production writes.
 | 2026-08-14 | APP4 deferred; Azure/Entra SSO mentioned | Develop without auth/signing; installer trust and any identity requirement move to a later gate |
 | 2026-08-14 | Shawn confirmed sample layout and `.txt` extension | Phase 2B target is the 76-field pipe-delimited `.txt`; field-source/edge contracts remain deferred |
 | 2026-08-14 | Phase 2A independent code re-audit PASS | Native source accepted; Windows packaging/accessibility/EDR release gate remains open |
+| 2026-08-14 | INSTALL-A approved | Build an unsigned, per-user pilot installer; warnings/quarantine remain possible and security controls must not be bypassed |
 
 Historical decisions belong here or in an ADR. They must not be copied back
 into the active questionnaire.
@@ -121,3 +122,7 @@ into the active questionnaire.
 | `DISCOVERY_EVIDENCE.md` / `docs/discovery/` | Evidence and interpretation |
 | `docs/design/` | Proposed designs awaiting/implementing decisions |
 | `docs/adr/` | Durable architecture decisions |
+
+The pilot installer workflow is implemented but does not become a deliverable
+until its Windows build, lifecycle smoke and private GitHub prerelease complete
+successfully. Signed production distribution remains a separate IT gate.

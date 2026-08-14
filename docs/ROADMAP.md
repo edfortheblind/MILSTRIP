@@ -7,7 +7,7 @@ sequence, outcome and gate.
 |---|---|---|
 | 1 | Deterministic parser, validation, canonical 80-character record, CLI/`.bat` | **ACCEPTED 2026-08-14**; 46 regression tests |
 | 1.5 | Additional evidence-backed repair rules | Deferred until more real anomalies provide a unique safe interpretation |
-| 2A | Native Windows app: paste/`.txt`, analyze and guided review | **CODE ACCEPTED:** Windows packaging/accessibility/EDR release gate remains |
+| 2A | Native Windows app: paste/`.txt`, analyze and guided review | **PILOT BUILD GATE:** unsigned installer workflow ready; Windows run/prerelease pending |
 | 2B | Official 76-field pipe-delimited `.txt` | Layout/extension confirmed; **blocked:** field-source map, byte edge cases and golden/ACK |
 | 2C | Controlled Rainbow transfer | **Blocked:** protocol, credentials, test endpoint, retry/duplicate/ACK contract |
 | 3 | Application database and approved reference validation | **Blocked:** owner-supplied layout and database inputs |

@@ -13,7 +13,8 @@
     { "path": "docs/master.md", "purpose": "Living status doc — scope, governance profile, phase, outstanding decisions" },
     { "path": "run_milstrip.bat", "purpose": "Windows launcher for the Phase 1 CLI — drag a .txt file onto it or run from a terminal" },
     { "path": "docs/USER_SOP.md", "purpose": "English operator procedure for installation, execution, statuses, exit codes and troubleshooting" },
-    { "path": "src/Milstrip.Desktop", "purpose": "Phase 2A native Windows review application; currently a developer build, not a signed release" }
+    { "path": "src/Milstrip.Desktop", "purpose": "Phase 2A native Windows review application" },
+    { "path": ".github/workflows/build-pilot-installer.yml", "purpose": "Build, smoke-test and optionally prerelease the one-file unsigned pilot installer" }
   ],
   "topLevelSections": [
     {
@@ -49,6 +50,11 @@
       "path": "scripts",
       "type": "build",
       "purpose": "Windows desktop build and unsigned test-publish helper"
+    },
+    {
+      "path": "installer",
+      "type": "build",
+      "purpose": "Per-user Inno Setup pilot installer definition and distribution limitations"
     },
     {
       "path": "tests",

@@ -14,6 +14,19 @@ waits for its field/source contract. Database work remains Phase 3. See
 [`docs/master.md`](docs/master.md) for current status and
 [`docs/ROADMAP.md`](docs/ROADMAP.md) for what comes next.
 
+## Operator installation
+
+Operators download one installer; they do not clone this repository:
+
+1. Open [GitHub Releases](https://github.com/edfortheblind/MILSTRIP/releases).
+2. Open the approved private prerelease.
+3. Download `MILSTRIP-Setup-<version>.exe` under **Assets**.
+4. Follow [`docs/USER_SOP.md`](docs/USER_SOP.md).
+
+The current pilot installer is unsigned and may be warned, blocked or
+quarantined by Windows/organizational security. Never disable security controls
+to run it. Signed managed distribution remains a later IT gate.
+
 ## Quick start
 
 Requires Python 3.10+, nothing else — the Phase 1 toolkit has zero
@@ -61,8 +74,9 @@ Build a self-contained unsigned test candidate with:
 .\scripts\build-windows-desktop.ps1 -Publish
 ```
 
-Do not distribute that candidate to operators as an approved installer. Code
-signing, managed Windows testing and IT/EDR approval remain release gates.
+Do not distribute the raw publish folder. The workflow in
+`.github/workflows/build-pilot-installer.yml` creates the single approved pilot
+download only after its Windows lifecycle smoke passes.
 
 For complete operator instructions, result interpretation, exit codes and
 failure handling, see [`docs/USER_SOP.md`](docs/USER_SOP.md).
@@ -117,6 +131,8 @@ milstrip/            Phase 1 Python package (domain, intake, parsing, validation
 src/                  Phase 2A .NET core and WinForms desktop application
 tools/                Dependency-free C# parity test runner
 scripts/              Windows build/publish helper
+installer/            Unsigned pilot installer definition and licensing note
+.github/workflows/     Reproducible Windows installer/prerelease build
 tests/                Tests + real-example fixtures
 run_milstrip.bat       Windows launcher
 docs/                 Design documentation (this project's own)

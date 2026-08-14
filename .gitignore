@@ -9,6 +9,7 @@ venv/
 # .NET build output.
 **/bin/
 **/obj/
+/artifacts/
 
 # Never commit credentials or environment-specific config.
 .env
