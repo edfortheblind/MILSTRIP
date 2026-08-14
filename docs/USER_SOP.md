@@ -113,19 +113,101 @@ If Git is unavailable, use Method A or install Git for Windows from
 never put a password or token in the command. The final commit ID must match
 the approved ID supplied by the release manager.
 
-### Method C — GitHub CLI (`gh`), optional
+### Method C — GitHub CLI from Command Prompt
 
-```bat
-gh auth login
-gh auth status
-cd /d "%USERPROFILE%\Documents"
-gh repo clone edfortheblind/MILSTRIP
-cd /d "%USERPROFILE%\Documents\MILSTRIP"
-git rev-parse HEAD
-```
+This is the complete CMD flow for connecting to GitHub, cloning into the
+recommended folder and running the included smoke test.
 
-Choose GitHub.com, HTTPS and browser authentication. Never place a token in
-this repository, a ticket, an input file or the `.bat` file.
+1. Open Command Prompt and verify the required commands:
+
+   ```bat
+   git --version
+   gh --version
+   ```
+
+2. If either command is missing, install it, close Command Prompt and open a
+   new one:
+
+   ```bat
+   winget install --id Git.Git --exact
+   winget install --id GitHub.cli --exact
+   ```
+
+3. Authenticate through the browser:
+
+   ```bat
+   gh auth login --web --git-protocol https
+   gh auth status
+   ```
+
+4. Clone and enter the application folder:
+
+   ```bat
+   cd /d "%USERPROFILE%\Documents"
+   gh repo clone edfortheblind/MILSTRIP MILSTRIP
+   cd /d "%USERPROFILE%\Documents\MILSTRIP"
+   ```
+
+5. Verify the folder and approved commit:
+
+   ```bat
+   dir run_milstrip.bat
+   dir milstrip
+   git rev-parse HEAD
+   ```
+
+6. Run the included smoke test:
+
+   ```bat
+   run_milstrip.bat samples\known_valid.txt
+   ```
+
+The result must show one detected record, `VALID`, zero rejected records and
+`Phase 1 only: no Rainbow CSV was created or uploaded.`
+
+### Method D — GitHub CLI from PowerShell
+
+This is the equivalent complete PowerShell flow.
+
+1. Open PowerShell and verify/install Git and GitHub CLI as described in Method
+   C. Then close and reopen PowerShell.
+2. Authenticate:
+
+   ```powershell
+   gh auth login --web --git-protocol https
+   gh auth status
+   ```
+
+3. Clone into Documents and enter the repository:
+
+   ```powershell
+   Set-Location "$HOME\Documents"
+   gh repo clone edfortheblind/MILSTRIP MILSTRIP
+   Set-Location "$HOME\Documents\MILSTRIP"
+   ```
+
+4. Verify the folder and approved commit:
+
+   ```powershell
+   Get-Item .\run_milstrip.bat
+   Get-Item .\milstrip
+   git rev-parse HEAD
+   ```
+
+5. Run the included smoke test and capture its exit code:
+
+   ```powershell
+   & .\run_milstrip.bat .\samples\known_valid.txt
+   $LASTEXITCODE
+   ```
+
+The expected exit code is `0`. The displayed result requirements are the same
+as Method C.
+
+For both methods, choose GitHub.com, HTTPS and browser authentication. Never
+place a token in this repository, a ticket, an input file or the `.bat` file.
+If the target `MILSTRIP` folder already exists, do not clone over it; follow
+Section 16 or ask support which copy is approved.
 
 ## 7. Open Command Prompt in the correct folder
 
@@ -258,7 +340,7 @@ Do not construct a guessed CSV or store FTP credentials in this repository.
 Support must record Windows version, `python --version`, approved commit ID,
 tester and date, then verify:
 
-1. known-valid input → exit `0` and canonical length 80;
+1. `samples\known_valid.txt` → exit `0`, `VALID` and canonical length 80;
 2. known-rejected input → exit `1` and no canonical;
 3. empty input → exit `2` and `MIL-INTAKE-001`;
 4. missing file → exit `2` and `MIL-INTAKE-002`; and

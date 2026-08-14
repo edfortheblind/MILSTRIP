@@ -29,6 +29,12 @@ python -m milstrip.cli request.txt --json
 type request.txt | python -m milstrip.cli   # or: cat request.txt | python -m milstrip.cli
 ```
 
+After cloning onto Windows, run the included smoke test:
+
+```bat
+run_milstrip.bat samples\known_valid.txt
+```
+
 Every current run is a Phase 1 dry run — no CSV is created, nothing is written
 to a database and nothing is sent over the network. `--json` is a developer
 diagnostic report, not the Rainbow deliverable. The future operational output

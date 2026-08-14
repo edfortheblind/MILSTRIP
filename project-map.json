@@ -39,6 +39,11 @@
       ]
     },
     {
+      "path": "samples",
+      "type": "operator-test-data",
+      "purpose": "Sanitized known-valid input used for the Windows installation smoke test"
+    },
+    {
       "path": "docs",
       "type": "governance",
       "purpose": "This project's own design documentation",
