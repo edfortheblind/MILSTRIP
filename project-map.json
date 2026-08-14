@@ -1,0 +1,75 @@
+{
+  "$schema_note": "Canonical Project Map data. PROJECT_MAP.md is a non-authoritative conceptual view; PROJECT_MAP.html loads this file and embeds no second copy. See AEKR's project-map-standard.md.",
+  "repo": {
+    "name": "MILSTRIP",
+    "alias": "MILSTRIP Intake Automation",
+    "aliasMeaning": "Automates the manual MILSTRIP-formatting step in Travis 3PL's urgent-order intake",
+    "visibility": "private",
+    "schemaVersion": 1,
+    "lastUpdated": "2026-08-14"
+  },
+  "entryPoints": [
+    { "path": "README.md", "purpose": "Repo overview, quick start, links to everything else" },
+    { "path": "docs/master.md", "purpose": "Living status doc — scope, governance profile, phase, outstanding decisions" },
+    { "path": "run_milstrip.bat", "purpose": "Windows launcher for the Phase 1 CLI — drag a .txt file onto it or run from a terminal" },
+    { "path": "docs/USER_SOP.md", "purpose": "English operator procedure for installation, execution, statuses, exit codes and troubleshooting" }
+  ],
+  "topLevelSections": [
+    {
+      "path": "milstrip",
+      "type": "code",
+      "purpose": "Phase 1 Python package: parse raw email/ticket text into a validated canonical MILSTRIP. Zero database or network access.",
+      "children": [
+        { "path": "milstrip/domain.py", "purpose": "Single source of truth for field positions (FIELD_SPECS) and the record/issue data model" },
+        { "path": "milstrip/intake/extractor.py", "purpose": "Strip HTML/whitespace noise, find candidate MILSTRIP lines" },
+        { "path": "milstrip/parsing/parser.py", "purpose": "Lossless family-aware fixed-width field extraction" },
+        { "path": "milstrip/parsing/normalizer.py", "purpose": "ASCII-safe transport normalization and unique evidence-backed punctuation repair" },
+        { "path": "milstrip/validation/structural.py", "purpose": "Structural + semantic point validators (no database access)" },
+        { "path": "milstrip/canonical/builder.py", "purpose": "Rebuild the exact 80-character canonical record" },
+        { "path": "milstrip/service.py", "purpose": "Wires extractor -> parser -> normalizer -> validator -> canonical builder into one pipeline" },
+        { "path": "milstrip/cli.py", "purpose": "Phase 1 command-line entry point — text or diagnostic JSON, always a dry run" }
+      ]
+    },
+    {
+      "path": "tests",
+      "type": "tests",
+      "purpose": "46 tests covering legacy examples, lossless canonicalization, failure paths and sanitized malformed-email regressions",
+      "children": [
+        { "path": "tests/fixtures/real_examples.py", "purpose": "Sanitized example records derived from the local-only SQL prototype" }
+      ]
+    },
+    {
+      "path": "docs",
+      "type": "governance",
+      "purpose": "This project's own design documentation",
+      "children": [
+        { "path": "docs/master.md", "purpose": "Status, scope, governance profile, outstanding decisions" },
+        { "path": "docs/MILSTRIP_SPEC.md", "purpose": "Field-by-field specification with evidence and confidence levels" },
+        { "path": "docs/ARCHITECTURE.md", "purpose": "Current-state and target diagrams, system boundary, legacy integration classification" },
+        { "path": "docs/DISCOVERY_EVIDENCE.md", "purpose": "Source-to-claim register and privacy handling for discovery evidence" },
+        { "path": "docs/ROADMAP.md", "purpose": "Phased plan — Phase 1 accepted; Rainbow CSV/FTP in Phase 2; database in Phase 3" },
+        { "path": "docs/RAINBOW_INTERFACE_CONTRACT.md", "purpose": "TBD-safe contract template and acceptance gates for Rainbow CSV and transfer" },
+        { "path": "docs/OPEN_QUESTIONS.md", "purpose": "Ten precise questions, each tagged with which phase it blocks" },
+        { "path": "docs/OWNER_QUESTIONNAIRE.md", "purpose": "Owner decisions for Phase 1 acceptance and future database design" },
+        { "path": "docs/USER_SOP.md", "purpose": "English operator SOP for the Phase 1 application" },
+        { "path": "docs/delivery/FINAL_AUDIT.md", "purpose": "Focused Full audit evidence, verdict and remaining security gate" },
+        { "path": "docs/adr", "purpose": "Durable architectural decisions, including the Rainbow CSV/FTP delivery boundary" }
+      ]
+    },
+    {
+      "path": "local-discovery",
+      "type": "local-only-evidence",
+      "purpose": "Raw discovery sources kept outside the GitHub deliverable; entire directory is Git-ignored"
+    },
+    {
+      "path": "assets",
+      "type": "assets",
+      "purpose": "AEKR provenance banner and its license notice"
+    },
+    {
+      "path": "CLAUDE.md",
+      "type": "governance",
+      "purpose": "AEKR engineering constitution (byte-identical to AGENTS.md)"
+    }
+  ]
+}
