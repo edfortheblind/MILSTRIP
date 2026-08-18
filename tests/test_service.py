@@ -19,6 +19,18 @@ def test_real_14_digit_sample_is_never_auto_corrected():
     assert any(issue.code == "MIL-NORM-002" for issue in record.issues)
 
 
+def test_plain_14_digit_nsn_requires_customer_correction():
+    # Structurally aligned synthetic record isolates the field validator from
+    # the punctuation-repair path observed in the real email.
+    record = process_text(
+        "A2ASTZS84050123456789 EA00004AA000000000001 ZZ9999MKK   030399 SMSAA       "
+    )[0]
+    assert record.status == "REJECTED"
+    issue = next(issue for issue in record.issues if issue.code == "MIL-STR-003")
+    assert "contact the requester/customer" in issue.message
+    assert record.canonical is None
+
+
 def test_real_dot_sample_has_one_auditable_repair():
     record = process_text(REPAIRABLE_DOT_SAMPLE)[0]
     assert record.status == "REQUIRES_REVIEW"

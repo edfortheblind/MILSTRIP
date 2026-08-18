@@ -7,8 +7,9 @@ of it (`download_ship940` → ADF → `ShipMaster` → Boomi → SCALE).
 
 ## Status
 
-**Phase 1 accepted; Phase 2A authorized** — the current release is a local
-parsing CLI. The next increment is a native C# Windows review application.
+**Phase 1 accepted; validation/export discovery active** — the current release
+is a local parsing CLI. Further delivery work on the native C# Windows review
+application is on hold while a private Freshservice option is evaluated.
 The confirmed Rainbow target is a 76-field pipe-delimited `.txt`; generation
 waits for its field/source contract. Database work remains Phase 3. See
 [`docs/master.md`](docs/master.md) for current status and
@@ -96,6 +97,9 @@ failure handling, see [`docs/USER_SOP.md`](docs/USER_SOP.md).
   proposed Phase 4 browser extension.
 - [`docs/DISCOVERY_EVIDENCE.md`](docs/DISCOVERY_EVIDENCE.md) — source-to-claim
   register for SQL, calls, DLM appendices and sanitized malformed-email facts.
+- [`docs/discovery/FRESHSERVICE_CUSTOM_APP_FEASIBILITY.md`](docs/discovery/FRESHSERVICE_CUSTOM_APP_FEASIBILITY.md)
+  — research-only assessment, architecture options and vendor/admin meeting
+  questions for a possible private Freshservice Custom App.
 - [`docs/discovery/CSV_SAMPLE_ASSESSMENT.md`](docs/discovery/CSV_SAMPLE_ASSESSMENT.md)
   — sanitized assessment of Shawn's provisional pipe-delimited examples.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — phased plan (Phase 1 accepted, Rainbow

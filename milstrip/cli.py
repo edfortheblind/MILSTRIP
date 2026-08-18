@@ -134,7 +134,12 @@ def main(argv: list[str] | None = None) -> int:
     if not records:
         intake_errors.append({
             "code": "MIL-INTAKE-001",
-            "message": "No MILSTRIP candidates were detected in the input.",
+            "message": (
+                "No plausible MILSTRIP records were detected. Expected a record beginning "
+                "with an A2_, A5_, or AF6 document identifier and containing the required "
+                "fixed-width fields. Do not submit or invent missing values; contact the "
+                "requester/customer and ask for a corrected MILSTRIP record."
+            ),
         })
 
     if args.json:

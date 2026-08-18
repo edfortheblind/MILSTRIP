@@ -22,6 +22,23 @@ not disposable gaps, and positions 67-80 have family-dependent meanings.
   contamination and exactly one expansion satisfies all structural rules.
 - Ambiguous or impossible repairs are rejected for human action.
 
+## Intake eligibility before positional parsing
+
+The extractor only promotes logical lines beginning with a supported layout
+prefix (`A2_`, `A5_`, or exact `AF6`) to positional parsing. If the complete
+input contains no plausible candidate—for example only `AE2245`—the run fails
+with `MIL-INTAKE-001` and exit code 2. The operator must not submit or infer a
+record; the required action is to contact the requester/customer for a
+corrected MILSTRIP.
+
+A plausible prefix is not acceptance. Candidate records are then rejected if
+they are truncated, exceed 80 characters, contain invalid characters, use an
+unsupported family, or fail field rules. Rejection produces no canonical and
+can never become eligible for the future 76-field export. In particular, a
+numeric NSN must contain exactly 13 digits. The observed 14-digit case is
+rejected with an instruction to obtain the corrected NSN from DLA through the
+requester/customer; no digit is removed or guessed.
+
 ## Common positions, all supported layouts
 
 | Field | Position | Length | Rule/source |

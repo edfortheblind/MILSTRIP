@@ -33,7 +33,8 @@ def validate_length(cleaned_line: str) -> list[ProcessingIssue]:
             message=(
                 f"Record is {len(cleaned_line)} characters; at least "
                 f"{MIN_STRUCTURAL_LENGTH} are required to contain every known field "
-                "up to and including the condition code. Likely truncated during copy/paste."
+                "up to and including the condition code. Likely truncated during copy/paste; "
+                "do not submit it. Contact the requester/customer for the complete record."
             ),
             severity="ERROR",
         )]
@@ -69,7 +70,8 @@ def validate_stock_or_part_number(fields: MilstripFields) -> list[ProcessingIssu
         return [ProcessingIssue(
             code="MIL-STR-003",
             message=f"A numeric NSN must be exactly 13 digits; received {len(value)}. "
-                    "Do not guess or remove a digit—obtain the corrected NSN from DLA.",
+                    "Do not guess or remove a digit—contact the requester/customer and obtain "
+                    "the corrected NSN from DLA.",
             severity="ERROR",
         )]
     if not re.fullmatch(r"[A-Z0-9 -]{1,15}", value):

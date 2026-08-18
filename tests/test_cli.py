@@ -47,6 +47,27 @@ def test_cli_returns_intake_error_for_empty_input(tmp_path, capsys):
     assert "MIL-INTAKE-001" in capsys.readouterr().err
 
 
+def test_cli_rejects_non_milstrip_text_before_positional_parsing(tmp_path, capsys):
+    path = tmp_path / "not-a-milstrip.txt"
+    path.write_text("AE2245\n", encoding="utf-8")
+
+    assert main([str(path)]) == 2
+    captured = capsys.readouterr()
+    assert "MIL-INTAKE-001" in captured.err
+    assert "contact the requester/customer" in captured.err
+
+
+def test_cli_json_exposes_actionable_preparse_rejection(tmp_path, capsys):
+    path = tmp_path / "not-a-milstrip.txt"
+    path.write_text("AE2245\n", encoding="utf-8")
+
+    assert main([str(path), "--json"]) == 2
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["records"] == []
+    assert payload["errors"][0]["code"] == "MIL-INTAKE-001"
+    assert "corrected MILSTRIP record" in payload["errors"][0]["message"]
+
+
 def test_cli_returns_controlled_error_for_missing_file(capsys):
     assert main(["/definitely/not/present.txt"]) == 2
     captured = capsys.readouterr()

@@ -1,6 +1,6 @@
 # MILSTRIP Intake Automation — Master Document
 
-**Version:** 0.9 **Date:** 2026-08-14 **Status:** PHASE_2A_PILOT_INSTALLER_BUILD_GATE
+**Version:** 0.10 **Date:** 2026-08-18 **Status:** VALIDATION_AND_PHASE_2B_DISCOVERY_GATE
 
 Built with the AEKR (AI Engineering Knowledge Repo) workflow — see the root
 `README.md` footer and `meta/OPERATING_PRINCIPLES.md` in the `AEKR` repo for
@@ -75,6 +75,16 @@ There are no owner decisions blocking Phase 2A development. Deferred inputs in
 `docs/OWNER_QUESTIONNAIRE.md` block the operational 76-field `.txt`, packaging
 release, transfer and database phases only.
 
+A Freshservice Custom App is being evaluated as a parallel discovery track.
+No decision has been made and it does not change the approved phase sequence or
+authorize tenant access. Its feasibility evidence and meeting questions are in
+`docs/discovery/FRESHSERVICE_CUSTOM_APP_FEASIBILITY.md`.
+
+The HOC placed further Windows desktop delivery work on hold on 2026-08-18
+while the Freshservice option is evaluated. Existing source, test evidence and
+pilot artifacts remain preserved. Parser, validation and future serializer
+tests continue independently of the presentation-channel decision.
+
 ## 7. Document control
 
 Git history is the change log for this document. A durable, non-obvious
@@ -105,6 +115,8 @@ credentials, connectivity or production writes.
 | 2026-08-14 | Shawn confirmed sample layout and `.txt` extension | Phase 2B target is the 76-field pipe-delimited `.txt`; field-source/edge contracts remain deferred |
 | 2026-08-14 | Phase 2A independent code re-audit PASS | Native source accepted; Windows packaging/accessibility/EDR release gate remains open |
 | 2026-08-14 | INSTALL-A approved | Build an unsigned, per-user pilot installer; warnings/quarantine remain possible and security controls must not be bypassed |
+| 2026-08-18 | Windows desktop delivery placed on hold | Preserve accepted 2A work; continue parser/export-contract tests while evaluating Freshservice, with no integration authorization |
+| 2026-08-18 | Invalid intake must produce an actionable rejection | Unsupported/no-candidate input and invalid records must block submission and direct the operator to obtain corrected customer/DLA data; never infer values |
 
 Historical decisions belong here or in an ADR. They must not be copied back
 into the active questionnaire.
