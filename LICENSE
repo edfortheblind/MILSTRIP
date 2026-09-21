@@ -1,0 +1,15 @@
+Copyright (c) 2026 Ed Lopez. All rights reserved.
+
+This repository and its contents are proprietary and confidential. It
+handles operational data related to DLA/military logistics shipments and is
+not licensed for redistribution, public disclosure, or reuse outside of its
+intended internal purpose.
+
+No license, express or implied, is granted to any third party except as
+explicitly authorized in writing by the copyright holder.
+
+Note: this default was applied per AEKR's project-lifecycle guidance
+("proprietary if it's client/product work") without an explicit confirmation
+from Ed. See docs/OPEN_QUESTIONS.md Q10 — replace this file if the actual
+policy differs (e.g. employer-owned copyright, a specific confidentiality
+marking).

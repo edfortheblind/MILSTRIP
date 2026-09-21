@@ -1,0 +1,1 @@
+"""Local API boundary for the MILSTRIP application."""

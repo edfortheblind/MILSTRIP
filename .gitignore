@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Never commit credentials or environment-specific config.
+.env
+*.local.yaml
+.env.*
+*.pem
+*.key
+
+# Owner-supplied raw correspondence contains personal contact information.
+# DLM source documents are also kept local; version only derived facts and
+# sanitized fixtures unless redistribution rights are confirmed.
+local-discovery/
