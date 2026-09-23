@@ -1,7 +1,7 @@
 # MILSTRIP procedures and session handoff
 
-**For readers outside this repository:** [download the public field guide](https://github.com/edfortheblind/milstrip-guide/releases/tag/guide-v1.1.0).
-It includes the six-step SOP and recovery instructions, plus a two-page printable reference.
+**For readers outside this repository:** [read the public field guide online](https://edfortheblind.github.io/milstrip-guide/).
+The six-step SOP, recovery instructions and diagrams open directly in a browser.
 
 - [Current visual workflow, architecture and end-user SOP](../docs/operations-guide/index.html):
   implemented canvas behavior plus the proposed two-period Phase 2 plan.

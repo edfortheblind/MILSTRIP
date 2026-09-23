@@ -19,9 +19,9 @@ flow, technical architecture, user SOP and the proposed Phase 2 periods
 Production delivery/cutover remain gated. See [`docs/master.md`](docs/master.md)
 for status and [`docs/ROADMAP.md`](docs/ROADMAP.md) for historical phase context.
 
-**Share with anyone:** [public guide release](https://github.com/edfortheblind/milstrip-guide/releases/tag/guide-v1.1.0)
-with standalone HTML, a two-page SOP, illustrated PDF and seven charts. The
-documentation release does not publish or grant access to the Power App.
+**Share with anyone:** [read the guide online](https://edfortheblind.github.io/milstrip-guide/).
+The SOP, diagrams and Phase 2 plan open directly in a browser. No download or
+login is needed. Reading the guide does not grant access to the Power App.
 
 ## Quick start
 

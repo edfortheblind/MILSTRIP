@@ -2,8 +2,8 @@
 
 **Evidence date: September 23, 2026.** Current development behavior and proposed production work remain separate.
 
-**Share:** [public documentation release](https://github.com/edfortheblind/milstrip-guide/releases/tag/guide-v1.1.0).
-Download [index.html](https://github.com/edfortheblind/milstrip-guide/releases/download/guide-v1.1.0/index.html), then open it in a browser. No repository access or login is required to read it. This publishes documentation, not the Power App.
+**Share this webpage:** [MILSTRIP field guide](https://edfortheblind.github.io/milstrip-guide/).
+It opens directly in a browser, with no download or login. This publishes documentation, not the Power App.
 
 - [Open the offline visual guide](index.html) — all seven charts, operating instructions, architecture and Phase 2 plan. No web service or CDN is required.
 - [Read the 12-page illustrated PDF](MILSTRIP-current-and-phase2.pdf).
@@ -52,8 +52,9 @@ offline links, and creates a deterministic ZIP plus SHA256 checksums. PDF text
 and layout are checked separately. See [verification](VERIFICATION.md) and the
 [independent editorial review](EDITORIAL_REVIEW.md).
 
-The public repository contains only a download index; the release contains the
-HTML, two PDFs, ZIP, README and checksums. The source repository stays private.
+The public repository hosts the standalone `index.html` through GitHub Pages
+from the root of `main`, with `.nojekyll`. The webpage is the primary deliverable;
+the earlier release assets remain optional archives. The source repository stays private.
 No runtime code, production database or tenant resource is changed by these tools.
 
 ## Production design items requiring decisions

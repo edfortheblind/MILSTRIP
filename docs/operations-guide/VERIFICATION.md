@@ -31,7 +31,7 @@ the private companion notes; the public guide leads with status and six steps.
 ## Published artifact verification
 
 Public repository: <https://github.com/edfortheblind/milstrip-guide>.
-It contains only the download README. The implementation repository remains private.
+It hosts the public guide HTML and reading README. The implementation repository remains private.
 
 Release: [guide-v1.1.0](https://github.com/edfortheblind/milstrip-guide/releases/tag/guide-v1.1.0),
 targeting public documentation commit `6a0237c00d1a4b31d043d799f1c64d5da247aeee`.
@@ -53,3 +53,18 @@ decisions remain open. No runtime or tenant configuration was changed.
 
 The owner explicitly authorized public artifact preparation and commit/push for
 this increment. Rebuild and packaging commands are in [README.md](README.md).
+
+## Webpage delivery correction
+
+The owner clarified that the deliverable must open as a webpage. GitHub Pages
+now publishes the public repository's `main` root, with `.nojekyll` and HTTPS
+enforced. The primary URL is <https://edfortheblind.github.io/milstrip-guide/>.
+Public documentation commit: `46b32b8fe331b3c7243f3250c90e437d5b47eddc`.
+Download-first instructions were replaced with this direct link. Existing release
+assets are optional archives, not the reading workflow.
+
+Live verification passed: anonymous HTTPS **200**, `text/html`, exact match to
+committed HTML bytes, six SOP steps, seven inline charts, section navigation,
+diagram viewer/Escape close, and 390/1440-pixel layout with no browser errors.
+A separate agent independently confirmed the anonymous webpage and embedded
+content. GitHub reports the Pages build as `built`.
