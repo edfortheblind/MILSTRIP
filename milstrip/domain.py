@@ -4,6 +4,17 @@ from dataclasses import dataclass
 
 RECORD_LENGTH = 80
 
+# Inclusive, one-based MILSTRIP positions. The untouched tail stays in source.
+FIELD_SPECS = {
+    "dic": (1, 3), "ric": (4, 6), "media_status_cd": (7, 7),
+    "nsn": (8, 22), "ui": (23, 24), "order_qty_raw": (25, 29),
+    "requisition": (30, 43), "suffix": (44, 44), "supp_addr": (45, 50),
+    "signal_cd": (51, 51), "fund_cd": (52, 53), "dist_cd": (54, 56),
+    "project_code": (57, 59), "priority_cd": (60, 61), "rdd": (62, 64),
+    "advice_cd": (65, 66), "tail_67_69": (67, 69),
+    "ownership_cd": (70, 70), "cond_cd": (71, 71),
+}
+
 
 @dataclass(frozen=True)
 class Issue:
@@ -56,3 +67,4 @@ class Record:
     fields: Fields
     issues: tuple[Issue, ...]
     canonical: str | None
+    raw_candidate: str | None = None

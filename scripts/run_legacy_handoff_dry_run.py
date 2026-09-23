@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import psycopg
 
-from api.legacy_handoff import build_legacy_download_ship940_row
+from api.legacy_handoff import build_legacy_download_ship940_row, legacy_order_exists
 from milstrip.parsing.parser import parse_fields
 
 
@@ -23,6 +23,7 @@ def main() -> None:
     )
     fields = parse_fields(SAMPLE)
     with psycopg.connect(connection_string, connect_timeout=5) as connection:
+        connection.read_only = True
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT city, add1, add2, add3, add4, state, cntrycd, zip "
@@ -49,12 +50,7 @@ def main() -> None:
                 item_lookup=item,
                 now=datetime(2026, 9, 21, 12, 0),
             )
-            cursor.execute(
-                "SELECT 1 FROM dbo.download_ship940 "
-                "WHERE erp_order = %s AND dic = %s LIMIT 1",
-                (row["erp_order"], row["dic"]),
-            )
-            duplicate = cursor.fetchone() is not None
+            duplicate = legacy_order_exists(cursor, row["erp_order"])
 
     print({
         "status": "DUPLICATE" if duplicate else "DRY_RUN_READY",

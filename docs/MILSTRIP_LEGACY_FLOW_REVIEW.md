@@ -105,7 +105,9 @@ downstream behavior. It should not route through `staging_download_ship940`.
         compatibility but add an honest application audit state such as
         `INSERTED`, `SKIPPED_DUPLICATE`, `REJECTED_UNKNOWN_NSN`, or
         `REJECTED_UNKNOWN_DODAAC`.
-- Duplicate detection uses the derived ERP order and DIC family.
+- An initial filter uses ERP order and DIC, but the final anti-join rejects an
+        existing ERP order regardless of DIC. The corrected dry run applies
+        this stronger final rule and SQL-style trailing-space equivalence.
 - DODAAC selection depends on signal code position 51: values before `J` use
         the first six requisition characters; values at or after `J` use positions
         45-50.
@@ -230,21 +232,30 @@ flow.
 
 ## 7. Backend decision
 
-The current API may continue to store new intake metadata in `milstrip_app`. The API must not expose or implement a legacy-write endpoint until the missing parser/handoff contract is recovered and approved.
+The current API may continue to store new intake metadata in `milstrip_app`.
+The owner-run contract is recovered. A legacy-write endpoint remains blocked
+until handoff acceptance and the remaining transaction/review decisions are
+approved.
 
-**Corrective status:** `LEGACY_BOUNDARY_RECOVERED_PYTHON_PSQL_PARITY_PASS`  
+**Corrective status (2026-09-23):** `BACKEND_OWNER_ACCEPTED_IMPLEMENTATION_PREPARED`
 **Database safety status:** `NO_LEGACY_OBJECTS_MODIFIED`  
 **Cutover status:** `SQL_AUTHORITATIVE_PSQL_FUTURE_TARGET`  
-**Next action:** translate the recovered batch into a tested PostgreSQL/API
-adapter, prove parity with one controlled input/output case, then expand to the
-Power Apps workflow.
+**Next action:** implement the local API contracts and read slice described in
+`docs/delivery/IMPLEMENTATION_PLAN.md`. The owner accepted the backend and
+authorized preparation. The owner-approved synthetic temporary-table test passed
+all 38 mapped fields, duplicate checks, rollback and retry on 2026-09-23.
 
-The pure parser parity gate is now complete locally: 47 Python tests pass, the
-PostgreSQL parser unit test passes, and the cross-layer Python/PostgreSQL
-contract test passes. The remaining backend gate is the controlled legacy
-`download_ship940` handoff, which is intentionally not implemented yet.
+The original 47-test/single-sample check was insufficient to establish broad
+parity. The corrected local suite has 106 passing tests, including 18 parser
+cases across all 14 exposed SQL fields, transport failures and API transaction
+rollback. Migration 004 is installed locally. This is positional/application
+evidence, not complete SQL Server operational parity.
 
 The next read-only handoff gate also passed. The translated sample resolved
 through `cfg_dodaac_active` and `ItemMaster`, produced the expected
 `download_ship940` values, and was correctly classified as a duplicate existing
 legacy order (`SL470162240DCV`). The dry run performed no legacy write.
+
+The corrected ERP-order-only duplicate check and installed parser parity were
+rerun on 2026-09-23. Full evidence and remaining gates are recorded in
+`docs/delivery/BACKEND_CORRECTION_2026-09-23.md`.

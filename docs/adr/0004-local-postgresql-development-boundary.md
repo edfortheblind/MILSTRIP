@@ -33,6 +33,11 @@ and database connectivity.
   production data, legacy writes or Rainbow delivery.
 - The parser integration remains blocked until the documented `milstrip/`
   source package is restored to the workspace.
+
+Update (2026-09-23): the parser package is restored and integrated. API
+persistence/rollback verification is now covered by local database tests; see
+`docs/delivery/BACKEND_CORRECTION_2026-09-23.md`. The original prerequisite above
+is resolved; legacy writes and final deployment remain separately gated.
 - Runtime connection strings and credentials stay outside the repository.
 
 ## Verification required before applying the migration
@@ -49,5 +54,5 @@ and database connectivity.
 The migration was applied and verified on 2026-09-21 against the local
 PostgreSQL 18.6 instance at `localhost:5432`, database
 `trav3pl-psqldb-stage`. The verification returned exactly five tables under
-`milstrip_app`. API endpoint smoke testing remains separate because the parser
-package is not yet present in this workspace.
+`milstrip_app`. The later parser/API verification is recorded in the September
+correction report; this original migration record is not production acceptance.

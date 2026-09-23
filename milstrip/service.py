@@ -19,5 +19,5 @@ def process_text(text: str) -> list[Record]:
         errors = [issue for issue in issues if issue.severity == "ERROR"]
         canonical = None if errors else build_canonical(fields)
         status = "REJECTED" if errors else ("REQUIRES_REVIEW" if issues else "VALID")
-        records.append(Record(status, fields, tuple(issues), canonical))
+        records.append(Record(status, fields, tuple(issues), canonical, raw_candidate=candidate))
     return records

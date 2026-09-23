@@ -45,6 +45,14 @@ not disposable gaps, and positions 67-80 have family-dependent meanings.
 | `ownership_cd` | 70 | 1 | Ownership code. Earlier code incorrectly named this `op_cd`. |
 | `cond_cd` | 71 | 1 | Supply Condition; required by the current Travis workflow. |
 
+The current PostgreSQL parser preserves the same full 15-character stock/part
+value after migration 004. The legacy row mapper supports the original SQL's
+13-character lookup only when positions 21-22 are blank. Populated extensions
+remain valid input where appropriate but block legacy handoff for review.
+Empty stock/part values and non-printable/non-ASCII record characters are
+rejected. Malformed DICs are rejected; unobserved well-formed A2/A5 variants
+require review.
+
 ## A2_ tail: AP8.25
 
 | Field | Position | Length |
@@ -118,7 +126,8 @@ rejected and is never shortened or guessed.
 
 ## Source-of-truth implementation
 
-`milstrip/domain.py::FIELD_SPECS` owns the lossless positional slices used by
-the parser. Family-specific names are views over the preserved tail. The
+`milstrip/domain.py::FIELD_SPECS` owns the named positional slices for positions
+1-71. Positions 72-80 remain intact in `Fields.source`; the current parser does
+not expose separate named fields for that tail. The
 canonical builder uses the validated normalized source record directly, so a
 round trip must equal `normalized.ljust(80)` byte-for-byte.

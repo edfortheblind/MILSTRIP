@@ -1,5 +1,13 @@
 # Roadmap
 
+Current implementation update (2026-09-23): the local PostgreSQL application
+schema and intake API now exist, and the owner accepted the corrected backend.
+Use `docs/PSQL_INTELLIGENCE_ROADMAP.md` for the migration route and
+`docs/delivery/IMPLEMENTATION_PLAN.md` for the next local API slice. The phase
+ordering below records the original delivery plan; its Phase 3 "not started"
+description is historical. The Rainbow delivery contract still requires an
+explicit decision before any alternative operational writer is implemented.
+
 Scaled down from the original design brief's 9-sprint plan to match what's
 actually been discovered and built so far. Each phase only gets designed in
 detail once the phase before it is real and in use — see AEKR's own

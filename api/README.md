@@ -3,9 +3,9 @@
 This is the first local API slice for the future Power Apps boundary. It owns
 only application tables in the `milstrip_app` PostgreSQL schema. It must not
 connect Power Apps directly to PostgreSQL or write to legacy operational tables.
-The existing `dbo.staging_download_shipmils`, `dbo.staging_download_ship940`
-and `dbo.download_ship940` tables remain the legacy flow; these new tables are
-not copies of them.
+The recovered MILSTRIP owner-run flow is `dbo.staging_download_shipmils`
+directly to `dbo.download_ship940`. It does not use `staging_download_ship940`.
+The application tables are metadata, not copies of those operational tables.
 
 ## Current scope
 
@@ -49,10 +49,15 @@ connected to the intended local database:
 
 ```text
 db/migrations/001_create_milstrip_app.sql
+db/migrations/002_milstrip_legacy_parse.sql
+db/migrations/003_canonical_text_length.sql
+db/migrations/004_parser_stock_contract.sql
 ```
 
-The migration creates only `milstrip_app` and its tables, indexes and
-constraints. It does not alter existing schemas or operational objects.
+Apply all four in numeric order. Migration 003 changes canonical storage to
+`text` so trailing spaces count toward the 80-character constraint. Migration
+004 preserves the full stock/part input and rejects invalid transport input.
+Changes are limited to `milstrip_app`; no operational objects are altered.
 
 ## Request example
 
@@ -65,8 +70,9 @@ constraints. It does not alter existing schemas or operational objects.
 }
 ```
 
-The response is a persistence acknowledgement, not a validation result. Parser
-results are included in the response, but no legacy table write is performed.
+The response includes aggregate validation status and record counts. Detailed
+records/issues are stored in the application schema; the current GET endpoint
+returns request metadata only. No legacy table write is performed.
 
 The pure PostgreSQL parser function is installed by
 `db/migrations/002_milstrip_legacy_parse.sql`. The Python/PostgreSQL contract
@@ -85,3 +91,16 @@ PostgreSQL client. The database contains these five application tables under
 - `audit_event`
 
 No legacy operational tables were referenced or modified by the migration.
+
+## Backend verification
+
+Set `MILSTRIP_TEST_DATABASE_URL` to the approved localhost development connection
+and run `.venv/Scripts/python.exe -m pytest -q`. Database tests use rollback-only
+application transactions, including transactional identity-sequence restarts.
+Without the variable, integration cases are explicitly skipped.
+
+`scripts/run_milstrip_psql_contract_test.py` checks the installed function
+read-only across 18 cases and all 14 exposed fields. It requires migration 004.
+It checks positional parsing, not SQL Server end-to-end or semantic-validation
+parity. See `docs/delivery/BACKEND_CORRECTION_2026-09-23.md` for current evidence
+and the owner-gated temporary-table handoff test.

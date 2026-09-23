@@ -1,6 +1,6 @@
 # MILSTRIP Intake Automation — Master Document
 
-**Version:** 0.6 **Date:** 2026-09-21 **Status:** PHASE_1_ACCEPTED_LEGACY_FLOW_REVIEW_COMPLETE
+**Version:** 0.9 **Date:** 2026-09-23 **Status:** BACKEND_OWNER_ACCEPTED_IMPLEMENTATION_PREPARED
 
 Built with the AEKR (AI Engineering Knowledge Repo) workflow — see the root
 `README.md` footer and `meta/OPERATING_PRINCIPLES.md` in the `AEKR` repo for
@@ -30,10 +30,12 @@ redesign of that downstream pipeline, the legacy 3PL database, or SCALE.
 ## 2. Governance profile
 
 **Lean for normal Phase 1 operation; Full for the current corrective gate.**
-Phase 1 has no production writes, but the owner requested a Full independent
-audit after the initial implementation. That audit returned FAIL and this
-corrective increment incorporates new normative DLM evidence. Future database
-design and any production-connected phase use Full/high-risk gates.
+Phase 1 was accepted after the August corrective audit. The September backend
+corrections have implementation verification recorded in
+`docs/delivery/BACKEND_CORRECTION_2026-09-23.md`; they have not received a new
+independent Audit. The Full-profile orchestration-loop and definition-of-done
+files referenced by the constitution are absent. Future database design and
+any production-connected phase use Full/high-risk gates.
 
 ## 3. Confirmed scope of Phase 1 (accepted 2026-08-14)
 
@@ -74,8 +76,9 @@ together.
 - Phase 2 will create the final Rainbow CSV and deliver it through the vendor's
   FTP boundary. The CSV layout and connectivity contracts are pending; no
   serializer or network adapter is authorized yet. See ADR 0003.
-- A new application-owned database is required in Phase 3; technology, schema
-  and connection design await the owner-supplied layout. See ADR 0002.
+- Application-owned persistence is implemented locally in PostgreSQL's
+  `milstrip_app` schema under ADR 0004. Final hosting, identity and production
+  connection design remain pending; ADR 0002 records the original requirement.
 - Local development is now authorized against the owner's localhost PostgreSQL
   instance. The local migration may create only standalone objects inside the
   `milstrip_app` schema; it must not alter existing operational objects. See
@@ -83,7 +86,9 @@ together.
 - The local database review confirmed the migrated legacy MILSTRIP and 940
   tables already exist under `dbo`. The new `milstrip_app` tables are metadata
   for intake/review/audit, not copies of legacy business tables. The original
-  raw-MILS parser/handoff contract remains unresolved; see
+  raw-MILS SQL contract has been recovered. The approved temporary-table
+  handoff test passed; independent review and operational acceptance remain
+  pending. See
   `docs/MILSTRIP_LEGACY_FLOW_REVIEW.md`.
 - The live SQL Server source remains authoritative while PostgreSQL is a future
   deployment target. PostgreSQL is not approved for cutover, dual-write or SQL
@@ -114,3 +119,24 @@ Rainbow production delivery, legacy table writes, or production database
 changes. A local development database slice is separately authorized under
 the `milstrip_app` isolation boundary. No legacy-table write is authorized
 until the original parser/handoff contract is recovered and approved.
+
+## 9. Current backend increment
+
+The parser, local intake API, metadata migrations, pure PostgreSQL parser and
+read-only legacy row mapper are present. The original one-case/six-field parity
+check has been expanded to 18 cases and all 14 exposed SQL fields. Input stock
+values retain all 15 positions; the 13-character legacy projection is blocked
+when positions 21-22 are populated. Duplicate classification now uses ERP order
+across all DICs. The test suite includes real PostgreSQL persistence and rollback
+checks. Exact execution and deployment evidence is in the correction report.
+
+The owner approved the synthetic temporary-table handoff test on 2026-09-23.
+All 38 mapped columns, duplicate checks, rollback and retry passed; the temporary
+target was removed. The owner subsequently accepted the backend ("all good
+with the backend"), authorized commit/push and requested implementation
+preparation. The next local increment is prepared in
+`docs/delivery/IMPLEMENTATION_PLAN.md`: operator review API contracts, request
+and record reads, then auditable review decisions and Power Apps preparation.
+This owner acceptance is not an independent Audit result. Operational legacy
+writes, shared frontend rollout and SQL Server retirement retain their separate
+contracts and acceptance gates.

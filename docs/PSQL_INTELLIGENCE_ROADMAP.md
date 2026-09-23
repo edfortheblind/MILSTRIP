@@ -3,8 +3,9 @@
 **Date:** 2026-09-21  
 **Decision:** PostgreSQL is the future intelligence and production platform. SQL
 Server remains operational until the final migration gate.  
-**Current state:** SQL authoritative; PostgreSQL local future target; MILSTRIP
-legacy handoff contract still being recovered.
+**Current state (2026-09-23):** SQL authoritative; PostgreSQL local backend
+implemented and under correction/verification; recovered legacy SQL contract;
+temporary-table handoff passed; independent review and operational acceptance pending.
 
 ## 1. Agreed operating model
 
@@ -56,7 +57,7 @@ schema are validated; no legacy object is modified unexpectedly.
 
 ### Step 2 - Recover the current MILSTRIP manual contract
 
-**Status:** Recovered; translation and parity are blocking
+**Status:** Recovered; controlled handoff acceptance is pending
 
 - Recovered the owner-run SQL batch in
   `inbox/MILSTRIP helper NewMultiple_Protoype 1.sql`.
@@ -70,7 +71,7 @@ legacy test case.
 
 ### Step 3 - Implement the PostgreSQL MILSTRIP intelligence increment
 
-**Status:** Next implementation increment
+**Status:** Implemented locally; corrected validation/parity under verification
 
 - Restore or attach the accepted `milstrip/` parser package.
 - Expose parsing through the local API; do not duplicate parsing in Power Fx.
@@ -155,14 +156,14 @@ stable, the archive is verified, and decommission approval is recorded.
 
 ## 3. Immediate next actions
 
-1. Recover the original SQL/manual MILSTRIP transformation and one sanitized
-   lineage example.
-2. Restore or attach the missing `milstrip/` package.
-3. Add parser/API tests against the accepted MILSTRIP examples.
-4. Design the PostgreSQL legacy handoff adapter without implementing writes
-   until the recovered contract is approved.
-5. Produce the first PostgreSQL-vs-SQL parity test matrix.
-6. Only after the backend contract is stable, design the Power Apps canvas app.
+1. Review the correction evidence in `docs/delivery/BACKEND_CORRECTION_2026-09-23.md`.
+2. Review the completed owner-approved temporary-table handoff evidence:
+   all 38 mapped fields, duplicate checks, rollback and retry passed.
+3. Obtain independent review of the backend contract and expand SQL Server
+   parity evidence to operational outcomes, not just positional parsing.
+4. Approve transaction, concurrency, retry, review and SENT/audit semantics
+   before implementing a legacy writer.
+5. Only after backend acceptance, design the Power Apps canvas app.
 
 **Current gate:** `SQL_OPERATIONAL_PSQL_INTELLIGENCE_IN_DEVELOPMENT`  
 **Final target:** `PSQL_PRODUCTION_SQL_ARCHIVED_AFTER_DRY_RUN`

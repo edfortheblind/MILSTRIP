@@ -27,7 +27,7 @@ class IntakeRequest(BaseModel):
 def _database_url() -> str:
     value = os.getenv("MILSTRIP_DATABASE_URL")
     if not value:
-        raise RuntimeError("MILSTRIP_DATABASE_URL is not configured")
+        raise HTTPException(status_code=503, detail="Database unavailable")
     return value
 
 
@@ -85,7 +85,7 @@ def create_intake_request(request: IntakeRequest) -> dict[str, Any]:
                             record_id,
                             request_id,
                             sequence,
-                            record.fields.source,
+                            record.raw_candidate,
                             record.fields.source,
                             record.canonical,
                             record.status,
@@ -95,10 +95,10 @@ def create_intake_request(request: IntakeRequest) -> dict[str, Any]:
                         cursor.execute(
                             """
                             INSERT INTO milstrip_app.validation_issue
-                                (record_id, issue_code, severity, message)
-                            VALUES (%s, %s, %s, %s)
+                                (record_id, issue_code, severity, message, field_name)
+                            VALUES (%s, %s, %s, %s, %s)
                             """,
-                            (record_id, issue.code, issue.severity, issue.message),
+                            (record_id, issue.code, issue.severity, issue.message, issue.field_name),
                         )
                 request_status = (
                     "REJECTED" if not records or any(record.status == "REJECTED" for record in records)

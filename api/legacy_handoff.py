@@ -5,6 +5,19 @@ from decimal import Decimal
 from typing import Any
 
 from milstrip.domain import Fields
+from milstrip.validation.structural import validate_record
+
+
+def legacy_order_exists(cursor: Any, erp_order: str, *, temporary: bool = False) -> bool:
+    """Match the owner's final ERP_ORDER anti-join across all DIC values."""
+    from psycopg import sql
+
+    target = sql.Identifier("pg_temp", "milstrip_handoff_test") if temporary else sql.Identifier("dbo", "download_ship940")
+    cursor.execute(
+        sql.SQL("SELECT 1 FROM {} WHERE rtrim(erp_order) = %s LIMIT 1").format(target),
+        (erp_order.rstrip(),),
+    )
+    return cursor.fetchone() is not None
 
 
 def build_legacy_download_ship940_row(
@@ -15,6 +28,12 @@ def build_legacy_download_ship940_row(
     now: datetime,
 ) -> dict[str, Any]:
     """Build the owner-run SQL row without performing a database write."""
+    if validate_record(fields.source, fields):
+        raise ValueError("Legacy handoff requires a valid record with no pending review")
+    if fields.source.ljust(80)[20:22].strip():
+        raise ValueError("Legacy NSN is 13 characters; populated positions 21-22 require review")
+    if not dodaac_lookup or not item_lookup:
+        raise ValueError("Legacy handoff requires matching DODAAC and ItemMaster references")
     return {
         "bornondate": now,
         "interfaceid": None,

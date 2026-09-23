@@ -2,6 +2,10 @@
 
 **Date:** 2026-08-14
 
+Historical acceptance record. This audit does not certify the September backend
+baseline or its later corrections. Current implementation verification and open
+independent-review gates are in `BACKEND_CORRECTION_2026-09-23.md`.
+
 **Profile:** AEKR Full, independent focused re-audit
 
 **Scope:** new DLM/PDF discovery evidence, parser corrections, CLI/launcher,

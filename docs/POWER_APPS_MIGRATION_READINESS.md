@@ -1,7 +1,7 @@
 # Power Apps Migration Readiness
 
-**Date:** 2026-09-21  
-**Status:** BLOCKED_PENDING_SOURCE_AND_POWER_PLATFORM_ACCESS
+**Date:** 2026-09-23
+**Status:** LOCAL_BACKEND_ACCEPTED_POWER_PLATFORM_INPUTS_PENDING
 
 ## Completed prerequisites
 
@@ -23,7 +23,8 @@ Power Apps package, desktop UI or other frontend implementation. The current
 `run_milstrip.bat` launcher is an operator entry point, not a UI that can be
 mechanically migrated.
 
-Therefore a direct UI/UX migration cannot begin until the old UI is supplied as
+An existing UI is required only if this is a migration of that UI. A new canvas
+app can be designed from the accepted operator workflow. For migration, supply
 one of:
 
 - an existing `.msapp` export;
@@ -31,13 +32,13 @@ one of:
 - screenshots plus a workflow inventory; or
 - source code for the existing UI, if it exists outside this workspace.
 
-### 2. The documented parser package is absent
+### 2. Parser/backend prerequisite resolved
 
-The tests and design documents refer to `milstrip/`, but that package is not in
-the current workspace. The Power Apps API cannot safely implement the actual
-workflow until the parser source or an approved replacement package is
-restored. Power Fx must not become a second, divergent implementation of the
-MILSTRIP rules.
+The `milstrip/` package is restored and integrated. The owner accepted the local
+backend after 106 passing tests and the controlled temporary-table handoff.
+The next review API contracts and read endpoints are prepared in
+`docs/delivery/IMPLEMENTATION_PLAN.md`. Power Fx must not become a second,
+divergent implementation of the MILSTRIP rules.
 
 ### 3. Archive/decommission scope is not specified
 
@@ -72,18 +73,17 @@ until parity, parser handoff and cutover approval are complete.
 
 ## Required owner inputs
 
-1. Location/export of the old UI and permission to inspect it.
+1. Whether to build a new canvas app or migrate an existing UI; for migration,
+   the location/export and permission to inspect it.
 2. Power Platform environment name and permission to create or inspect a
    development canvas app/custom connector.
 3. Whether the old UI is the current CLI workflow or a separate application.
 4. Archive targets: files, app versions, environments and/or deployments.
 5. Retention period, archive location and rollback owner.
-6. Approval to restore the missing `milstrip/` package from its authoritative
-   source, or approval to rebuild it from the accepted specification and
-   fixtures.
+6. Identity/role mapping and an approved reachable API path for the connector.
 
 ## Current decision
 
-Database/API work may continue locally. Power Apps migration and old-version
-decommissioning remain blocked pending the inputs above. This is a source and
-authorization boundary, not a PostgreSQL limitation.
+Local API implementation and Power Apps contract preparation may proceed from
+the owner-accepted backend. Connected deployment needs the environment and
+identity inputs above. Old-version decommissioning remains separately gated.

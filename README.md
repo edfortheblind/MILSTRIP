@@ -85,7 +85,7 @@ failure handling, see [`docs/USER_SOP.md`](docs/USER_SOP.md).
 ## Running the tests
 
 ```bash
-pip install pytest
+pip install -r requirements-dev.txt
 python -m pytest -v
 ```
 

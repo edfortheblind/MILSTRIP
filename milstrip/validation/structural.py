@@ -11,13 +11,17 @@ def validate_record(line: str, fields: Fields) -> list[Issue]:
     if len(line) > RECORD_LENGTH:
         return [Issue("MIL-STR-005", "ERROR", "Record is longer than 80 characters")]
     issues: list[Issue] = []
-    if fields.dic[:2] not in {"A2", "A5", "AF"} or fields.dic == "A2!":
+    if any(not 32 <= ord(character) <= 126 for character in line):
+        issues.append(Issue("MIL-STR-006", "ERROR", "Record must contain printable ASCII only"))
+    if not re.fullmatch(r"(?:A[25][A-Z0-9]|AF6)", fields.dic):
         issues.append(Issue("MIL-STR-001", "ERROR", "Unsupported DIC family"))
-    if fields.dic in {"A2A", "A2B", "A2E"} and fields.dic != "A2A":
-        issues.append(Issue("MIL-BIZ-005", "WARNING", "Unobserved A2 DIC variant"))
+    elif fields.dic not in {"A2A", "A5A", "A5E", "AF6"}:
+        issues.append(Issue("MIL-BIZ-005", "WARNING", "Unobserved DIC variant requires legacy review"))
     if fields.dic == "AF6":
         issues.append(Issue("MIL-BIZ-004", "WARNING", "AF6 requires legacy review"))
-    if fields.nsn.isdigit() and len(fields.nsn) != 13:
+    if not fields.nsn:
+        issues.append(Issue("MIL-STR-003", "ERROR", "Stock or part number is required"))
+    elif fields.nsn.isdigit() and len(fields.nsn) != 13:
         issues.append(Issue("MIL-STR-003", "ERROR", "Numeric stock number must be 13 digits"))
     quantity = fields.order_qty_raw
     if quantity.endswith("M"):
