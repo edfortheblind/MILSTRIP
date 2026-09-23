@@ -71,7 +71,7 @@ class Chart:
             self.text(x,y,label,16,anchor="middle")
 
     def save(self):
-        self.text(30,self.height-18,f"MILSTRIP  |  {DATE}  |  Public guide v1.1.0 | Recorded state, not live service status",14,fill="#60758c")
+        self.text(30,self.height-18,f"MILSTRIP  |  {DATE}  |  Public guide v1.1.1 | Recorded state, not live service status",14,fill="#60758c")
         description=f"{self.title}. {PALETTE['future' if 'phase2' in self.filename else 'dev'][2]}. Full text equivalent is in the operating guide."
         svg=f'''<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="{self.height}" viewBox="0 0 1000 {self.height}" role="img" aria-labelledby="title desc">
 <title id="title">{escape(self.title)}</title><desc id="desc">{escape(description)}</desc>
@@ -222,6 +222,15 @@ def build_html():
                 f'<a href="data:image/svg+xml;base64,{data}" download="{Path(path).name}">Download SVG</a>'
                 '</div></figure>')
     body=re.sub(r'<p><img alt="([^"]*)" src="(diagrams/[^"]+)"\s*/></p>',embed,body)
+    def embed_screen(match):
+        alt,path=match.groups()
+        allowed={f"screens/{name}" for name in ["01-intake.png","02-results.png","03-review.png","04-history.png"]}
+        assert path in allowed,path
+        data=base64.b64encode((OUT/path).read_bytes()).decode()
+        return (f'<figure class="app-screen"><img src="data:image/png;base64,{data}" alt="{alt}" width="1918" height="867">'
+                f'<figcaption>{alt}</figcaption><div class="figure-tools">'
+                '<button type="button" data-view-chart>View larger</button></div></figure>')
+    body=re.sub(r'<p><img alt="([^"]*)" src="(screens/[^"]+)"\s*/></p>',embed_screen,body)
     for i,match in reversed(list(enumerate(re.finditer(r'<svg\b.*?</svg>',body,re.S)))):
         svg=match.group().replace('id="title"',f'id="title-{i}"').replace('id="desc"',f'id="desc-{i}"').replace('id="arrow"',f'id="arrow-{i}"').replace('aria-labelledby="title desc"',f'aria-labelledby="title-{i} desc-{i}"').replace('url(#arrow)',f'url(#arrow-{i})')
         body=body[:match.start()]+svg+body[match.end():]
@@ -236,7 +245,7 @@ def build_html():
     html=f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="MILSTRIP operator guide: current development workflow, diagrams and proposed Azure SQL to PostgreSQL plan."><title>MILSTRIP | A practical guide</title><style>{css}</style></head><body>
 <a class="skip" href="#main">Skip to guide</a>
 <nav class="topbar" aria-label="Guide navigation"><strong>MILSTRIP / Field guide</strong><a href="#use-the-app">Use it</a><a href="#understand-the-workflow">How it works</a><a href="#phase-2-two-production-periods">What's next</a><button id="print-guide" type="button">Print guide</button></nav>
-<header class="cover"><img src="data:image/png;base64,{logo}" alt="MILSTRIP icon"><div><span class="eyebrow">A practical guide · v1.1.0</span><h1>From intake to review.</h1><p>Six steps today. A clear path to production.</p><p class="edition">Evidence dated {DATE} · Works offline</p></div></header>
+<header class="cover"><img src="data:image/png;base64,{logo}" alt="MILSTRIP icon"><div><span class="eyebrow">A practical guide · v1.1.1</span><h1>From intake to review.</h1><p>Six steps today. A clear path to production.</p><p class="edition">Evidence dated {DATE} · Works offline</p></div></header>
 <main id="main"><div class="jump"><a href="#use-the-app">Start the six-step SOP →</a><a href="#understand-the-workflow">Explore the diagrams</a><a href="#phase-2-two-production-periods">See Phase 2</a></div>{body}</main>
 <footer>Public documentation edition · {DATE} · Current app: unpublished development draft. Phase 2: proposed. Sharing this guide does not share or publish the app.</footer>
 <dialog id="diagram-viewer" aria-labelledby="viewer-title"><div class="viewer-bar"><strong id="viewer-title">Diagram</strong><span class="viewer-note">Scroll to explore at full size</span><button id="close-viewer" type="button" autofocus>Close</button></div><div class="viewer-scroll" id="viewer-content"></div></dialog>
@@ -260,6 +269,8 @@ def render_pdf(browser_path):
         page.evaluate("document.fonts.ready")
         assert page.locator("figure svg").count()==7
         assert page.locator(".steps > li").count()==6
+        assert page.locator(".app-screen img").count()==4
+        assert page.locator(".app-screen img").evaluate_all('(images)=>images.every(i=>i.complete && i.naturalWidth===1918 && i.naturalHeight===867)')
         assert page.locator("details[open]").count()==0
         assert not page.evaluate("Array.from(document.querySelectorAll('a[href^=\"#\"]')).filter(a=>!document.getElementById(a.hash.slice(1))).map(a=>a.hash)")
         assert page.locator('a[download]').count()==7
@@ -277,6 +288,13 @@ def render_pdf(browser_path):
         page.keyboard.press('Escape')
         assert not page.locator('#diagram-viewer').evaluate('(d)=>d.open')
         panel.locator('summary').click()
+        # Every app screenshot is visible beside its instructions and opens larger.
+        for figure in page.locator('.app-screen').all():
+            figure.locator('[data-view-chart]').click()
+            assert page.locator('#diagram-viewer').evaluate('(d)=>d.open')
+            assert page.locator('#viewer-content img').evaluate('(i)=>i.complete && i.naturalWidth===1918')
+            page.keyboard.press('Escape')
+            assert not page.locator('#diagram-viewer').evaluate('(d)=>d.open')
         for width in [390,1440]:
             page.set_viewport_size({"width":width,"height":1000})
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth+1"),f"Page overflow at {width}px"
@@ -289,7 +307,7 @@ def render_pdf(browser_path):
           svg.querySelectorAll('[data-node]').forEach(g=>{const r=g.querySelector('rect').getBBox();g.querySelectorAll('text').forEach(t=>{const b=t.getBBox();if(b.x+b.width>r.x+r.width-8||b.y+b.height>r.y+r.height-4)bad.push(g.dataset.node+': '+t.textContent);});});
         });return bad;}''')
         assert not problems,problems
-        footer='<div style="font-size:8px;width:100%;padding:0 45px;color:#526577;display:flex;justify-content:space-between"><span>MILSTRIP · Public guide v1.1.0 · Evidence: September 23, 2026</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>'
+        footer='<div style="font-size:8px;width:100%;padding:0 45px;color:#526577;display:flex;justify-content:space-between"><span>MILSTRIP · Public guide v1.1.1 · Evidence: September 23, 2026</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>'
         options=dict(print_background=True,prefer_css_page_size=True,display_header_footer=True,header_template='<span></span>',footer_template=footer)
         page.pdf(path=str(OUT/"MILSTRIP-current-and-phase2.pdf"),**options)
         page.evaluate("document.body.classList.add('sop-only');expandForPrint()")
@@ -298,7 +316,7 @@ def render_pdf(browser_path):
         assert not errors,errors
         assert not network,network
         browser.close()
-    print("PASS: standalone offline HTML; six SOP steps; seven charts; disclosure/dialog controls; print expansion; text bounds; anchors; mobile/desktop overflow.")
+    print("PASS: standalone offline HTML; six SOP steps; four real screens; seven charts; disclosure/dialog controls; print expansion; text bounds; anchors; mobile/desktop overflow.")
 
 
 def main():

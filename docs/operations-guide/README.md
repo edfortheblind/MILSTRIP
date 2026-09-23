@@ -1,4 +1,4 @@
-# MILSTRIP field guide — release 1.1.0
+# MILSTRIP field guide — web edition 1.1.1
 
 **Evidence date: September 23, 2026.** Current development behavior and proposed production work remain separate.
 
@@ -6,8 +6,8 @@
 It opens directly in a browser, with no download or login. This publishes documentation, not the Power App.
 
 - [Open the offline visual guide](index.html) — all seven charts, operating instructions, architecture and Phase 2 plan. No web service or CDN is required.
-- [Read the 12-page illustrated PDF](MILSTRIP-current-and-phase2.pdf).
-- [Print the two-page quick SOP](MILSTRIP-quick-sop.pdf).
+- [Read the 15-page illustrated PDF](MILSTRIP-current-and-phase2.pdf).
+- [Print the five-page screen-based SOP](MILSTRIP-quick-sop.pdf).
 - [Edit the public guide](guide.md), [styles](theme.css) or [interactions](guide.js).
 - [Read the internal engineering notes](engineering-notes.md) for the complete implementation plan, evidence and gates. These notes are excluded from the public release.
 
@@ -33,7 +33,7 @@ From the repository root:
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r docs\operations-guide\requirements.txt
 .\.venv\Scripts\python.exe scripts\build_operations_guide.py --pdf
-.\.venv\Scripts\python.exe scripts\package_operations_guide.py --output-dir "$env:LOCALAPPDATA\MILSTRIP\release-v1.1.0"
+.\.venv\Scripts\python.exe scripts\package_operations_guide.py --output-dir "$env:LOCALAPPDATA\MILSTRIP\release-v1.1.1"
 ```
 
 The builder uses the existing local Brave executable in an **isolated headless
@@ -41,10 +41,10 @@ process**. It does not reuse the signed-in browser session or access the tenant.
 Supply `--browser <absolute chromium executable path>` if necessary. Omit
 `--pdf` to build HTML/SVG without a browser. Edit `guide.md` for text and
 `scripts/build_operations_guide.py` for chart content/layout. The HTML embeds CSS,
-JavaScript, the icon and every SVG, including downloadable diagram copies.
+JavaScript, the icon, four real app screenshots and every SVG, including downloadable diagram copies.
 Generated files should not be manually edited.
 
-Validation checks a lone HTML file in an isolated directory, seven SVGs, six SOP
+Validation checks a lone HTML file in an isolated directory, four screenshots, seven SVGs, six SOP
 steps, rendered text bounds, section links, disclosures, keyboard dialog closing,
 print expansion, browser errors, no network dependencies and desktop/mobile
 overflow. The public packager uses an explicit allowlist, checks identifiers and
@@ -56,6 +56,10 @@ The public repository hosts the standalone `index.html` through GitHub Pages
 from the root of `main`, with `.nojekyll`. The webpage is the primary deliverable;
 the earlier release assets remain optional archives. The source repository stays private.
 No runtime code, production database or tenant resource is changed by these tools.
+
+Screenshots sit beside their corresponding SOP steps and open at full size.
+See [capture provenance](screens/README.md). The current webpage is edition 1.1.1;
+the previously published 1.1.0 download release is retained unchanged as an archive.
 
 ## Production design items requiring decisions
 

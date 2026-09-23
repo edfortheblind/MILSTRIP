@@ -14,16 +14,51 @@ Paste the source. Check the records. Save a decision you can trace.
 
 **For an authorized tester:** have the owner confirm the development laptop, API, database and gateway are running. Open **MILSTRIP Intake Dev** in Power Apps Studio, select **Preview**, and use approved test input.
 
-<ol class="steps">
+These are real screens from the development app, using synthetic demonstration data. Select **View larger** on any screen to read it at full size.
+
+<div class="screen-step-group" markdown="1">
+
+![MILSTRIP intake: paste the source, submit once, and reopen recent requests.](screens/01-intake.png)
+
+<ol class="steps" start="1">
 <li><h3>Paste the source</h3><p>On <strong>MILSTRIP intake</strong>, paste the original email or ticket text. Keep the source unchanged; obtain missing business values rather than guessing.</p></li>
 <li><h3>Submit once</h3><p>Select <strong>Submit intake</strong> and wait for results. Keep the <strong>Request ID</strong>: it is your reference for this intake. If no result arrives, use the recovery steps below before submitting again.</p></li>
-<li><h3>Check every record</h3><p>Select <strong>Load / refresh results</strong>, then <strong>Inspect / review</strong> beside a record. Read its status and issues; use <strong>Next results page</strong> when enabled. Accepted canonical output should be 80 characters; the field is read-only.</p></li>
-<li><h3>Save a decision</h3><p>Choose <strong>APPROVED</strong> or <strong>REJECTED</strong>, enter a reason of 1–1,000 characters, and select <strong>Save review</strong>. Validation-REJECTED records cannot be approved. Resolve warnings from business evidence; reject or escalate unresolved issues.</p><p class="inline-note"><strong>Approval records your review. It does not release an order.</strong></p></li>
-<li><h3>Confirm it saved</h3><p>Look for the saved message and updated review version. Return through <strong>Results</strong> and refresh before relying on displayed review status.</p></li>
-<li><h3>Check the history</h3><p>Select <strong>History → Load / refresh history</strong>; use <strong>More history</strong> when enabled. Confirm the decision and keep the Request ID. The current audit actor is the shared development connection, not your individual sign-in.</p></li>
 </ol>
 
-**You are finished when** the saved decision appears in history. The existing authorized production process remains separate.
+</div>
+
+<div class="screen-step-group" markdown="1">
+
+![Validation results: check each record and open Inspect / review.](screens/02-results.png)
+
+<ol class="steps" start="3">
+<li><h3>Check every record</h3><p>Select <strong>Load / refresh results</strong>, then <strong>Inspect / review</strong> beside a record. Read its status and issues; use <strong>Next results page</strong> when enabled. Accepted canonical output should be 80 characters; the field is read-only.</p></li>
+</ol>
+
+</div>
+
+<div class="screen-step-group" markdown="1">
+
+![Operator review: inspect the canonical record, choose a decision, and save a reason.](screens/03-review.png)
+
+<ol class="steps" start="4">
+<li><h3>Save a decision</h3><p>Choose <strong>APPROVED</strong> or <strong>REJECTED</strong>, enter a reason of 1–1,000 characters, and select <strong>Save review</strong>. Validation-REJECTED records cannot be approved. Resolve warnings from business evidence; reject or escalate unresolved issues.</p><p class="inline-note"><strong>Approval records your review. It does not release an order.</strong></p></li>
+<li><h3>Confirm it saved</h3><p>Look for the saved message and updated review version. Return through <strong>Results</strong> and refresh before relying on displayed review status.</p></li>
+</ol>
+
+</div>
+
+<div class="screen-step-group" markdown="1">
+
+![Audit history: load the recorded events and find the matching review event.](screens/04-history.png)
+
+<ol class="steps" start="6">
+<li><h3>Check the history</h3><p>Select <strong>History → Load / refresh history</strong>; use <strong>More history</strong> when enabled. Find <strong>REVIEW_DECIDED</strong> for the same record and keep the Request ID. Confirm the decision itself in <strong>Results</strong>; history shows the event and its actor. The current audit actor is the shared development connection, not your individual sign-in.</p></li>
+</ol>
+
+</div>
+
+**You are finished when** Results shows the saved decision and History shows its matching review event. The existing authorized production process remains separate.
 
 ### If something goes wrong
 
@@ -158,8 +193,8 @@ A future release action needs a current approval, live reference checks, the rig
 
 ## About this edition
 
-Version **1.1.0** · Public reading edition · Evidence dated **September 23, 2026**.
+Version **1.1.1** · Public reading edition · Evidence dated **September 23, 2026**.
 
-Current claims come from recorded canvas execution, source controls and API tests. The manual route comes from the September 21 legacy review; migration assumptions come from the September 3 migration master and accepted roadmap. This edition does not re-inspect the tenant or production database. The implementation team retains detailed evidence and engineering decisions separately.
+Current claims come from recorded canvas execution, source controls and API tests. The manual route comes from the September 21 legacy review; migration assumptions come from the September 3 migration master and accepted roadmap. The screens were captured from the existing development app using synthetic demonstration data. The production database was not re-inspected. The implementation team retains detailed evidence and engineering decisions separately.
 
-All seven charts are embedded. Expand a chart to read it, use **View larger** to zoom, or download its SVG. The HTML works offline; print includes expanded details. This documentation release does not publish or install the Power App.
+The four app screens and all seven charts are embedded. Use **View larger** to inspect a screen or chart. Expand a chart to read it, or download its SVG. The HTML works offline; print includes expanded details. This documentation release does not publish or install the Power App.

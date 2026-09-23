@@ -6,7 +6,9 @@ A practical guide to the current development app and its proposed production pat
 
 Open the link and read it in your browser. No download, account or installation.
 Start with the six-step SOP; expand recovery instructions and diagrams as needed.
-Use **View larger** for full-size diagrams and **Escape** to close.
+The SOP includes the real Intake, Results, Review and History screens, using
+synthetic demonstration data. Use **View larger** for full-size screens or
+diagrams and **Escape** to close.
 
 ## What is current?
 

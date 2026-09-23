@@ -68,3 +68,39 @@ committed HTML bytes, six SOP steps, seven inline charts, section navigation,
 diagram viewer/Escape close, and 390/1440-pixel layout with no browser errors.
 A separate agent independently confirmed the anonymous webpage and embedded
 content. GitHub reports the Pages build as `built`.
+
+## Screenshot SOP update — web edition 1.1.1
+
+The owner requested the app screens within the SOP. Four authentic app-only
+captures now accompany the corresponding actions: Intake (steps 1–2), Results
+(3), Review (4–5) and History (6). The modal supports both screenshot and diagram
+viewing, including Escape close and responsive layout. Images are embedded, so
+the webpage requires no additional downloads.
+
+The existing development app was exercised with one isolated synthetic intake.
+The final APPROVED review at version 2 was independently read back, then this
+request and only its related application rows were removed and absence verified.
+No legacy operational tables, app formulas or tenant configuration were changed.
+The app was not published. See [capture evidence](screens/README.md).
+
+A separate agent visually reviewed all four public images and matched them to
+the control labels. Browser/tenant/profile chrome was excluded at capture time.
+The History wording now accurately describes REVIEW_DECIDED event metadata;
+the saved decision itself is confirmed through Review/Results.
+
+The isolated HTML build passed four decoded images, six SOP steps, seven diagrams,
+all four screenshot modals, chart modal, print expansion, anchors, rendered chart
+bounds, zero external requests/browser errors, and 390/1440-pixel page overflow.
+Visual inspection confirmed the screenshot/instruction layout. Both PDFs contain
+all four screenshots: the full guide is now **15 pages**, and the screen-based SOP
+is **five pages**. These supersede the earlier page counts for edition 1.1.0.
+Public text/PDF checks and allowlisted packaging also passed.
+
+The updated public site is sourced from commit
+`cedf2c76b9f5e2d7bef3c31551f5163ec4aebb98`. The existing 1.1.0 downloadable release
+remains an unchanged archive; the primary deliverable is the updated webpage.
+
+Live readback passed anonymous HTTPS 200 and exact committed-byte equality.
+All four screenshots loaded at their expected resolution; all four full-size
+viewers, six-step structure and desktop/mobile layout passed in an isolated
+browser with no JavaScript errors. GitHub Pages reported the new commit built.

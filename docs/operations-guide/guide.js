@@ -16,15 +16,29 @@ const viewer = document.getElementById('diagram-viewer');
 document.querySelectorAll('[data-view-chart]').forEach(button => {
   button.addEventListener('click', () => {
     const figure = button.closest('figure');
-    const svg = figure.querySelector('svg').cloneNode(true);
-    // The modal is named by its heading; avoid duplicate inline SVG identifiers.
-    svg.querySelectorAll('[id]').forEach(el => { el.id += '-viewer'; });
-    svg.setAttribute('aria-labelledby', svg.getAttribute('aria-labelledby').split(' ').map(id => id + '-viewer').join(' '));
-    svg.querySelectorAll('[marker-end]').forEach(el => {
-      el.setAttribute('marker-end', el.getAttribute('marker-end').replace(')', '-viewer)'));
-    });
+    const visual = figure.querySelector('svg, img').cloneNode(true);
+    // Only one visual is open; the suffix keeps its identifiers out of the page.
+    if (visual.tagName.toLowerCase() === 'svg') {
+      const ids = new Map([...visual.querySelectorAll('[id]')].map(el => [el.id, `${el.id}-viewer`]));
+      if (visual.id) ids.set(visual.id, `${visual.id}-viewer`);
+      [visual, ...visual.querySelectorAll('*')].forEach(el => {
+        if (el.id) el.id = ids.get(el.id);
+        ['aria-labelledby', 'aria-describedby'].forEach(attribute => {
+          if (el.hasAttribute(attribute)) {
+            el.setAttribute(attribute, el.getAttribute(attribute).split(/\s+/).map(id => ids.get(id) || id).join(' '));
+          }
+        });
+        [...el.attributes].forEach(attribute => {
+          const value = attribute.value.replace(/url\(#([^)]*)\)/g, (match, id) => ids.has(id) ? `url(#${ids.get(id)})` : match);
+          if (value !== attribute.value) el.setAttribute(attribute.name, value);
+        });
+      });
+    } else {
+      visual.removeAttribute('id');
+      visual.removeAttribute('loading');
+    }
     document.getElementById('viewer-title').textContent = figure.querySelector('figcaption').textContent;
-    document.getElementById('viewer-content').replaceChildren(svg);
+    document.getElementById('viewer-content').replaceChildren(visual);
     viewer.showModal();
   });
 });

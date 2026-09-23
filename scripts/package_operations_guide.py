@@ -20,7 +20,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "docs" / "operations-guide"
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 ARCHIVE_NAME = f"MILSTRIP-guide-v{VERSION}.zip"
 PDF_NAME = "MILSTRIP-current-and-phase2.pdf"
 OPTIONAL_PDF_NAME = "MILSTRIP-quick-sop.pdf"
