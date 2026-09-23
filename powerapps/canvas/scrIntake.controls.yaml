@@ -1,0 +1,122 @@
+- IntakeIcon:
+    Control: Image
+    Properties:
+      X: =24
+      Y: =16
+      Width: =64
+      Height: =64
+      Image: ='milstrip-app'
+- IntakeTitle:
+    Control: Label
+    Properties:
+      X: =104
+      Y: =16
+      Width: =Parent.Width-128
+      Height: =64
+      Text: ="MILSTRIP intake"
+      Size: =24
+- IntakeMessage:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =84
+      Width: =Parent.Width-48
+      Height: =60
+      Text: =Coalesce(varMessage, "")
+- txtSource:
+    Control: Classic/TextInput
+    Properties:
+      X: =24
+      Y: =152
+      Width: =Parent.Width-48
+      Height: =320
+      Default: =""
+      Mode: =TextMode.MultiLine
+      HintText: ="Paste the original email or ticket text"
+      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+- btnSubmit:
+    Control: Classic/Button
+    Properties:
+      X: =24
+      Y: =490
+      Width: =210
+      Height: =44
+      Text: ="Submit intake"
+      OnSelect: '=Set(varBusy,true); Set(varSourceId,Text(GUID()));
+
+        IfError(
+
+        Set(varAck,MILSTRIPLocalDevAPI.CreateIntakeRequest(txtSource.Text,"PASTE",{source_id:varSourceId})); varAck,
+
+        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep this text. Load recent
+        requests and compare the source ID before another submission: " & varSourceId); false,
+
+        Set(varRequestId,varAck.request_id); Set(varIntakeUncertain,false); Set(varMessage,"Intake saved. Load results
+        to inspect validation."); Navigate(scrResults); true); Set(varBusy,false)'
+      DisplayMode: =If(Coalesce(varBusy,false) || IsBlank(txtSource.Text) || Coalesce(varIntakeUncertain,false),DisplayMode.Disabled,DisplayMode.Edit)
+- btnRecent:
+    Control: Classic/Button
+    Properties:
+      X: =254
+      Y: =490
+      Width: =210
+      Height: =44
+      Text: ="Load recent requests"
+      OnSelect: '=Set(varBusy,true);
+
+        IfError(
+
+        Set(varRequestsPage,MILSTRIPLocalDevAPI.ListIntakeRequests({limit:50})); varRequestsPage,
+
+        Set(varMessage,"Could not load requests. Input retained."); false,
+
+        ClearCollect(colRequests,varRequestsPage.items); Set(varRequestsCursor,varRequestsPage.next_cursor); true);
+        Set(varBusy,false)'
+      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+- btnIntakeRetryConfirm:
+    Control: Classic/Button
+    Properties:
+      X: =484
+      Y: =490
+      Width: =210
+      Height: =44
+      Text: ="Allow new submission"
+      OnSelect: =Set(varIntakeUncertain,false); Set(varMessage,"A new submission creates another request. Submit
+        only after checking recent requests.")
+      DisplayMode: =If(Coalesce(varBusy,false) || !Coalesce(varIntakeUncertain,false),DisplayMode.Disabled,DisplayMode.Edit)
+- galRequests:
+    Control: Gallery
+    Properties:
+      X: =24
+      Y: =548
+      Width: =Parent.Width-278
+      Height: =Parent.Height-564
+      Items: =colRequests
+      TemplateSize: =70
+    Variant: Vertical
+    Children:
+    - RequestRow:
+        Control: Classic/Button
+        Properties:
+          X: =0
+          Y: =0
+          Width: =Parent.TemplateWidth
+          Height: =64
+          Text: =ThisItem.request_id & " | " & ThisItem.status & " | " & Coalesce(ThisItem.source_id, "")
+          OnSelect: =Set(varRequestId,ThisItem.request_id); Set(varMessage,""); Navigate(scrResults)
+- btnMoreRequests:
+    Control: Classic/Button
+    Properties:
+      X: =Parent.Width-234
+      Y: =548
+      Width: =210
+      Height: =44
+      Text: ="More requests"
+      OnSelect: '=Set(varBusy,true); IfError(
+
+        Set(varRequestsPage,MILSTRIPLocalDevAPI.ListIntakeRequests({limit:50,cursor:varRequestsCursor})); varRequestsPage,
+
+        Set(varMessage,"Could not load the next page. Retry retains the cursor."); false,
+
+        Collect(colRequests,varRequestsPage.items); Set(varRequestsCursor,varRequestsPage.next_cursor); true); Set(varBusy,false)'
+      DisplayMode: =If(Coalesce(varBusy,false) || IsBlank(varRequestsCursor),DisplayMode.Disabled,DisplayMode.Edit)

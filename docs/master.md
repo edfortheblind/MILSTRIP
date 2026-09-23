@@ -1,6 +1,15 @@
 # MILSTRIP Intake Automation — Master Document
 
-**Version:** 1.0 **Date:** 2026-09-23 **Status:** LOCAL_OPERATOR_API_IMPLEMENTED
+**Version:** 1.0 **Date:** 2026-09-23 **Status:** CANVAS_DRAFT_IMPLEMENTED_WITH_CONCERNS
+
+**Current reading guide:** the saved unpublished canvas app, authenticated laptop
+API and local PostgreSQL are implemented. Use the [visual operating package](operations-guide/index.html)
+for the current functional flow, architecture, end-user SOP and evidence limits.
+The [Phase 2 plan](operations-guide/guide.md#5-phase-2-published-app-two-production-periods)
+assumes publication, uses existing Azure SQL first, then accepted production
+PostgreSQL with an end-Q4 2026 target. It is planning, not deployment approval.
+Earlier increment sections below are historical snapshots and are superseded by
+the final canvas execution update where they describe pending work already done.
 
 Built with the AEKR (AI Engineering Knowledge Repo) workflow — see the root
 `README.md` footer and `meta/OPERATING_PRINCIPLES.md` in the `AEKR` repo for
@@ -159,7 +168,7 @@ identity/role mapping are the next connected-integration inputs.
 
 The successful procedure is now [PowerApps setup](../sop/powerapps-setup.md).
 See the [conversation record](../sop/conversation-record.md) for decisions and
-the [restart prompt](../sop/restart-prompt.md) to continue in a separate session.
+the [restart prompt](../restart-prompt.md) to continue in a separate session.
 
 Current setup (2026-09-23): the owner used the existing organization Default
 environment, created the MILSTRIP solution and MILSTRIP Local Dev API connector,
@@ -181,3 +190,39 @@ environment was used instead of creating a Developer environment. No cloud
 API/database host is required at this stage. Power Apps
 connector creation also needs an OpenAPI 2.0 artifact; the existing 3.1 export
 remains the runtime API reference.
+
+## 12. Authenticated connector increment
+
+Dedicated Basic authentication now protects all seven `/api/v1` operations.
+Intake/review audit identity comes from the authenticated username, replacing
+the unauthenticated local-reviewer setting. All application calls enforce the
+approved loopback/database boundary. Private credential setup stores a salted
+verifier in the Git-ignored `.cred` folder; the repeatable launcher preserves the gateway path.
+
+The existing connector artifact now exposes typed intake, listing, details,
+results, review and history. Four canvas control sets are prepared locally.
+The owner supplied saved app ID `7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`;
+solution membership and Studio execution remain unverified. Reuse this app.
+The existing gateway service is installed/running; authenticated tenant tooling
+is unavailable in this session. The owner completed private credential setup;
+the authenticated API replaced the temporary health-only process on port 8000.
+Live missing/invalid credential checks return 401. The owner verified local
+authentication with HTTP 200, then supplied a screenshot of GetHealth returning
+200 through the existing gateway after selecting a replacement connection with
+the matching private credential. The owner subsequently saved the updated
+connector and supplied a Test-tab screenshot showing all seven operations.
+The one-command standalone API/database workflow passed with synthetic cleanup;
+see `sop/standalone-workflow-test.md`. The owner requested moving on to canvas
+implementation rather than more individual Swagger tests. Application operations
+through Power Platform will be checked during canvas integration.
+
+Follow [the continuation SOP](../sop/local-api-development.md) and
+`powerapps/canvas/README.md`. Local verification is not an independent Audit
+or shared-app rollout acceptance. No operational legacy writes are authorized.
+
+## Canvas execution update (2026-09-23)
+
+The existing app now contains the four implemented screens and a saved unpublished
+draft. Live gateway integration passed the synthetic intake/results/review/history
+path. See [canvas execution evidence](delivery/CANVAS_IMPLEMENTATION_2026-09-23.md)
+for the remaining acceptance boundary. No independent Audit is claimed.

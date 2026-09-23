@@ -1,5 +1,12 @@
 # Architecture
 
+**Current architecture update (2026-09-23):** the diagrams below preserve the
+earlier discovery/CLI design. Use the [current technical architecture and
+functional flow](operations-guide/index.html) for the implemented canvas draft,
+authenticated laptop API and local PostgreSQL. The same package contains the
+owner-requested proposed Phase 2 architecture: existing Azure SQL first, then
+accepted production PostgreSQL. It does not authorize either operational writer.
+
 ## Current state (unchanged by this project)
 
 Reconstructed from the 2026-08-12 discovery calls with Shawn Hinkle and the

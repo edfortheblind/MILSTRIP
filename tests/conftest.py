@@ -5,6 +5,20 @@ import pytest
 
 
 @pytest.fixture
+def api_credentials(tmp_path, monkeypatch):
+    import json
+    from api.auth import ITERATIONS, password_digest
+    username, password = 'synthetic-reviewer', 'synthetic-test-password-only'
+    salt = 'ab' * 32
+    path = tmp_path / 'credential.json'
+    path.write_text(json.dumps(dict(version=1, iterations=ITERATIONS, username=username,
+                                   salt=salt, digest=password_digest(password, salt))), encoding='utf-8')
+    monkeypatch.setenv('MILSTRIP_API_CREDENTIAL_FILE', str(path))
+    monkeypatch.setenv('MILSTRIP_DATABASE_URL', 'postgresql://localhost/trav3pl-psqldb-stage')
+    return username, password
+
+
+@pytest.fixture
 def database():
     """Opt-in local integration tests; all application DDL/data rolls back."""
     import psycopg

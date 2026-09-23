@@ -7,6 +7,8 @@ venv/
 *.egg-info/
 
 # Never commit credentials or environment-specific config.
+.cred/
+milstrip-app cred.txt
 .env
 *.local.yaml
 .env.*

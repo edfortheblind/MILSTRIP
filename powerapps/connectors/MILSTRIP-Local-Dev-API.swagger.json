@@ -1,57 +1,1143 @@
 {
-  "swagger": "2.0",
-  "info": {
-    "title": "Default title",
-    "description": "MILSTRIP development API running on Ed's laptop.",
-    "version": "1.0"
+  "basePath": "/api/v1",
+  "consumes": [
+    "application/json"
+  ],
+  "definitions": {
+    "AuditEvent": {
+      "properties": {
+        "actor": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "aggregate_id": {
+          "type": "string"
+        },
+        "aggregate_type": {
+          "type": "string"
+        },
+        "correlation_id": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "event_data": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "event_id": {
+          "type": "integer"
+        },
+        "event_type": {
+          "type": "string"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "aggregate_type",
+        "aggregate_id",
+        "event_type",
+        "actor",
+        "correlation_id",
+        "event_data",
+        "occurred_at"
+      ],
+      "type": "object"
+    },
+    "EventPage": {
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/definitions/AuditEvent"
+          },
+          "type": "array"
+        },
+        "next_cursor": {
+          "type": "string",
+          "x-nullable": true
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor"
+      ],
+      "type": "object"
+    },
+    "HTTPValidationError": {
+      "properties": {
+        "detail": {
+          "items": {
+            "$ref": "#/definitions/ValidationError"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "HealthResponse": {
+      "properties": {
+        "database": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "database"
+      ],
+      "type": "object"
+    },
+    "IntakeAcknowledgement": {
+      "properties": {
+        "received_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "records": {
+          "type": "integer"
+        },
+        "rejected": {
+          "type": "integer"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "requires_review": {
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "RECEIVED",
+            "PROCESSING",
+            "REQUIRES_REVIEW",
+            "VALID",
+            "REJECTED",
+            "FAILED"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "status",
+        "received_at",
+        "records",
+        "rejected",
+        "requires_review"
+      ],
+      "type": "object"
+    },
+    "IntakeRequest": {
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "source_text": {
+          "maxLength": 1000000,
+          "minLength": 1,
+          "type": "string"
+        },
+        "source_type": {
+          "pattern": "^(PASTE|FILE|FRESHSERVICE)$",
+          "type": "string"
+        },
+        "submitted_by": {
+          "type": "string",
+          "x-nullable": true
+        }
+      },
+      "required": [
+        "source_type",
+        "source_text"
+      ],
+      "type": "object"
+    },
+    "RecordDetail": {
+      "properties": {
+        "canonical_record": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "issues": {
+          "items": {
+            "$ref": "#/definitions/ValidationIssue"
+          },
+          "type": "array"
+        },
+        "latest_review": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/ReviewDecision"
+            }
+          ],
+          "x-nullable": true
+        },
+        "normalized_record": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "raw_candidate": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "record_id": {
+          "type": "string"
+        },
+        "record_sequence": {
+          "type": "integer"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "review_version": {
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "RECEIVED",
+            "PROCESSING",
+            "REQUIRES_REVIEW",
+            "VALID",
+            "REJECTED",
+            "FAILED"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "record_id",
+        "request_id",
+        "record_sequence",
+        "raw_candidate",
+        "normalized_record",
+        "canonical_record",
+        "status",
+        "review_version",
+        "issues",
+        "latest_review"
+      ],
+      "type": "object"
+    },
+    "RecordPage": {
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/definitions/RecordDetail"
+          },
+          "type": "array"
+        },
+        "next_cursor": {
+          "type": "string",
+          "x-nullable": true
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor"
+      ],
+      "type": "object"
+    },
+    "RequestPage": {
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/definitions/RequestSummary"
+          },
+          "type": "array"
+        },
+        "next_cursor": {
+          "type": "string",
+          "x-nullable": true
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor"
+      ],
+      "type": "object"
+    },
+    "RequestSummary": {
+      "properties": {
+        "completed_at": {
+          "format": "date-time",
+          "type": "string",
+          "x-nullable": true
+        },
+        "received_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "source_sha256": {
+          "type": "string"
+        },
+        "source_type": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "RECEIVED",
+            "PROCESSING",
+            "REQUIRES_REVIEW",
+            "VALID",
+            "REJECTED",
+            "FAILED"
+          ],
+          "type": "string"
+        },
+        "submitted_by": {
+          "type": "string",
+          "x-nullable": true
+        }
+      },
+      "required": [
+        "request_id",
+        "source_type",
+        "source_id",
+        "source_sha256",
+        "status",
+        "submitted_by",
+        "received_at",
+        "completed_at"
+      ],
+      "type": "object"
+    },
+    "ReviewCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "command_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "decision": {
+          "enum": [
+            "APPROVED",
+            "REJECTED"
+          ],
+          "type": "string"
+        },
+        "expected_version": {
+          "maximum": 2147483646.0,
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "reason": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "decision",
+        "reason",
+        "expected_version",
+        "command_id"
+      ],
+      "type": "object"
+    },
+    "ReviewDecision": {
+      "properties": {
+        "command_id": {
+          "format": "uuid",
+          "type": "string",
+          "x-nullable": true
+        },
+        "decided_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "decided_by": {
+          "type": "string"
+        },
+        "decision": {
+          "enum": [
+            "APPROVED",
+            "REJECTED"
+          ],
+          "type": "string"
+        },
+        "decision_id": {
+          "type": "integer"
+        },
+        "expected_version": {
+          "type": "integer",
+          "x-nullable": true
+        },
+        "reason": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "record_id": {
+          "type": "string"
+        },
+        "review_version": {
+          "type": "integer",
+          "x-nullable": true
+        }
+      },
+      "required": [
+        "decision_id",
+        "record_id",
+        "decision",
+        "reason",
+        "decided_by",
+        "decided_at",
+        "command_id",
+        "expected_version",
+        "review_version"
+      ],
+      "type": "object"
+    },
+    "ValidationError": {
+      "properties": {
+        "ctx": {
+          "type": "object"
+        },
+        "input": {},
+        "loc": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "msg": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "loc",
+        "msg",
+        "type"
+      ],
+      "type": "object"
+    },
+    "ValidationIssue": {
+      "properties": {
+        "field_name": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "issue_code": {
+          "type": "string"
+        },
+        "issue_id": {
+          "type": "integer"
+        },
+        "message": {
+          "type": "string"
+        },
+        "position_end": {
+          "type": "integer",
+          "x-nullable": true
+        },
+        "position_start": {
+          "type": "integer",
+          "x-nullable": true
+        },
+        "severity": {
+          "enum": [
+            "INFO",
+            "WARNING",
+            "ERROR"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "issue_id",
+        "issue_code",
+        "severity",
+        "field_name",
+        "position_start",
+        "position_end",
+        "message"
+      ],
+      "type": "object"
+    }
   },
   "host": "127.0.0.1:8000",
-  "basePath": "/api/v1",
-  "schemes": [
-    "http"
-  ],
-  "consumes": [],
-  "produces": [],
+  "info": {
+    "title": "MILSTRIP Local Dev API",
+    "version": "0.3.0"
+  },
   "paths": {
     "/health": {
       "get": {
+        "operationId": "GetHealth",
+        "parameters": [],
         "responses": {
-          "default": {
-            "description": "default",
+          "200": {
+            "description": "Successful Response",
             "schema": {
-              "type": "object",
+              "$ref": "#/definitions/HealthResponse"
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API credentials",
+            "schema": {
               "properties": {
-                "status": {
-                  "type": "string",
-                  "description": "status"
-                },
-                "database": {
-                  "type": "string",
-                  "description": "database"
+                "detail": {
+                  "type": "string"
                 }
-              }
+              },
+              "type": "object"
+            }
+          },
+          "403": {
+            "description": "Outside laptop boundary",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "409": {
+            "description": "Review conflict; reload before a new command",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "503": {
+            "description": "Local configuration or database unavailable",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             }
           }
         },
-        "summary": "Check API health",
-        "description": "Check whether the local API and database are available.",
-        "operationId": "GetHealth",
-        "parameters": []
+        "summary": "Health"
+      }
+    },
+    "/intake/requests": {
+      "get": {
+        "operationId": "ListIntakeRequests",
+        "parameters": [
+          {
+            "default": 50,
+            "in": "query",
+            "maximum": 100,
+            "minimum": 1,
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "enum": [
+              "RECEIVED",
+              "PROCESSING",
+              "REQUIRES_REVIEW",
+              "VALID",
+              "REJECTED",
+              "FAILED"
+            ],
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "type": "string",
+            "x-nullable": true
+          },
+          {
+            "in": "query",
+            "maxLength": 2048,
+            "name": "cursor",
+            "required": false,
+            "type": "string",
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "schema": {
+              "$ref": "#/definitions/RequestPage"
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API credentials",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "403": {
+            "description": "Outside laptop boundary",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "409": {
+            "description": "Review conflict; reload before a new command",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "schema": {
+              "$ref": "#/definitions/HTTPValidationError"
+            }
+          },
+          "503": {
+            "description": "Local configuration or database unavailable",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "summary": "List Requests"
+      },
+      "post": {
+        "operationId": "CreateIntakeRequest",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/IntakeRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "schema": {
+              "$ref": "#/definitions/IntakeAcknowledgement"
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API credentials",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "403": {
+            "description": "Outside laptop boundary",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "409": {
+            "description": "Review conflict; reload before a new command",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "schema": {
+              "$ref": "#/definitions/HTTPValidationError"
+            }
+          },
+          "503": {
+            "description": "Local configuration or database unavailable",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "summary": "Create Intake Request"
+      }
+    },
+    "/intake/requests/{request_id}": {
+      "get": {
+        "operationId": "GetIntakeRequest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "schema": {
+              "$ref": "#/definitions/RequestSummary"
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API credentials",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "403": {
+            "description": "Outside laptop boundary",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "409": {
+            "description": "Review conflict; reload before a new command",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "schema": {
+              "$ref": "#/definitions/HTTPValidationError"
+            }
+          },
+          "503": {
+            "description": "Local configuration or database unavailable",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "summary": "Get Intake Request"
+      }
+    },
+    "/intake/requests/{request_id}/audit-events": {
+      "get": {
+        "operationId": "ListAuditEvents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "default": 50,
+            "in": "query",
+            "maximum": 100,
+            "minimum": 1,
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "maxLength": 2048,
+            "name": "cursor",
+            "required": false,
+            "type": "string",
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "schema": {
+              "$ref": "#/definitions/EventPage"
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API credentials",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "403": {
+            "description": "Outside laptop boundary",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "409": {
+            "description": "Review conflict; reload before a new command",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "schema": {
+              "$ref": "#/definitions/HTTPValidationError"
+            }
+          },
+          "503": {
+            "description": "Local configuration or database unavailable",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "summary": "List Events"
+      }
+    },
+    "/intake/requests/{request_id}/records": {
+      "get": {
+        "operationId": "ListRecordResults",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "default": 50,
+            "in": "query",
+            "maximum": 100,
+            "minimum": 1,
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "maxLength": 2048,
+            "name": "cursor",
+            "required": false,
+            "type": "string",
+            "x-nullable": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "schema": {
+              "$ref": "#/definitions/RecordPage"
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API credentials",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "403": {
+            "description": "Outside laptop boundary",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "409": {
+            "description": "Review conflict; reload before a new command",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "schema": {
+              "$ref": "#/definitions/HTTPValidationError"
+            }
+          },
+          "503": {
+            "description": "Local configuration or database unavailable",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "summary": "List Records"
+      }
+    },
+    "/records/{record_id}/review-decisions": {
+      "post": {
+        "operationId": "CreateReviewDecision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "record_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReviewCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ReviewDecision"
+            }
+          },
+          "201": {
+            "description": "Successful Response",
+            "schema": {
+              "$ref": "#/definitions/ReviewDecision"
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API credentials",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "403": {
+            "description": "Outside laptop boundary",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "409": {
+            "description": "Review conflict; reload before a new command",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "schema": {
+              "$ref": "#/definitions/HTTPValidationError"
+            }
+          },
+          "503": {
+            "description": "Local configuration or database unavailable",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "summary": "Review Record"
       }
     }
   },
-  "definitions": {},
-  "parameters": {},
-  "responses": {},
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http"
+  ],
   "security": [
     {
       "basic-auth": []
     }
   ],
-  "tags": [],
   "securityDefinitions": {
     "basic-auth": {
       "type": "basic"
     }
-  }
+  },
+  "swagger": "2.0"
 }

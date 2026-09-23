@@ -1,0 +1,181 @@
+- ReviewIcon:
+    Control: Image
+    Properties:
+      X: =24
+      Y: =16
+      Width: =64
+      Height: =64
+      Image: ='milstrip-app'
+- ReviewTitle:
+    Control: Label
+    Properties:
+      X: =104
+      Y: =16
+      Width: =Parent.Width-128
+      Height: =64
+      Text: ="Operator review"
+      Size: =24
+- ReviewMessage:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =84
+      Width: =Parent.Width-48
+      Height: =60
+      Text: =Coalesce(varMessage, "")
+- ReviewIdentity:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =144
+      Width: =Parent.Width-48
+      Height: =42
+      Text: '=varRecord.record_id & " | validation: " & varRecord.status & " | version: " & Text(varRecord.review_version)'
+- CanonicalLabel:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =188
+      Width: =Parent.Width-48
+      Height: =42
+      Text: '="Canonical length: " & Text(Len(varRecord.canonical_record)) & " (trailing spaces preserved)"'
+- txtCanonical:
+    Control: Classic/TextInput
+    Properties:
+      X: =24
+      Y: =234
+      Width: =Parent.Width-48
+      Height: =70
+      Default: =varRecord.canonical_record
+      Mode: =TextMode.MultiLine
+      DisplayMode: =DisplayMode.View
+      Font: ="Courier New"
+- ReviewIssues:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =310
+      Width: =Parent.Width-48
+      Height: =80
+      Text: '=Concat(varRecord.issues,issue_code & ": " & message,Char(10))'
+- ddDecision:
+    Control: Classic/DropDown
+    Properties:
+      X: =24
+      Y: =400
+      Width: =220
+      Height: =44
+      Items: =["REJECTED","APPROVED"]
+      Default: ="REJECTED"
+      DisplayMode: =If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id),DisplayMode.Disabled,DisplayMode.Edit)
+- txtReason:
+    Control: Classic/TextInput
+    Properties:
+      X: =264
+      Y: =400
+      Width: =Parent.Width-288
+      Height: =110
+      Default: =""
+      HintText: ="Reason required (1-1000 characters)"
+      MaxLength: =1000
+      Mode: =TextMode.MultiLine
+      DisplayMode: =If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id),DisplayMode.Disabled,DisplayMode.Edit)
+- btnSaveReview:
+    Control: Classic/Button
+    Properties:
+      X: =24
+      Y: =534
+      Width: =210
+      Height: =44
+      Text: ="Save review"
+      OnSelect: '=Set(varPending,{decision:ddDecision.Selected.Value,reason:txtReason.Text,expected_version:varRecord.review_version,command_id:Text(GUID())});
+        Set(varPendingRecord,varRecord.record_id); Set(varBusy,true);
+
+        IfError(
+
+        Set(varReviewResult,MILSTRIPLocalDevAPI.CreateReviewDecision(varPendingRecord,varPending.command_id,varPending.decision,varPending.expected_version,varPending.reason));
+        varReviewResult,
+
+        Set(varConflict,FirstError.Details.HttpStatusCode=409);
+
+        Set(varMessage,If(varConflict,"Conflict. Reload the record, inspect the new version, then submit a new decision.","Review
+        outcome unknown. Retry the SAME command; reason and decision are retained.")); false,
+
+        Set(varRefreshPage,MILSTRIPLocalDevAPI.ListRecordResults(varRequestId,{limit:50,cursor:varRecordPageCursor}));
+        varRefreshPage,
+
+        Set(varConflict,FirstError.Details.HttpStatusCode=409);
+
+        Set(varMessage,If(varConflict,"Conflict. Reload the record, inspect the new version, then submit a new decision.","Review
+        outcome unknown. Retry the SAME command; reason and decision are retained.")); false,
+
+        Set(varRecord,LookUp(varRefreshPage.items,record_id=varPendingRecord)); Set(varPending,Blank()); Set(varConflict,false);
+        Set(varMessage,"Review saved. Approval does not authorize delivery."); true);
+
+        Set(varBusy,false)'
+      DisplayMode: =If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id) || IsBlank(Trim(txtReason.Text))
+        || (ddDecision.Selected.Value="APPROVED" && !(varRecord.status in ["VALID","REQUIRES_REVIEW"])),DisplayMode.Disabled,DisplayMode.Edit)
+- btnRetryReview:
+    Control: Classic/Button
+    Properties:
+      X: =254
+      Y: =534
+      Width: =210
+      Height: =44
+      Text: ="Retry same command"
+      OnSelect: '=Set(varBusy,true);
+
+        IfError(
+
+        Set(varReviewResult,MILSTRIPLocalDevAPI.CreateReviewDecision(varPendingRecord,varPending.command_id,varPending.decision,varPending.expected_version,varPending.reason));
+        varReviewResult,
+
+        Set(varConflict,FirstError.Details.HttpStatusCode=409);
+
+        Set(varMessage,If(varConflict,"Conflict. Reload the record, inspect the new version, then submit a new decision.","Review
+        outcome unknown. Retry the SAME command; reason and decision are retained.")); false,
+
+        Set(varRefreshPage,MILSTRIPLocalDevAPI.ListRecordResults(varRequestId,{limit:50,cursor:varRecordPageCursor}));
+        varRefreshPage,
+
+        Set(varConflict,FirstError.Details.HttpStatusCode=409);
+
+        Set(varMessage,If(varConflict,"Conflict. Reload the record, inspect the new version, then submit a new decision.","Review
+        outcome unknown. Retry the SAME command; reason and decision are retained.")); false,
+
+        Set(varRecord,LookUp(varRefreshPage.items,record_id=varPendingRecord)); Set(varPending,Blank()); Set(varConflict,false);
+        Set(varMessage,"Review saved. Approval does not authorize delivery."); true);
+
+        Set(varBusy,false)'
+      DisplayMode: =If(Coalesce(varBusy,false) || IsBlank(varPending.command_id) || Coalesce(varConflict,false),DisplayMode.Disabled,DisplayMode.Edit)
+- btnReconcile:
+    Control: Classic/Button
+    Properties:
+      X: =484
+      Y: =534
+      Width: =210
+      Height: =44
+      Text: ="Reload after conflict"
+      OnSelect: '=Set(varBusy,true); IfError(
+
+        Set(varReconcilePage,MILSTRIPLocalDevAPI.ListRecordResults(varRequestId,{limit:50,cursor:varRecordPageCursor}));
+        varReconcilePage,
+
+        Set(varMessage,"Reload failed. Pending command and reason retained."); false,
+
+        Set(varReloaded,LookUp(varReconcilePage.items,record_id=varRecord.record_id)); If(IsBlank(varReloaded.record_id),Set(varMessage,"Record
+        absent from this page. Pending command retained."),
+
+        Set(varRecord,varReloaded); Set(varPending,Blank()); Set(varConflict,false); Set(varMessage,"Current version
+        loaded. Inspect it and confirm the retained reason before saving a new decision.")); true); Set(varBusy,false)'
+      DisplayMode: =If(Coalesce(varBusy,false) || !Coalesce(varConflict,false),DisplayMode.Disabled,DisplayMode.Edit)
+- btnReviewBack:
+    Control: Classic/Button
+    Properties:
+      X: =714
+      Y: =534
+      Width: =210
+      Height: =44
+      Text: ="Results"
+      OnSelect: =Navigate(scrResults)
+      DisplayMode: =If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id),DisplayMode.Disabled,DisplayMode.Edit)

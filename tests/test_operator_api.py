@@ -14,16 +14,16 @@ from scripts.run_controlled_handoff_test import SYNTHETIC_RECORD
 
 
 @pytest.fixture
-def client(database, monkeypatch):
+def client(database, monkeypatch, api_credentials):
     @contextmanager
     def connect():
         with database.transaction():
             yield database
     monkeypatch.setattr(api, "_connect", connect)
     monkeypatch.setattr(storage, "connect", connect)
-    monkeypatch.setenv("MILSTRIP_LOCAL_REVIEWER", "synthetic-reviewer")
     monkeypatch.setenv("MILSTRIP_DATABASE_URL", "postgresql://localhost/trav3pl-psqldb-stage")
     with TestClient(api.app, client=("127.0.0.1", 50000)) as value:
+        value.auth = api_credentials
         yield value
 
 
@@ -137,7 +137,14 @@ def test_stale_version_and_command_reuse_are_conflicts(client, monkeypatch):
     assert review(client, request_id, body).status_code == 201
     assert review(client, request_id, command()).status_code == 409
     assert review(client, request_id, {**body, "reason": "Changed reason"}).status_code == 409
-    monkeypatch.setenv("MILSTRIP_LOCAL_REVIEWER", "another-reviewer")
+    import json
+    import os
+    from pathlib import Path
+    path = Path(os.environ["MILSTRIP_API_CREDENTIAL_FILE"])
+    config = json.loads(path.read_text())
+    config["username"] = "another-reviewer"
+    path.write_text(json.dumps(config))
+    client.auth = ("another-reviewer", "synthetic-test-password-only")
     assert review(client, request_id, body).status_code == 409
 
 
@@ -164,8 +171,8 @@ def test_missing_record_is_404(client):
     assert review(client, "missing").status_code == 404
 
 
-def test_local_reviewer_is_required(client, monkeypatch):
-    monkeypatch.delenv("MILSTRIP_LOCAL_REVIEWER")
+def test_credentials_configuration_is_required(client, monkeypatch):
+    monkeypatch.setenv("MILSTRIP_API_CREDENTIAL_FILE", "missing-credential.json")
     assert review(client, "missing").status_code == 503
 
 
@@ -197,7 +204,7 @@ def test_database_failure_is_controlled(client, monkeypatch):
 
 def test_openapi_exposes_typed_operator_contract():
     schema = api.app.openapi()
-    assert schema["info"]["version"] == "0.2.0"
+    assert schema["info"]["version"] == "0.3.0"
     assert "/api/v1/records/{record_id}/review-decisions" in schema["paths"]
     assert schema["components"]["schemas"]["ReviewCommand"]["additionalProperties"] is False
 
@@ -223,7 +230,7 @@ def test_invalid_connection_configuration_is_controlled(client, monkeypatch):
     assert review(client, "missing").status_code == 503
 
 
-def test_concurrent_commands_have_one_winner(monkeypatch):
+def test_concurrent_commands_have_one_winner(monkeypatch, api_credentials):
     """Two real sessions commit against one synthetic record; remove it afterward."""
     import os
     from concurrent.futures import ThreadPoolExecutor
@@ -237,7 +244,6 @@ def test_concurrent_commands_have_one_winner(monkeypatch):
     assert config.get("host") in {"localhost", "127.0.0.1", "::1"}
     assert config.get("dbname") == "trav3pl-psqldb-stage"
     monkeypatch.setenv("MILSTRIP_DATABASE_URL", url)
-    monkeypatch.setenv("MILSTRIP_LOCAL_REVIEWER", "synthetic-concurrency-reviewer")
     request_id = str(uuid4())
     record_id = request_id + ":1"
     try:
@@ -248,6 +254,7 @@ def test_concurrent_commands_have_one_winner(monkeypatch):
 
         def submit(body):
             with TestClient(api.app, client=("127.0.0.1", 50000)) as client:
+                client.auth = api_credentials
                 barrier.wait(timeout=5)
                 return review(client, request_id, body)
 
@@ -265,3 +272,12 @@ def test_concurrent_commands_have_one_winner(monkeypatch):
             db.execute("DELETE FROM milstrip_app.milstrip_record WHERE record_id=%s", (record_id,))
             db.execute("DELETE FROM milstrip_app.intake_request WHERE request_id=%s", (request_id,))
             assert db.execute("SELECT count(*) FROM milstrip_app.intake_request WHERE request_id=%s", (request_id,)).fetchone()[0] == 0
+
+
+def test_authenticated_identity_overrides_intake_claim_and_headers(client, monkeypatch):
+    monkeypatch.setenv("MILSTRIP_LOCAL_REVIEWER", "spoofed-config")
+    response = client.post("/api/v1/intake/requests", json={"source_type": "PASTE", "source_text": SYNTHETIC_RECORD, "submitted_by": "spoofed-body"}, headers={"X-Forwarded-User": "spoofed-header"})
+    request_id = response.json()["request_id"]
+    assert client.get(f"/api/v1/intake/requests/{request_id}").json()["submitted_by"] == "synthetic-reviewer"
+    assert review(client, request_id).json()["decided_by"] == "synthetic-reviewer"
+    assert all(event["actor"] == "synthetic-reviewer" for event in client.get(f"/api/v1/intake/requests/{request_id}/audit-events").json()["items"])

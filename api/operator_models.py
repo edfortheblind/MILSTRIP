@@ -7,6 +7,21 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validato
 ValidationStatus = Literal["RECEIVED", "PROCESSING", "REQUIRES_REVIEW", "VALID", "REJECTED", "FAILED"]
 
 
+class HealthResponse(BaseModel):
+    status: str
+    database: str
+    detail: str | None = None
+
+
+class IntakeAcknowledgement(BaseModel):
+    request_id: str
+    status: ValidationStatus
+    received_at: datetime
+    records: int
+    rejected: int
+    requires_review: int
+
+
 class RequestSummary(BaseModel):
     request_id: str
     source_type: str

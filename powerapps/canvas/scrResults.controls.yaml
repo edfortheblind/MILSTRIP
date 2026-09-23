@@ -1,0 +1,132 @@
+- ResultsIcon:
+    Control: Image
+    Properties:
+      X: =24
+      Y: =16
+      Width: =64
+      Height: =64
+      Image: ='milstrip-app'
+- ResultsTitle:
+    Control: Label
+    Properties:
+      X: =104
+      Y: =16
+      Width: =Parent.Width-128
+      Height: =64
+      Text: ="Validation results"
+      Size: =24
+- ResultsMessage:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =84
+      Width: =Parent.Width-48
+      Height: =60
+      Text: =Coalesce(varMessage, "")
+- RequestIdentity:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =144
+      Width: =Parent.Width-48
+      Height: =42
+      Text: '="Request: " & varRequestId'
+- btnLoadResults:
+    Control: Classic/Button
+    Properties:
+      X: =24
+      Y: =200
+      Width: =210
+      Height: =44
+      Text: ="Load / refresh results"
+      OnSelect: '=Set(varBusy,true); IfError(
+
+        Set(varRequestDetail,MILSTRIPLocalDevAPI.GetIntakeRequest(varRequestId)); varRequestDetail,
+
+        Set(varMessage,"Results unavailable. Retained data may be stale; reload before reviewing."); Set(varLoadedRequest,Blank());
+        false,
+
+        Set(varRecordsPage,MILSTRIPLocalDevAPI.ListRecordResults(varRequestId,{limit:50})); varRecordsPage,
+
+        Set(varMessage,"Results unavailable. Retained data may be stale; reload before reviewing."); Set(varLoadedRequest,Blank());
+        false,
+
+        ClearCollect(colRecords,varRecordsPage.items); Set(varRecordsCursor,varRecordsPage.next_cursor); Set(varRecordPageCursor,Blank());
+        Set(varLoadedRequest,varRequestId); Set(varMessage,"Validation and review are separate. Approval does not
+        authorize delivery."); true); Set(varBusy,false)'
+      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+- btnNextRecords:
+    Control: Classic/Button
+    Properties:
+      X: =254
+      Y: =200
+      Width: =210
+      Height: =44
+      Text: ="Next results page"
+      OnSelect: '=Set(varBusy,true); IfError(
+
+        Set(varRecordsPage,MILSTRIPLocalDevAPI.ListRecordResults(varRequestId,{limit:50,cursor:varRecordsCursor}));
+        varRecordsPage,
+
+        Set(varMessage,"Next page failed. Existing results and cursor retained."); false,
+
+        Set(varRecordPageCursor,varRecordsCursor); ClearCollect(colRecords,varRecordsPage.items); Set(varRecordsCursor,varRecordsPage.next_cursor);
+        true); Set(varBusy,false)'
+      DisplayMode: =If(Coalesce(varBusy,false) || IsBlank(varRecordsCursor) || varLoadedRequest<>varRequestId,DisplayMode.Disabled,DisplayMode.Edit)
+- btnHistory:
+    Control: Classic/Button
+    Properties:
+      X: =484
+      Y: =200
+      Width: =210
+      Height: =44
+      Text: ="History"
+      OnSelect: =Navigate(scrHistory)
+      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+- btnBackToIntake:
+    Control: Classic/Button
+    Properties:
+      X: =714
+      Y: =200
+      Width: =210
+      Height: =44
+      Text: ="Intake"
+      OnSelect: =Navigate(scrIntake)
+      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+- galRecords:
+    Control: Gallery
+    Properties:
+      X: =24
+      Y: =260
+      Width: =Parent.Width-48
+      Height: =Parent.Height-280
+      Items: =If(varLoadedRequest=varRequestId,colRecords,Filter(colRecords,false))
+      TemplateSize: =150
+    Variant: Vertical
+    Children:
+    - RecordSummary:
+        Control: Label
+        Properties:
+          X: =0
+          Y: =0
+          Width: =Parent.TemplateWidth-220
+          Height: =50
+          Text: '="Record " & Text(ThisItem.record_sequence) & " | " & ThisItem.status & " | review: " & Coalesce(Text(ThisItem.latest_review.decision),"NONE")'
+    - RecordIssues:
+        Control: Label
+        Properties:
+          X: =0
+          Y: =50
+          Width: =Parent.TemplateWidth-220
+          Height: =85
+          Text: '=Concat(ThisItem.issues,issue_code & ": " & message,Char(10))'
+    - btnOpenReview:
+        Control: Classic/Button
+        Properties:
+          X: =Parent.TemplateWidth-215
+          Y: =0
+          Width: =210
+          Height: =44
+          Text: ="Inspect / review"
+          OnSelect: =Set(varRecord,ThisItem); Set(varMessage,""); Navigate(scrReview)
+          DisplayMode: =If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id),DisplayMode.Disabled,DisplayMode.Edit)

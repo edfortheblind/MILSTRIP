@@ -1,5 +1,14 @@
 # PostgreSQL Intelligence Platform Roadmap
 
+**Continuation (2026-09-23):** the canvas draft is now implemented and tested with
+synthetic data. The owner requested [two production operating periods](operations-guide/guide.md):
+published app on existing Azure SQL first, then PostgreSQL after migration
+acceptance, targeting end of Q4 2026. That plan preserves the two-month
+qualification gate below and distinguishes it from the migration project's
+30-day post-acceptance retention window. The sibling migration master's recorded
+SQL freeze must be reconciled before P2.1 writes; publication and cutover are not
+current facts.
+
 **Date:** 2026-09-21  
 **Decision:** PostgreSQL is the future intelligence and production platform. SQL
 Server remains operational until the final migration gate.  

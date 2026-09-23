@@ -2,6 +2,10 @@
 
 Date: 2026-09-23. Status: local operator API implemented and verified.
 
+Current continuation: dedicated local authentication and the expanded existing
+connector are implemented; see `LOCAL_AUTH_CONNECTOR_2026-09-23.md` for evidence
+and pending private credential, gateway and Studio acceptance steps.
+
 The owner approved implementation. Completion evidence is in
 `OPERATOR_API_IMPLEMENTATION_2026-09-23.md`; the contract is in
 `docs/OPERATOR_API_CONTRACT.md`. All four interfaces below are implemented.

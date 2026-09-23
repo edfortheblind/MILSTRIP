@@ -31,24 +31,14 @@ complete the parity gate. See `docs/MILSTRIP_LEGACY_FLOW_REVIEW.md`.
 
 ## Local Windows setup
 
-From PowerShell in the repository root:
+From PowerShell in the repository root, run `scripts/Set-LocalApiCredential.ps1`
+privately, then `scripts/Start-LocalApi.ps1`. No virtual-environment activation
+is required. See [the current SOP](../sop/local-api-development.md).
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r api\requirements.txt
-$env:MILSTRIP_DATABASE_URL = 'postgresql://<local-user>:<local-password>@localhost:<port>/trav3pl-psqldb-stage'
-python -m uvicorn api.app:app --reload --host 127.0.0.1 --no-proxy-headers
-```
-
-The verified local development target is PostgreSQL 18.6 on `localhost:5432`,
-database `trav3pl-psqldb-stage`. The connection probe succeeded with the
-owner-provided local role. The password is intentionally not documented here;
-use the workstation's approved PostgreSQL authentication mechanism.
-
-Do not commit the connection string. The placeholder above is intentionally
-not a working credential. Use the local PostgreSQL authentication mechanism
-already approved for the TAB development workstation.
+All API operations require Basic authentication; the authenticated username
+supplies intake and review audit identity. `MILSTRIP_LOCAL_REVIEWER` is obsolete.
+Keep the API and database on this laptop. Use the workstation's existing
+PostgreSQL authentication mechanism; never paste credentials into chat or Git.
 
 Apply the migration with a PostgreSQL client or approved database tool while
 connected to the intended local database:
@@ -118,11 +108,11 @@ and the owner-gated temporary-table handoff test.
 
 ## Local operator review
 
-For synthetic local review only, set `MILSTRIP_LOCAL_REVIEWER` to a local test
-identity before launching the service with the loopback command above. Review
-writes are disabled without that configuration. Actor is supplied by the server;
+For synthetic local review, configure the dedicated Basic credential privately
+and use the loopback launcher above. Actor is the authenticated API username;
 the client sends a decision, reason, command UUID and expected record version.
-Never expose this local mode through a proxy or shared endpoint as SSO.
+The old local-reviewer environment setting grants no access. This connection
+identity is not shared-user SSO.
 
 See `docs/OPERATOR_API_CONTRACT.md` for paging, status codes, retry semantics and
 the Power Apps screen/connector preparation contract. Review approval does not

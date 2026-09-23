@@ -1,5 +1,33 @@
 # New-session prompt
 
+## Current continuation (2026-09-23)
+
+The instructions below initiated a local authentication/connector increment.
+Before resuming, inspect the uncommitted changes and read
+`sop/local-api-development.md`, `docs/master.md` and `powerapps/canvas/README.md`.
+App ID supplied by owner: `7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`; reuse it.
+Basic authentication and seven Swagger operations are implemented locally;
+the old MILSTRIP_LOCAL_REVIEWER setting is obsolete. Password-validation and ACL
+retry problems were fixed; the owner confirmed private setup succeeded. The real
+authenticated API now runs on loopback port 8000 and missing/invalid credentials
+return 401. The owner confirmed local credential HTTP 200 and supplied a gateway
+GetHealth HTTP 200 screenshot after replacing the saved connection. The owner
+then saved the expanded connector and supplied a Test screenshot showing all
+seven operations. `scripts/Test-LocalWorkflow.ps1` passed the full local HTTP
+workflow and synthetic cleanup. Continue canvas implementation; the owner prefers
+the standalone test to repeated individual Swagger tests. Power Platform
+application-operation acceptance is deferred to canvas integration.
+The agent applied the four canvas control sets to the existing app using Windows
+desktop automation and saved the unpublished draft. Live synthetic canvas intake,
+results, review and history passed. Read docs/delivery/CANVAS_IMPLEMENTATION_2026-09-23.md
+for evidence and remaining acceptance. New commit/push is not yet approved.
+
+Credential storage now uses the Git-ignored, access-restricted root `.cred/`
+folder. The owner-supplied credential text and API verifier were moved there;
+launcher/runtime paths were updated and the API restarted. Passwords are unchanged.
+
+## Original implementation request
+
 Copy the block below into a new coding session opened in this MILSTRIP repository.
 
 ```text

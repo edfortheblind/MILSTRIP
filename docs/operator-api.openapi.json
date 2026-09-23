@@ -106,6 +106,82 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "HealthResponse": {
+        "properties": {
+          "database": {
+            "title": "Database",
+            "type": "string"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "database"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "IntakeAcknowledgement": {
+        "properties": {
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
+          "records": {
+            "title": "Records",
+            "type": "integer"
+          },
+          "rejected": {
+            "title": "Rejected",
+            "type": "integer"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          },
+          "requires_review": {
+            "title": "Requires Review",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "RECEIVED",
+              "PROCESSING",
+              "REQUIRES_REVIEW",
+              "VALID",
+              "REJECTED",
+              "FAILED"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "status",
+          "received_at",
+          "records",
+          "rejected",
+          "requires_review"
+        ],
+        "title": "IntakeAcknowledgement",
+        "type": "object"
+      },
       "IntakeRequest": {
         "properties": {
           "source_id": {
@@ -622,39 +698,46 @@
         "title": "ValidationIssue",
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "basic-auth": {
+        "scheme": "basic",
+        "type": "http"
+      }
     }
   },
   "info": {
     "title": "MILSTRIP API",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "openapi": "3.1.0",
   "paths": {
     "/api/v1/health": {
       "get": {
-        "operationId": "health_api_v1_health_get",
+        "operationId": "GetHealth",
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "title": "Response Health Api V1 Health Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/HealthResponse"
                 }
               }
             },
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "basic-auth": []
+          }
+        ],
         "summary": "Health"
       }
     },
     "/api/v1/intake/requests": {
       "get": {
-        "operationId": "list_requests_api_v1_intake_requests_get",
+        "operationId": "ListIntakeRequests",
         "parameters": [
           {
             "in": "query",
@@ -732,13 +815,18 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "basic-auth": []
+          }
+        ],
         "summary": "List Requests",
         "tags": [
           "operator"
         ]
       },
       "post": {
-        "operationId": "create_intake_request_api_v1_intake_requests_post",
+        "operationId": "CreateIntakeRequest",
         "requestBody": {
           "content": {
             "application/json": {
@@ -754,9 +842,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Create Intake Request Api V1 Intake Requests Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/IntakeAcknowledgement"
                 }
               }
             },
@@ -773,12 +859,17 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "basic-auth": []
+          }
+        ],
         "summary": "Create Intake Request"
       }
     },
     "/api/v1/intake/requests/{request_id}": {
       "get": {
-        "operationId": "get_intake_request_api_v1_intake_requests__request_id__get",
+        "operationId": "GetIntakeRequest",
         "parameters": [
           {
             "in": "path",
@@ -795,9 +886,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Intake Request Api V1 Intake Requests  Request Id  Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/RequestSummary"
                 }
               }
             },
@@ -814,12 +903,17 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "basic-auth": []
+          }
+        ],
         "summary": "Get Intake Request"
       }
     },
     "/api/v1/intake/requests/{request_id}/audit-events": {
       "get": {
-        "operationId": "list_events_api_v1_intake_requests__request_id__audit_events_get",
+        "operationId": "ListAuditEvents",
         "parameters": [
           {
             "in": "path",
@@ -882,6 +976,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "basic-auth": []
+          }
+        ],
         "summary": "List Events",
         "tags": [
           "operator"
@@ -890,7 +989,7 @@
     },
     "/api/v1/intake/requests/{request_id}/records": {
       "get": {
-        "operationId": "list_records_api_v1_intake_requests__request_id__records_get",
+        "operationId": "ListRecordResults",
         "parameters": [
           {
             "in": "path",
@@ -953,6 +1052,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "basic-auth": []
+          }
+        ],
         "summary": "List Records",
         "tags": [
           "operator"
@@ -961,7 +1065,7 @@
     },
     "/api/v1/records/{record_id}/review-decisions": {
       "post": {
-        "operationId": "review_record_api_v1_records__record_id__review_decisions_post",
+        "operationId": "CreateReviewDecision",
         "parameters": [
           {
             "in": "path",
@@ -1015,6 +1119,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "basic-auth": []
+          }
+        ],
         "summary": "Review Record",
         "tags": [
           "operator"

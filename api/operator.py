@@ -1,13 +1,10 @@
 """Local operator reads and auditable review commands; no legacy writes."""
 import base64
 import binascii
-import ipaddress
-import os
 from typing import Annotated
 
 import psycopg
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from psycopg.conninfo import conninfo_to_dict
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from pydantic import ValidationError
@@ -50,7 +47,7 @@ def _scoped_cursor(value, model, request_id):
     return decoded
 
 
-@router.get("/intake/requests", response_model=RequestPage)
+@router.get("/intake/requests", response_model=RequestPage, operation_id="ListIntakeRequests")
 def list_requests(limit: Limit = 50, status: ValidationStatus | None = None, cursor: Cursor = None):
     boundary = _decode(cursor, RequestCursor)
     if boundary is not None and boundary.status != status:
@@ -78,7 +75,7 @@ def list_requests(limit: Limit = 50, status: ValidationStatus | None = None, cur
     return {"items": items, "next_cursor": next_cursor}
 
 
-@router.get("/intake/requests/{request_id}/records", response_model=RecordPage)
+@router.get("/intake/requests/{request_id}/records", response_model=RecordPage, operation_id="ListRecordResults")
 def list_records(request_id: str, limit: Limit = 50, cursor: Cursor = None):
     boundary = _scoped_cursor(cursor, RecordCursor, request_id)
     with connection() as database, database.cursor(row_factory=dict_row) as db:
@@ -108,7 +105,7 @@ def list_records(request_id: str, limit: Limit = 50, cursor: Cursor = None):
     return {"items": items, "next_cursor": next_cursor}
 
 
-@router.get("/intake/requests/{request_id}/audit-events", response_model=EventPage)
+@router.get("/intake/requests/{request_id}/audit-events", response_model=EventPage, operation_id="ListAuditEvents")
 def list_events(request_id: str, limit: Limit = 50, cursor: Cursor = None):
     boundary = _scoped_cursor(cursor, EventCursor, request_id)
     query = """SELECT a.event_id, a.aggregate_type, a.aggregate_id, a.event_type,
@@ -132,26 +129,10 @@ def list_events(request_id: str, limit: Limit = 50, cursor: Cursor = None):
     return {"items": items, "next_cursor": next_cursor}
 
 
-def _local_reviewer(request):
-    reviewer = os.getenv("MILSTRIP_LOCAL_REVIEWER", "").strip()
-    if not reviewer or len(reviewer) > 200:
-        raise HTTPException(status_code=503, detail="Local reviewer is not configured")
-    try:
-        peer_is_local = request.client is not None and ipaddress.ip_address(request.client.host).is_loopback
-        host = conninfo_to_dict(os.getenv("MILSTRIP_DATABASE_URL", "")).get("host")
-    except ValueError:
-        peer_is_local, host = False, None
-    except psycopg.Error as error:
-        raise HTTPException(status_code=503, detail="Database unavailable") from error
-    if not peer_is_local or host not in {"localhost", "127.0.0.1", "::1"}:
-        raise HTTPException(status_code=403, detail="Review commands are restricted to local development")
-    return reviewer
-
-
 @router.post("/records/{record_id}/review-decisions", status_code=201,
-             response_model=ReviewDecision, responses={200: {"model": ReviewDecision}})
+             response_model=ReviewDecision, responses={200: {"model": ReviewDecision}}, operation_id="CreateReviewDecision")
 def review_record(record_id: str, command: ReviewCommand, request: Request, response: Response):
-    reviewer = _local_reviewer(request)
+    reviewer = request.state.reviewer
     with connection() as database, database.cursor(row_factory=dict_row) as db:
         db.execute("""SELECT request_id, status, review_version FROM milstrip_app.milstrip_record
             WHERE record_id=%s FOR UPDATE""", (record_id,))

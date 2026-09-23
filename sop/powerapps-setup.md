@@ -3,6 +3,10 @@
 **Date:** 2026-09-23. **Scope:** successful development setup through a tested
 Power Apps custom connector calling the API on the owner's laptop.
 
+**Current continuation:** [Authenticated local API](local-api-development.md).
+Sections 1-12 record the original health-only milestone; the new authentication
+and seven-operation connector supersede that temporary process.
+
 This procedure records the working configuration only. It does not include
 failed attempts. Existing resources should be reused when resuming this project.
 
@@ -237,5 +241,64 @@ Next implementation: authenticate the API, derive the reviewer identity on the
 server, add application connector actions, then build the intake/results/review/
 history screens. Verify CLI access before promising unattended tenant changes.
 
-Use the [new-session prompt](restart-prompt.md). No operational legacy writes,
+Use the [new-session prompt](../restart-prompt.md). No operational legacy writes,
 production deployment or SQL Server retirement is part of this setup.
+
+## 13. Locate the saved canvas app and record its identity
+
+On 2026-09-23, the owner supplied the saved canvas app ID:
+`7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`. Reuse this app. The expected name is
+`MILSTRIP Intake Dev`; its displayed name and solution membership still need
+confirmation. This owner-provided ID is not an automated tenant readback.
+
+1. Open [Power Apps](https://make.powerapps.com) and select the organization's
+   existing **Default** environment in the top bar.
+2. Select **Apps** and locate **MILSTRIP Intake Dev**.
+3. Select the app's **ellipsis (...) → Details** and copy **App ID**.
+4. Match it to `7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82` before editing.
+5. Select **Solutions → MILSTRIP → Objects** and check whether this canvas
+   app is listed. Record membership separately from whether the app is saved.
+6. If it is saved but absent from the solution, use **Add existing → App →
+   Canvas app**, select this same app, and add it. Do not create a second app.
+7. If Apps does not list it, keep any open Studio tab open and verify the
+   environment and save state before creating or replacing anything.
+
+No password, token, connection credential or gateway recovery key is needed
+to report the app ID. Apply the supplied icon when editing this existing app.
+
+## 14. Implemented canvas draft and connection correction (2026-09-23)
+
+The agent operated the existing Studio session directly using Windows desktop
+UI automation. The existing app ID and displayed name were verified, four
+screens were added, the original Screen1 was retained, and the same app was saved
+as an unpublished draft. See [execution evidence](../docs/delivery/CANVAS_IMPLEMENTATION_2026-09-23.md).
+
+When GetHealth works in the connector Test tab but the app returns 401:
+
+1. Open Connections in the same Default environment and inspect each existing
+   MILSTRIP connection's creation time, gateway and **Apps using this connection**.
+2. Do not assume identical display names identify the same connection. In this
+   session, Studio used the 10:56 AM connection while the successful connector
+   test used the separate 1:20 PM connection.
+3. Validate the private credential locally using `scripts/check_api_credentials.py`.
+   Never paste it into chat, source files or screenshots.
+4. Edit the existing connection actually used by the app and update its Basic
+   username/password to match the local API. Preserve MILSTRIP-DEV-LAPTOP.
+5. Save the existing app. In preview, exercise a synthetic intake, load results,
+   review the valid record, verify approval is disabled for the rejected record,
+   then load audit history and confirm the authenticated actor.
+6. Save without publishing. Use **Save menu ? Download a copy ? Download** and
+   complete the browser's native file dialog. Verify the resulting `.msapp`
+   archive exists; clicking Download alone is not evidence of a saved backup.
+
+The canvas result/review/history source files use the connector's Studio-generated
+parameter order and explicitly evaluate assigned connector results inside IfError.
+This prevents a stored error from being followed by an incorrect success message.
+
+The original image is now selected as the app icon. The agent saved and exited
+Studio to release its editing lock, then added this existing app to MILSTRIP using
+**Add existing ? App ? Canvas app ? Outside Dataverse**. Solution Objects readback
+confirmed both MILSTRIP Intake Dev and the original connector. The functional
+`.msapp` backup is verified under `%LOCALAPPDATA%\MILSTRIP\backups`; it predates
+icon selection and solution association. Synthetic acceptance rows were cleaned
+up with exact-ID/source/actor checks. The draft remains unpublished.

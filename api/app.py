@@ -7,15 +7,17 @@ from typing import Any
 from uuid import uuid4
 
 import psycopg
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from milstrip.service import process_text
 from api.database import connect as _connect
 from api.operator import router as operator_router
+from api.auth import authenticate
+from api.operator_models import IntakeAcknowledgement, RequestSummary, HealthResponse
 
 
-app = FastAPI(title="MILSTRIP API", version="0.2.0")
+app = FastAPI(title="MILSTRIP API", version="0.3.0", dependencies=[Depends(authenticate)])
 app.include_router(operator_router)
 
 
@@ -26,7 +28,7 @@ class IntakeRequest(BaseModel):
     submitted_by: str | None = None
 
 
-@app.get("/api/v1/health")
+@app.get("/api/v1/health", response_model=HealthResponse, operation_id="GetHealth")
 def health() -> dict[str, str]:
     try:
         with _connect() as connection:
@@ -38,8 +40,10 @@ def health() -> dict[str, str]:
     return {"status": "OK", "database": "AVAILABLE"}
 
 
-@app.post("/api/v1/intake/requests", status_code=201)
-def create_intake_request(request: IntakeRequest) -> dict[str, Any]:
+@app.post("/api/v1/intake/requests", status_code=201, response_model=IntakeAcknowledgement, operation_id="CreateIntakeRequest")
+def create_intake_request(request: IntakeRequest, http_request: Request = None) -> dict[str, Any]:
+    if http_request is not None:
+        request = request.model_copy(update={"submitted_by": http_request.state.reviewer})
     request_id = str(uuid4())
     source_sha256 = hashlib.sha256(request.source_text.encode("utf-8")).hexdigest()
     try:
@@ -131,7 +135,7 @@ def create_intake_request(request: IntakeRequest) -> dict[str, Any]:
         raise HTTPException(status_code=503, detail="Database unavailable") from error
 
 
-@app.get("/api/v1/intake/requests/{request_id}")
+@app.get("/api/v1/intake/requests/{request_id}", response_model=RequestSummary, operation_id="GetIntakeRequest")
 def get_intake_request(request_id: str) -> dict[str, Any]:
     try:
         with _connect() as connection:

@@ -1,5 +1,11 @@
 # MILSTRIP Intake Tool — Windows Operator SOP
 
+**Scope clarification (2026-09-23):** this file describes the accepted CLI tool.
+For the implemented Power Apps draft, use the [current canvas operator SOP and
+chart](operations-guide/guide.md#4-end-user-sop-current-development-app).
+The [visual package](operations-guide/index.html) separates current behavior from
+the proposed published Phase 2 Azure SQL / PostgreSQL periods.
+
 **Current release:** Phase 1 local validation only
 
 **Future release:** Phase 2 Rainbow CSV creation and secure transfer

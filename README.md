@@ -7,12 +7,17 @@ of it (`download_ship940` → ADF → `ShipMaster` → Boomi → SCALE).
 
 ## Status
 
-**Phase 1 accepted; Phase 2 planned** — the current release is a local parsing
-CLI with zero database/network access. Phase 2 will create the final Rainbow
-CSV and deliver it to Rainbow's FTP endpoint after its layout and connectivity
-contracts are supplied. The application database is now Phase 3. See
-[`docs/master.md`](docs/master.md) for current status and
-[`docs/ROADMAP.md`](docs/ROADMAP.md) for what comes next.
+**2026-09-23: CLI accepted; canvas development draft implemented, unpublished.**
+The four-screen app uses the existing connector/gateway, authenticated laptop API
+and local PostgreSQL metadata. Synthetic intake, review and history passed;
+shared-user authorization and remaining canvas acceptance are still open.
+
+Start with the [visual operating guide](docs/operations-guide/index.html) or
+[PDF](docs/operations-guide/MILSTRIP-current-and-phase2.pdf): current functional
+flow, technical architecture, user SOP and the proposed Phase 2 periods
+(existing Azure SQL, then production PostgreSQL by the end-Q4 target).
+Production delivery/cutover remain gated. See [`docs/master.md`](docs/master.md)
+for status and [`docs/ROADMAP.md`](docs/ROADMAP.md) for historical phase context.
 
 ## Quick start
 

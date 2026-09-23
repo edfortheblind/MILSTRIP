@@ -190,3 +190,83 @@ The owner prefers short, precise labeled progress updates and instructions based
 on the actual current screen. Continue authorized local implementation without
 repeated approval requests; do not interpret prior approvals as unrestricted
 production or destructive-operation authorization.
+
+## 11. Authenticated API continuation and saved app identity
+
+The owner requested implementation from the restart prompt while reusing the
+existing solution, connector and gateway. On 2026-09-23 the owner supplied app
+ID `7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82` and requested that it and the lookup
+steps be saved in the SOP. Section 13 of `powerapps-setup.md` records them;
+solution membership remains unconfirmed.
+
+The agent implemented dedicated Basic authentication, server-derived audit
+identity, private salted-verifier setup, a loopback API launcher and seven
+typed connector operations. Four canvas control sets are prepared locally;
+they have not been executed in Studio or applied to the saved app.
+
+The first owner credential attempt rejected a password shorter than the stated
+minimum. Re-running encountered a Set-Acl SeSecurityPrivilege error. The setup
+now uses DACL-only icacls with permission verification; applying it twice on
+the actual private directory succeeded without elevation. Password validation
+now supports retries without losing the username. No credential was present
+when diagnosing the failure; password values were never requested in chat.
+
+The current procedure is `local-api-development.md`. Authentication via the
+existing gateway and canvas acceptance remain owner-assisted steps pending
+private setup and authenticated tenant access. No new shared-history approval
+or production authorization was inferred from this request.
+
+The owner then replied "configured". The agent verified that a private verifier
+exists without displaying its contents, replaced the identified temporary
+health-only process with the authenticated launcher, and confirmed loopback
+port 8000 serves API version 0.3.0 with seven operations. Missing and invalid
+credentials returned 401. The gateway service remains Running. The private
+password is unknown to the agent; successful gateway authentication awaits
+the owner's test of the existing connector connection.
+
+## Authenticated gateway health accepted (2026-09-23)
+
+The owner ran `check_api_credentials.py` privately and supplied its HTTP 200
+result. The saved gateway connection still returned 401. The owner then followed
+these steps: Test -> New connection, enter the same dedicated credential,
+select MILSTRIP-DEV-LAPTOP, create the connection, refresh the Test connection
+list, select the new connection and run GetHealth. The supplied screenshot shows
+GetHealth success and HTTP 200 on the real authenticated API. Connector, gateway,
+solution and environment were reused; only the saved connection was replaced.
+The old connection was not deleted as part of these instructions.
+
+The screenshot still shows **Operations (1)**. Update the existing connector
+with `powerapps/connectors/MILSTRIP-Local-Dev-API.swagger.json` next. The local
+artifact contains seven operations and its runtime projection check passed.
+Gateway tests of application routes and Studio validation remain pending.
+
+## Saved seven-operation connector and standalone workflow
+
+The owner saved the generated definition into the existing connector and supplied
+a Test-tab screenshot showing Operations (7) and the selected working connection.
+The owner requested a standalone test and continuation with implementation rather
+than further individual Swagger tests. The agent added and ran
+`scripts/Test-LocalWorkflow.ps1`: all seven API operations and synthetic workflow
+checks passed, with cleanup verified. The test used a temporary local server and
+identity; the existing gateway API was left running. Canvas integration is next,
+using the existing saved app and connector connection. No further connector setup
+or individual Swagger test loop is required before that implementation.
+
+## Canvas connector binding confirmed
+
+The owner added the connector to the existing MILSTRIP Intake Dev app. Studio
+confirmed the data source was added and displayed its identifier as
+`MILSTRIPLocalDevAPI`. The agent updated all prepared control sets to match.
+The visible Screen1 has a layout scaffold; preserve it while adding the four
+blank implementation screens. Icon import and Studio paste/validation are next.
+
+## 2026-09-23 ? Direct canvas implementation
+
+After the owner requested implementation without manual UI handoffs, the agent
+verified local desktop automation and implemented the four screens in the existing
+app. No additional ChatGPT installation was needed. Runtime testing exposed a
+wrong existing connection and Power Fx error propagation issues; both were
+corrected. Synthetic intake, results, review, invalid approval guard, request
+listing and audit history passed through the existing gateway. The saved draft
+remains unpublished. Details and remaining acceptance are recorded in
+[canvas execution evidence](../docs/delivery/CANVAS_IMPLEMENTATION_2026-09-23.md).

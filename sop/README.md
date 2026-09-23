@@ -1,9 +1,17 @@
 # MILSTRIP procedures and session handoff
 
+- [Current visual workflow, architecture and end-user SOP](../docs/operations-guide/index.html):
+  implemented canvas behavior plus the proposed two-period Phase 2 plan.
+- [Printable operating guide and Phase 2 plan](../docs/operations-guide/MILSTRIP-current-and-phase2.pdf).
+
 - [PowerApps setup](powerapps-setup.md): the successful, step-by-step laptop setup.
 - [Conversation record](conversation-record.md): decisions, work, verification,
   troubleshooting conclusions and remaining scope from this conversation.
-- [New-session prompt](restart-prompt.md): copy into a new coding session.
+- [New-session prompt](../restart-prompt.md): copy into a new coding session.
+- [Authenticated local API](local-api-development.md): private credentials,
+  repeatable launcher, existing connector update and saved-app continuation.
+- [Standalone workflow test](standalone-workflow-test.md): one-command local
+  acceptance test and continuation to canvas implementation.
 
 Prepared 2026-09-23. These documents record the actual existing Default
 environment setup and supersede the separate Developer-environment recommendation

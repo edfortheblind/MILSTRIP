@@ -1,0 +1,3 @@
+# Documentation build only; no application runtime dependency.
+Markdown==3.10.3
+playwright==1.63.0

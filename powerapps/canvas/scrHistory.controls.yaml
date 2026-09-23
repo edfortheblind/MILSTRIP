@@ -1,0 +1,105 @@
+- HistoryIcon:
+    Control: Image
+    Properties:
+      X: =24
+      Y: =16
+      Width: =64
+      Height: =64
+      Image: ='milstrip-app'
+- HistoryTitle:
+    Control: Label
+    Properties:
+      X: =104
+      Y: =16
+      Width: =Parent.Width-128
+      Height: =64
+      Text: ="Audit history"
+      Size: =24
+- HistoryMessage:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =84
+      Width: =Parent.Width-48
+      Height: =60
+      Text: =Coalesce(varMessage, "")
+- HistoryRequest:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =144
+      Width: =Parent.Width-48
+      Height: =42
+      Text: '="Request: " & varRequestId'
+- btnLoadHistory:
+    Control: Classic/Button
+    Properties:
+      X: =24
+      Y: =200
+      Width: =210
+      Height: =44
+      Text: ="Load / refresh history"
+      OnSelect: '=Set(varBusy,true); IfError(
+
+        Set(varEventsPage,MILSTRIPLocalDevAPI.ListAuditEvents(varRequestId,{limit:50})); varEventsPage,
+
+        Set(varMessage,"History unavailable. Reload to retrieve current events."); Set(varHistoryRequest,Blank());
+        false,
+
+        ClearCollect(colEvents,varEventsPage.items); Set(varEventsCursor,varEventsPage.next_cursor); Set(varHistoryRequest,varRequestId);
+        Set(varMessage,""); true); Set(varBusy,false)'
+      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+- btnMoreHistory:
+    Control: Classic/Button
+    Properties:
+      X: =254
+      Y: =200
+      Width: =210
+      Height: =44
+      Text: ="More history"
+      OnSelect: '=Set(varBusy,true); IfError(
+
+        Set(varEventsPage,MILSTRIPLocalDevAPI.ListAuditEvents(varRequestId,{limit:50,cursor:varEventsCursor}));
+        varEventsPage,
+
+        Set(varMessage,"Next history page failed. Retry retains the cursor."); false,
+
+        Collect(colEvents,varEventsPage.items); Set(varEventsCursor,varEventsPage.next_cursor); true); Set(varBusy,false)'
+      DisplayMode: =If(Coalesce(varBusy,false) || IsBlank(varEventsCursor) || varHistoryRequest<>varRequestId,DisplayMode.Disabled,DisplayMode.Edit)
+- btnHistoryBack:
+    Control: Classic/Button
+    Properties:
+      X: =484
+      Y: =200
+      Width: =210
+      Height: =44
+      Text: ="Results"
+      OnSelect: =Navigate(scrResults)
+      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+- galHistory:
+    Control: Gallery
+    Properties:
+      X: =24
+      Y: =260
+      Width: =Parent.Width-48
+      Height: =Parent.Height-280
+      Items: =If(varHistoryRequest=varRequestId,colEvents,Filter(colEvents,false))
+      TemplateSize: =132
+    Variant: Vertical
+    Children:
+    - EventSummary:
+        Control: Label
+        Properties:
+          X: =0
+          Y: =0
+          Width: =Parent.TemplateWidth
+          Height: =44
+          Text: =Text(ThisItem.occurred_at) & " | " & ThisItem.event_type & " | " & Coalesce(ThisItem.actor, "")
+    - EventData:
+        Control: Label
+        Properties:
+          X: =0
+          Y: =46
+          Width: =Parent.TemplateWidth
+          Height: =80
+          Text: '=ThisItem.aggregate_type & ": " & ThisItem.aggregate_id & " | event " & Text(ThisItem.event_id)'
