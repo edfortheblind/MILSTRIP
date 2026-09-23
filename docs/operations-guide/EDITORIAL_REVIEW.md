@@ -1,28 +1,46 @@
-# Independent editorial review — September 23, 2026
+# Editorial review — web edition 1.2.0
 
-Requested by the owner: a third-eye, holistic review to reduce clutter and make
-the guide easier and more enjoyable to read. A separate `editorial_audit` agent
-reviewed the original guide and current UI controls independently of the author.
-This is editorial/UX review, not the project's independent production Audit.
+**Date:** September 23, 2026. The owner requested professional operator
+instructions without slogans, repeated caveats or lengthy demonstration prose.
 
-| Recommendation | Applied change |
+The `principal_sop_editor` agent rewrote the guide and generator text. A separate
+`acknowledgement_review` agent checked the procedure, acknowledgement semantics
+and all four real screenshots. These are AI editorial roles, not a claim of
+human credentials or the project's independent production Audit.
+
+## Changes
+
+| Finding | Revision |
 |---|---|
-| Lead with the reader's task | Three current/pending/next cards, then six action steps |
-| Separate successful use from troubleshooting | Four descriptive recovery disclosures; exact UI button names retained |
-| Distinguish two kinds of retry | Intake source-ID reconciliation remains separate from retrying the same review command |
-| Reduce competing audiences | Operator journey first, architecture and Phase 2 later; detailed engineering notes retained separately |
-| Keep status and outcomes honest | Unpublished DEV, shared audit actor, pending UI acceptance and approval-not-delivery remain visible |
-| Make diagrams usable on phones | Full-size modal viewer with keyboard close; embedded SVG download and prose equivalents |
-| Make the file independently shareable | Inline assets, no local/private evidence links, public documentation-only release |
-| Remove identifying deployment details | No personal names, tenant/app IDs, exact host/database identities, gateway machine names or credential paths in public artifacts |
-| Improve print use | Expanded details in the 12-page complete PDF; separate two-page SOP; no blanket section page breaks |
-| Preserve the production decisions | Freeze/baseline reconciliation, one route/writer, two-month qualification and 30-day retention kept |
+| Repeated framing before the procedure | Removed the slogan, three status cards, duplicate jump links and repeated footer caveats |
+| Competing operator and engineering audiences | Retained six actions beside four screens; moved recovery and technical planning into disclosures |
+| Confirmation insufficiently explained | Distinguished intake storage, production handoff and downstream receipt; added the current receipt to Results |
+| Procedure/chart numbering differed | Aligned the operator diagram with the six illustrated steps |
+| Counts could imply outstanding review work | Labeled receipt counts **Validation at intake** and **Flagged for review** |
+| Production lookup scope overstated | Replaced stock-check wording with item/address lookup wording |
+| Receipt diagram could imply all handoff outcomes proceed | Labeled the downstream arrow **accepted handoff**; receipt records accepted/rejected separately from shipment |
+| Repeated editing required owner intervention | Added the reusable [editorial standard](EDITORIAL_STANDARD.md), including size limits and a separate publication review |
 
-Tone uses short action verbs, expected outcomes and useful references rather than
-jokes or game-like approval language. The full internal plan was preserved instead
-of deleting implementation evidence to achieve a shorter reading edition.
+## Measured reduction
 
-Final revision review: **PASS, no must-fix findings.** The agent checked the
-revised prose, rendered desktop preview and quick-SOP PDF. Both optional
-improvements were applied: recovery cases start together on SOP page 2, and the
-validation glossary includes format and business-rule checks.
+Both editions were rendered from Markdown with the same parser and counted with
+`\b[\w]+(?:[-’'][\w]+)*\b`. Counts include headings, table cells, image captions,
+disclosure summaries and disclosed prose. SVG labels and page chrome are excluded.
+The baseline is the guide at source commit
+`b45c6f2c0f002ea0e33ee0c8e182b03461c39b69`.
+
+| Measure | Before | Edition 1.2.0 |
+|---|---:|---:|
+| Complete reading edition | 1,601 words | 876 words |
+| Reduction | — | 45.3% |
+| Visible operator and overview | — | 345 words |
+| Complete page with disclosures closed | — | 464 words |
+
+The independent review passed the procedure and four captures. Its terminology
+and diagram findings above were applied. The rebuilt page passed screenshot,
+step, chart, interaction, text-bound and responsive-layout checks. The complete
+PDF has **12 pages**; the illustrated SOP has **four pages**.
+
+Current receipt evidence and remaining production contracts are documented in the
+[acknowledgement design](../delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md).
+Production integration acceptance remains outside this editorial review.

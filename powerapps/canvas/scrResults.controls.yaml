@@ -29,13 +29,22 @@
       X: =24
       Y: =144
       Width: =Parent.Width-48
-      Height: =42
-      Text: '="Request: " & varRequestId'
+      Height: =110
+      Size: =14
+      Text: >-
+        ="Request: " & varRequestId & Char(10) &
+        If(!IsBlank(varAck.request_id) && varAck.request_id=varRequestId,
+        "Intake saved | Received: " & Text(varAck.received_at,DateTimeFormat.ShortDateTime) & Char(10) &
+        "Validation at intake: " & Text(varAck.records) & " records | " & Text(varAck.rejected) & " rejected | " &
+        Text(varAck.requires_review) & " flagged for review | Delivery: not connected",
+        If(!IsBlank(varRequestDetail.request_id) && varRequestDetail.request_id=varRequestId,
+        "Intake saved | Received: " & Text(varRequestDetail.received_at,DateTimeFormat.ShortDateTime) & Char(10) &
+        "Delivery: not connected", "Load results to confirm the saved intake."))
 - btnLoadResults:
     Control: Classic/Button
     Properties:
       X: =24
-      Y: =200
+      Y: =272
       Width: =210
       Height: =44
       Text: ="Load / refresh results"
@@ -52,14 +61,13 @@
         false,
 
         ClearCollect(colRecords,varRecordsPage.items); Set(varRecordsCursor,varRecordsPage.next_cursor); Set(varRecordPageCursor,Blank());
-        Set(varLoadedRequest,varRequestId); Set(varMessage,"Validation and review are separate. Approval does not
-        authorize delivery."); true); Set(varBusy,false)'
+        Set(varLoadedRequest,varRequestId); Set(varMessage,""); true); Set(varBusy,false)'
       DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
 - btnNextRecords:
     Control: Classic/Button
     Properties:
       X: =254
-      Y: =200
+      Y: =272
       Width: =210
       Height: =44
       Text: ="Next results page"
@@ -77,7 +85,7 @@
     Control: Classic/Button
     Properties:
       X: =484
-      Y: =200
+      Y: =272
       Width: =210
       Height: =44
       Text: ="History"
@@ -87,7 +95,7 @@
     Control: Classic/Button
     Properties:
       X: =714
-      Y: =200
+      Y: =272
       Width: =210
       Height: =44
       Text: ="Intake"
@@ -97,9 +105,9 @@
     Control: Gallery
     Properties:
       X: =24
-      Y: =260
+      Y: =332
       Width: =Parent.Width-48
-      Height: =Parent.Height-280
+      Height: =Parent.Height-352
       Items: =If(varLoadedRequest=varRequestId,colRecords,Filter(colRecords,false))
       TemplateSize: =150
     Variant: Vertical

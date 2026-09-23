@@ -1,32 +1,31 @@
-# App screen capture evidence — September 23, 2026
+# App screen evidence — edition 1.2.0
 
-These four PNGs were captured directly from the running existing MILSTRIP Intake
-Dev app in Power Apps Studio Preview. Capture bounds include only the app canvas;
-browser tabs, tenant identifiers, profile controls and the Windows taskbar were
-excluded at capture time. No UI reconstruction or pixel editing was used.
+**September 23, 2026.** Four fresh PNGs were captured directly from the existing
+MILSTRIP Intake Dev app in Power Apps Studio Preview. The captures contain only
+the app canvas; no browser tabs, tenant/profile controls or taskbar. No UI
+reconstruction or pixel editing was used.
 
 | Image | Visible state | SOP steps |
 |---|---|---|
-| 01-intake.png | Synthetic source pasted, Submit intake enabled | 1–2 |
-| 02-results.png | Record 1 VALID; record 2 REJECTED with a short-record issue | 3 |
-| 03-review.png | APPROVED saved, review version 2, canonical length 80 | 4–5 |
-| 04-history.png | Matching REVIEW_DECIDED events, actor and record identifiers | 6 |
+| 01-intake.png | Synthetic source entered; Submit intake enabled | 1–2 |
+| 02-results.png | Persistent saved receipt; one VALID and one REJECTED record | 3 |
+| 03-review.png | APPROVED saved at version 1; canonical length 80 | 4–5 |
+| 04-history.png | Matching REVIEW_DECIDED event and record identifier | 6 |
 
-The sample used the known synthetic fixture pattern, fictitious requisition
-`ZZ999926600002`, and a header explicitly identifying an SOP screen demonstration.
-Request `852354ab-e97e-4315-b7d1-410beef6d756` was created only for these captures.
-The first demonstration review recorded REJECTED at version 1; the second recorded
-APPROVED at version 2. Both events therefore appear in History. History displays
-event metadata, not the APPROVED/REJECTED payload; the SOP makes that distinction.
+The capture fixture uses fictitious requisition `ZZ999926600003`, source header
+`SYNTHETIC RECEIPT DEMO 2026-09-23`, and request
+`660ee537-9552-44ad-bfc6-165f83873954`. There is one APPROVED review at version 1.
+History shows event metadata; the decision is read back in Review/Results.
 
-The final decision/version was read back from the approved local application
-database. Cleanup required the exact request ID, original synthetic source text,
-PASTE source type, application actor, two expected records and both expected
-review versions. Only this request and its related application metadata were
-removed, then absence was verified. No legacy operational table was written.
+The implementer verified the saved decision against the approved local database.
+Cleanup matched the exact request, source, actor, source type, record count and
+review version before removing that request and its related application rows.
+The separate zero-candidate receipt test
+`24cc56d9-ceec-4f72-8206-f90d17cf1525` was removed with equivalent fixture guards.
+Absence of both requests was verified. No legacy operational table was written.
 
-A separate agent visually reviewed all four images and checked the captions
-against the actual controls. No credentials or personal/tenant chrome is visible.
-The app remains unpublished; no screen formulas or tenant configuration changed.
-
-The website embeds these images as data URLs; readers need no image downloads.
+The existing app's receipt formulas were updated and saved. Studio reported all
+changes saved at **16:35:37**; the app remains **unpublished**. A separate
+`acknowledgement_review` agent checked the four images against the instructions.
+No credentials or personal/tenant chrome are visible. The website embeds the
+images, so readers do not download them separately.

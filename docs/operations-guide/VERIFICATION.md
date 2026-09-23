@@ -104,3 +104,43 @@ Live readback passed anonymous HTTPS 200 and exact committed-byte equality.
 All four screenshots loaded at their expected resolution; all four full-size
 viewers, six-step structure and desktop/mobile layout passed in an isolated
 browser with no JavaScript errors. GitHub Pages reported the new commit built.
+
+## Intake receipt and editorial revision — web edition 1.2.0
+
+The existing app now retains an **Intake saved** receipt on Results: Request ID,
+received time and initial validation totals. It explicitly displays **Delivery:
+not connected**. Matching request details restore the ID/time receipt for a
+reopened request; counts are omitted when the original acknowledgement belongs
+to another request. The API and connector contracts are unchanged.
+
+Native Studio Preview checks passed: mixed intake (two records, one rejected),
+zero-candidate intake, results refresh, saved approval at version 1, matching
+history event, and reopening the first request while the newest acknowledgement
+belonged to the second. No counts from that second request appeared. Database
+readback confirmed both saves and the review. Cleanup verified exact source,
+actor, type, record counts and review version before removing only these test
+rows; absence was read back. Studio reported all changes saved at 16:35:37 local
+time. The app remains unpublished; the solution, connector and gateway were reused.
+
+Four new app-only captures document one synthetic request throughout the SOP.
+A separate agent inspected each image and found no publication blockers.
+The principal editorial agent rewrote the guide; a second agent checked control
+labels, outcomes, recovery and current/proposed claims. Initial-validation count
+wording, item-lookup terminology and the accepted/rejected downstream receipt
+distinction were corrected. [The editorial standard](EDITORIAL_STANDARD.md)
+requires that review before future publication, with word limits and exact-label
+checks. The [acknowledgement design](../delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md)
+specifies production evidence and unresolved integration contracts.
+
+The complete build passed: four decoded screen images, six SOP steps, seven
+charts, screenshot/chart modals, Escape closing, disclosures, print expansion,
+anchors, rendered SVG bounds, no external requests/browser errors and no page
+overflow at 390/1440 pixels. Both printable editions were regenerated: 12-page
+guide and four-page SOP. Allowlisted packaging passed; the webpage remains the
+primary deliverable.
+
+Edition 1.2.0 is published at <https://edfortheblind.github.io/milstrip-guide/>
+from public commit `5d77a028ffba99a63e19f51e942d2201eec97566`. GitHub Pages reports
+that commit built. Anonymous HTTPS returned 200 and `text/html`; served HTML
+matched committed bytes exactly (SHA256
+`1613c7135aa4edb075ee650bfdc427a21575d0b7addb8ff42466999165222b6c`).

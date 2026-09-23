@@ -11,6 +11,11 @@ PostgreSQL with an end-Q4 2026 target. It is planning, not deployment approval.
 Earlier increment sections below are historical snapshots and are superseded by
 the final canvas execution update where they describe pending work already done.
 
+The September 23 [acknowledgement update](delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md)
+adds a persistent, verified intake receipt to the same saved app. Production
+handoff and downstream receipts remain Phase 2 work. The illustrated operator
+guide is edition 1.2.0 with a separate editorial review and publication standard.
+
 Built with the AEKR (AI Engineering Knowledge Repo) workflow — see the root
 `README.md` footer and `meta/OPERATING_PRINCIPLES.md` in the `AEKR` repo for
 what that means. This document is this project's own single source of truth;

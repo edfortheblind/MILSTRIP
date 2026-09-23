@@ -1,15 +1,17 @@
-# MILSTRIP field guide — web edition 1.1.1
+# MILSTRIP operator guide — web edition 1.2.0
 
 **Evidence date: September 23, 2026.** Current development behavior and proposed production work remain separate.
 
-**Share this webpage:** [MILSTRIP field guide](https://edfortheblind.github.io/milstrip-guide/).
+**Share this webpage:** [MILSTRIP operator guide](https://edfortheblind.github.io/milstrip-guide/).
 It opens directly in a browser, with no download or login. This publishes documentation, not the Power App.
 
 - [Open the offline visual guide](index.html) — all seven charts, operating instructions, architecture and Phase 2 plan. No web service or CDN is required.
-- [Read the 15-page illustrated PDF](MILSTRIP-current-and-phase2.pdf).
-- [Print the five-page screen-based SOP](MILSTRIP-quick-sop.pdf).
+- [Read the 12-page illustrated PDF](MILSTRIP-current-and-phase2.pdf).
+- [Print the four-page illustrated SOP](MILSTRIP-quick-sop.pdf).
 - [Edit the public guide](guide.md), [styles](theme.css) or [interactions](guide.js).
 - [Read the internal engineering notes](engineering-notes.md) for the complete implementation plan, evidence and gates. These notes are excluded from the public release.
+- [Acknowledgement design](../delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md) distinguishes the implemented intake receipt from proposed production handoff and downstream receipt.
+- [Editorial standard](EDITORIAL_STANDARD.md) defines the writing and peer-review requirements for future editions.
 
 | Chart | Status | Standalone file |
 |---|---|---|
@@ -33,7 +35,7 @@ From the repository root:
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r docs\operations-guide\requirements.txt
 .\.venv\Scripts\python.exe scripts\build_operations_guide.py --pdf
-.\.venv\Scripts\python.exe scripts\package_operations_guide.py --output-dir "$env:LOCALAPPDATA\MILSTRIP\release-v1.1.1"
+.\.venv\Scripts\python.exe scripts\package_operations_guide.py --output-dir "$env:LOCALAPPDATA\MILSTRIP\release-v1.2.0"
 ```
 
 The builder uses the existing local Brave executable in an **isolated headless
@@ -58,8 +60,13 @@ the earlier release assets remain optional archives. The source repository stays
 No runtime code, production database or tenant resource is changed by these tools.
 
 Screenshots sit beside their corresponding SOP steps and open at full size.
-See [capture provenance](screens/README.md). The current webpage is edition 1.1.1;
+See [capture provenance](screens/README.md). The current webpage is edition 1.2.0;
 the previously published 1.1.0 download release is retained unchanged as an archive.
+
+This edition replaces repeated status cards and explanatory prose with six
+operator steps, recovery disclosures and a short confirmation table. The Results
+screen now retains the saved intake receipt while the operator refreshes results
+or reviews a record. All four screenshots were recaptured from the saved draft.
 
 ## Production design items requiring decisions
 

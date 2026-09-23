@@ -1,7 +1,7 @@
 [
   {
     "file": "01-current-functional.svg",
-    "title": "Functional flow: what the app does today",
+    "title": "Current functional flow",
     "nodes": [
       {
         "id": "source",
@@ -118,10 +118,10 @@
   },
   {
     "file": "03-current-user-sop.svg",
-    "title": "End-user SOP: use the current app",
+    "title": "Operator procedure",
     "nodes": [
       {
-        "id": "open",
+        "id": "source",
         "x": 30,
         "y": 155,
         "w": 570,
@@ -135,21 +135,21 @@
         "h": 104
       },
       {
-        "id": "load",
+        "id": "inspect",
         "x": 30,
         "y": 405,
         "w": 570,
         "h": 104
       },
       {
-        "id": "inspect",
+        "id": "save",
         "x": 30,
         "y": 530,
         "w": 570,
         "h": 104
       },
       {
-        "id": "save",
+        "id": "verify",
         "x": 30,
         "y": 655,
         "w": 570,
@@ -163,13 +163,6 @@
         "h": 104
       },
       {
-        "id": "finish",
-        "x": 30,
-        "y": 905,
-        "w": 570,
-        "h": 104
-      },
-      {
         "id": "unknown",
         "x": 650,
         "y": 280,
@@ -179,21 +172,21 @@
       {
         "id": "invalid",
         "x": 650,
-        "y": 450,
+        "y": 430,
         "w": 320,
         "h": 127
       },
       {
         "id": "retry",
         "x": 650,
-        "y": 640,
+        "y": 580,
         "w": 320,
-        "h": 127
+        "h": 149
       },
       {
         "id": "restart",
         "x": 650,
-        "y": 830,
+        "y": 760,
         "w": 320,
         "h": 149
       }
@@ -263,7 +256,7 @@
   },
   {
     "file": "05-phase2-functional.svg",
-    "title": "Phase 2 flow: review, release, acknowledge",
+    "title": "Phase 2 release and acknowledgement",
     "nodes": [
       {
         "id": "intake",

@@ -49,6 +49,11 @@ Power Fx execution; those checks require Studio.
 - Results load request details, records and issues, keeping validation and review
   separate. Pagination retrieves all records. Switching request hides stale
   results until load succeeds. Canonical values are never trimmed or rebuilt.
+- Results retain the saved-intake receipt after refresh and review. It shows
+  Request ID, received time and initial validation counts; reopened requests use
+  matching details without borrowing another request's totals. Delivery remains
+  disconnected. Mixed/empty intake and cross-request checks passed in Studio;
+  see the [acknowledgement update](../../docs/delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md).
 - Review creates one UUID per decision and freezes the payload while its outcome
   is unknown. Retry resends the same body and record ID. A 409 requires explicit
   reload; only successful reload clears the pending command, retaining the reason
@@ -74,4 +79,6 @@ corrected the app's existing connection credential and saved the unpublished
 draft. App checker had no formula errors and two empty-gallery warnings. The
 original Screen1 was preserved. The original image is both the app icon and the
 header image on each new screen. The app now belongs to the existing MILSTRIP
-solution. A verified local `.msapp` backup contains the final functional formulas.
+solution. A verified local `.msapp` backup contains the original functional
+increment. The later receipt changes are saved in Studio and in these source
+controls; that earlier backup predates the receipt change.

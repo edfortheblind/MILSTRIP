@@ -1,10 +1,15 @@
 # MILSTRIP engineering notes: current operation and Phase 2
 
-**Internal companion:** retained implementation detail from edition 1.0. The
+**Internal companion:** implementation detail for edition 1.2.0. The
 short [public reading edition](guide.md) and its standalone release exclude this
 file. Use these notes for evidence, hosting, contracts and implementation gates.
 
-**Status date: September 23, 2026 | Internal working document | Version 1.0**
+**Status date: September 23, 2026 | Internal working document | Version 1.2.0**
+
+This edition adds the persistent intake receipt in the existing unpublished app.
+See the [acknowledgement design](../delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md)
+for receipt evidence and the proposed downstream contract, and the
+[editorial standard](EDITORIAL_STANDARD.md) for public documentation rules.
 
 This guide separates the **implemented development app**, the **existing manual production process**, and the **proposed published production app**. “Current” describes recorded implementation evidence as of the status date; it is not a new live production inspection. Phase 2 assumes publication has occurred. It does not claim that the current draft is published.
 
@@ -16,6 +21,7 @@ This guide separates the **implemented development app**, the **existing manual 
 | API and connector | Seven authenticated operations; existing MILSTRIP Local Dev API connector and MILSTRIP-DEV-LAPTOP gateway | API runs on Ed's laptop; gateway, API, PostgreSQL and laptop availability are required |
 | Persistence | Local PostgreSQL, `trav3pl-psqldb-stage`, application schema `milstrip_app` | Local development state, not production shipment ownership |
 | Functional evidence | Synthetic intake, request listing/details, valid/rejected records, approval, invalid-approval guard and audit history passed through the gateway | Synthetic rows were removed after verification |
+| Intake confirmation | Persistent Results receipt with matching Request ID, received time and initial validation counts; reopened requests use matching request details | Counts describe validation at intake, not outstanding reviews. Delivery remains not connected |
 | Error handling | A 401 exercise preserved input and blocked blind resubmission; backend tests cover retries, conflicts and pagination | Canvas concurrency, outage recovery and multi-page acceptance remain pending |
 | Identity | Audit actor is the dedicated Basic connection identity `milstrip-app` | Signing into Power Apps does **not** make the API audit actor the individual user |
 | Operational delivery | No current app release, shipment insertion, CSV export or FTP action | **APPROVED means reviewed, not sent or shipped** |
@@ -33,7 +39,18 @@ The diagrams use explicit status labels as well as color: **CURRENT DEV**, **EXI
 
 The parser extracts candidates from pasted text, performs conservative normalization and validation, and preserves accepted positions while right-padding eligible output to exactly 80 characters. It does not invent missing business values. Intake/request status is distinct from each record's validation status and from its human review decision: a mixed request can be REJECTED while containing a valid record.
 
-The app stores original intake and parsed evidence in its local application tables. Review does not change the validation result, rewrite the original record, resolve stock/address reference data against production or authorize delivery. Corrected business input is a new intake; it is not an edit of the read-only canonical field.
+The app stores original intake and parsed evidence in its local application tables. Review does not change the validation result, rewrite the original record, resolve item/address reference data against production or authorize delivery. Corrected business input is a new intake; it is not an edit of the read-only canonical field.
+
+The intake API returns its acknowledgement after the transaction commits. The
+Results receipt identifies that saved request and remains visible independently
+of temporary refresh or review messages. Counts are shown only for the matching
+initial acknowledgement; request-detail lookup supplies a received time but no
+aggregate counts. A saved intake can contain rejected records or no candidates.
+None of these states establishes production handoff or downstream receipt.
+
+Receipt formulas were applied to the existing app and saved; Studio reported all
+changes saved at 16:35:37 on September 23. The app remains unpublished. The four
+current captures and guarded cleanup are recorded in [screen evidence](screens/README.md).
 
 **Existing manual production path:** Shawn prepares raw 80-character lines, inserts them into `dbo.staging_download_shipMILS`, then runs the recovered manual batch. That batch performs reference/duplicate checks and inserts directly into `dbo.download_ship940`. It does **not** route this MILSTRIP path through `dbo.staging_download_ship940`. The downstream ADF / ShipMaster / Boomi / SCALE route is recorded discovery context, not newly tested by this app increment. [E2, E3]
 
@@ -65,13 +82,11 @@ The runtime deliberately rejects non-loopback peers and a database outside the a
 | Step | What you do in the current UI | What to check |
 |---|---|---|
 | 1. Enter input | On **MILSTRIP intake**, paste the original email or ticket text into the large input box | Preserve the original source. Do not guess missing codes, quantities or addresses |
-| 2. Submit once | Select **Submit intake** | Wait for the results screen and a Request ID. Submission is not delivery |
-| 3. Load results | Select **Load / refresh results** | Check every record's validation status and issues; use **Next results page** when enabled |
-| 4. Inspect a record | Select **Inspect / review** beside that record | Read the issues and canonical length. The canonical field is read-only; accepted output should be 80 characters |
-| 5. Record a decision | Choose **APPROVED** or **REJECTED**, enter a reason of 1–1,000 characters, select **Save review** | Approval is blocked for validation-REJECTED records. Resolve review warnings using authoritative information; do not approve uncertainty away |
-| 6. Verify the result | Check the saved message and updated review version; use **Results** to return | Refresh results before relying on their displayed review status; an earlier gallery row may be stale |
-| 7. Check history | Select **History**, then **Load / refresh history**; use **More history** when enabled | Confirm the record/event and decision. In this development setup, the actor is `milstrip-app`, not your individual name |
-| 8. Finish | Keep the Request ID and follow the existing authorized business process separately | There is no Send, Release, CSV or FTP button in the current app |
+| 2. Submit once | Select **Submit intake** | Confirm **Intake saved**, Request ID and received time. Counts show validation at intake; delivery is not connected |
+| 3. Inspect results | Select **Load / refresh results**, then **Inspect / review** for each record | Read status, issues and canonical length; use **Next results page** when enabled. Canonical output is read-only |
+| 4. Record a decision | Choose **APPROVED** or **REJECTED**, enter a reason of 1–1,000 characters, select **Save review** | Approval is blocked for validation-REJECTED records. Resolve warnings against authoritative evidence |
+| 5. Verify the saved review | Check the saved message and updated version; return to **Results** and refresh | Confirm the persisted decision rather than relying on an earlier gallery row |
+| 6. Verify the audit event | Select **History**, then **Load / refresh history**; use **More history** when enabled | Match **REVIEW_DECIDED** to the record. History shows event metadata; Results shows the decision. The actor is `milstrip-app`, not the individual reviewer |
 
 ### Exceptions: preserve evidence before retrying
 
@@ -127,7 +142,7 @@ The present API uses `psycopg`, `RETURNING`, JSONB casts and `FOR UPDATE`; the A
 | Identity and hosting | Entra-authenticated API; tenant/audience validation; operator/reviewer/support roles; individual audit actor; approved network ingress and private DB path | Two-user authorization tests, denied unauthorized actions, TLS and service recovery checks |
 | SQL persistence | App-owned schema migrations; stable UUID request/command IDs; Unicode source text; exact canonical characters; UTC timestamps; JSON handling; review versions | Same API acceptance suite against SQL and PG adapters; no silent truncation, collation or trailing-space drift |
 | Current app completion | Accessibility/layout, multi-page results, outage and conflict UI tests; reliable production configuration and connection references | Shawn/authorized-user UAT; reproducible solution/package and rollback release |
-| Live reference validation | Query authoritative ItemMaster / DODAAC references through a narrow API role; explicit stock, quantity, address and eligibility outcomes | Golden cases for missing NSN/DODAAC, A5E address exceptions, duplicate ERP orders and price/unit mappings |
+| Live reference validation | Query authoritative ItemMaster / DODAAC references through a narrow API role; explicit item, quantity, address and eligibility outcomes | Golden cases for missing NSN/DODAAC, A5E address exceptions, duplicate ERP orders and price/unit mappings |
 | Controlled release | New release authorization, durable command ledger, transaction boundary and post-commit reconciliation | Retry produces one business effect; two workers cannot release the same eligible version twice |
 | Operations | Health/readiness, correlation IDs, audit retention, alert owner, deployment/restore runbook, workload limits | Operator drill, backup/restore evidence, approved capacity baseline and alert routing |
 
@@ -238,8 +253,9 @@ The immediate next work is to finish current canvas acceptance while G0/G1/G2 ar
 | E6 | Sibling `psql-migration/docs/architecture/adr/0010-sequential-csv-copy-phase-2-transfer.md` | Accepted sequential snapshot/CSV/COPY method and keyless-table limitation |
 | E7 | [ADR 0003](../adr/0003-rainbow-csv-ftp-is-the-delivery-boundary.md) | Earlier Rainbow route and missing output/transport contracts |
 | E8 | [PostgreSQL intelligence roadmap](../PSQL_INTELLIGENCE_ROADMAP.md) | Two-month controlled qualification and protected SQL ownership |
+| E9 | [Acknowledgement design](../delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md), [screen evidence](screens/README.md) | Persistent intake receipt, saved canvas changes, current synthetic captures and proposed production confirmation contract |
 | T1 | [Microsoft: connector/API Entra authentication](https://learn.microsoft.com/en-us/connectors/custom-connectors/azure-active-directory-authentication) | Production authentication design reference; not a statement about the current connector |
 | T2 | [Microsoft: App Service managed identity and databases](https://learn.microsoft.com/en-us/azure/app-service/tutorial-connect-msi-azure-database) | Proposed managed API-to-database identity building block |
 | T3 | [PostgreSQL 18: continuous archiving/PITR](https://www.postgresql.org/docs/18/continuous-archiving.html) | Distinction between a promotion dump and operational point-in-time recovery |
 
-Sibling repository evidence was read locally for this plan; its operational claims may have changed after the document dates. No credentials, raw production orders, database access, tenant configuration change, production deployment, commit or push was needed to create this package. The author checked consistency and rendering; this is not an independent production Audit.
+Sibling repository evidence was read locally for this plan; its operational claims may have changed after the document dates. Edition 1.2.0 updated the existing unpublished development app and verified synthetic local records. No production integration was enabled or production database re-inspected. Editorial review and rendering checks do not constitute the independent production Audit.

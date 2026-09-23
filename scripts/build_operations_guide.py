@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "operations-guide"
 DIAGRAMS = OUT / "diagrams"
 DATE = "September 23, 2026"
+VERSION = "1.2.0"
 PALETTE = {
     "dev": ("#e8f5f1", "#087f6c", "CURRENT DEV"),
     "manual": ("#f0f3f7", "#53657d", "EXISTING MANUAL"),
@@ -71,7 +72,7 @@ class Chart:
             self.text(x,y,label,16,anchor="middle")
 
     def save(self):
-        self.text(30,self.height-18,f"MILSTRIP  |  {DATE}  |  Public guide v1.1.1 | Recorded state, not live service status",14,fill="#60758c")
+        self.text(30,self.height-18,f"MILSTRIP  |  {DATE}  |  Version {VERSION}",14,fill="#60758c")
         description=f"{self.title}. {PALETTE['future' if 'phase2' in self.filename else 'dev'][2]}. Full text equivalent is in the operating guide."
         svg=f'''<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="{self.height}" viewBox="0 0 1000 {self.height}" role="img" aria-labelledby="title desc">
 <title id="title">{escape(self.title)}</title><desc id="desc">{escape(description)}</desc>
@@ -85,10 +86,10 @@ class Chart:
 
 def charts():
     manifests=[]
-    c=Chart("01-current-functional.svg","Functional flow: what the app does today","The app ends at review and audit. The manual production route is separate.",850)
+    c=Chart("01-current-functional.svg","Current functional flow","Development intake, validation, review and audit.",850)
     c.panel(20,150,960,400,"CURRENT DEV  /  implemented and tested with synthetic input")
     c.node("source",40,205,280,102,"Original source",["Email or ticket text","Pasted by the operator"])
-    c.node("intake",360,205,280,102,"Submit intake",["Save Request ID and source","Local application metadata"])
+    c.node("intake",360,205,280,102,"Submit intake",["Source sent for validation","Receipt after storage commits"])
     c.node("parser",680,205,280,102,"Parse and validate",["Conservative normalization","Preserve / pad to 80 chars"])
     c.arrow([(320,255),(360,255)]);c.arrow([(640,255),(680,255)])
     c.node("results",680,390,280,122,"Record results",["VALID / REQUIRES_REVIEW","or REJECTED","Issues stay visible"])
@@ -118,23 +119,22 @@ def charts():
     c.panel(20,727,960,63,"NO RUNTIME LINK TO PRODUCTION SQL  /  no legacy writer, CSV export or FTP delivery","manual")
     manifests.append(c.save())
 
-    c=Chart("03-current-user-sop.svg","End-user SOP: use the current app","Authorized development testing only. Exact button names match the existing screens.",1040)
-    steps=[("open",155,"1  Open Preview",["Owner confirms API, database and gateway are ready.","Use approved test input; start on MILSTRIP intake."]),
-           ("submit",280,"2  Paste, then Submit intake",["Click once. Keep the original text.","Continue only when a Request ID is returned."]),
-           ("load",405,"3  Load / refresh results",["Inspect every record and issue.","Use Next results page when enabled."]),
-           ("inspect",530,"4  Inspect / review",["Read canonical length and validation status.","Do not edit, trim or invent business values."]),
-           ("save",655,"5  Save review",["Choose APPROVED or REJECTED; enter a reason.","Check the saved message and review version."]),
-           ("history",780,"6  History → Load / refresh history",["Verify the event; use More history if enabled.","Refresh Results before relying on old review rows."]),
-           ("finish",905,"7  Keep the Request ID",["Current app has no release or shipment action.","Approval does not mean sent or shipped."])]
+    c=Chart("03-current-user-sop.svg","Operator procedure","Open MILSTRIP Intake Dev in Preview with development services running.",940)
+    steps=[("source",155,"1  Enter the source",["Paste the original email or ticket text.","Obtain missing values from the source owner."]),
+           ("submit",280,"2  Submit the intake",["Select Submit intake once.","Confirm Intake saved, Request ID and received time."]),
+           ("inspect",405,"3  Inspect the results",["Load / refresh results, then Inspect / review.","Read each issue; use Next results page if enabled."]),
+           ("save",530,"4  Record your decision",["Choose APPROVED or REJECTED; enter a reason.","Select Save review. Invalid approval is disabled."]),
+           ("verify",655,"5  Verify the saved review",["Check the saved message and updated version.","Return to Results; Load / refresh results."]),
+           ("history",780,"6  Verify the audit event",["History → Load / refresh history.","Find REVIEW_DECIDED for the same record."])]
     for key,y,title,lines in steps:c.node(key,30,y,570,104,title,lines)
-    for y in [259,384,509,634,759,884]:c.arrow([(315,y),(315,y+21)])
+    for y in [259,384,509,634,759]:c.arrow([(315,y),(315,y+21)])
     c.node("unknown",650,280,320,127,"Submission uncertain",["Load recent requests; match","the displayed source ID.","Confirm absence before retry."],"gate")
     c.arrow([(600,332),(650,332)],dashed=True)
-    c.node("invalid",650,450,320,127,"Validation REJECTED",["Obtain corrected source.","Submit a new intake.","Approval is disabled."],"gate")
-    c.arrow([(600,582),(625,582),(625,514),(650,514)],dashed=True)
-    c.node("retry",650,640,320,127,"Review exception",["Unknown: Retry same command.","Conflict: Reload after conflict;","inspect, then decide again."],"gate")
-    c.arrow([(600,707),(650,707)],dashed=True)
-    c.node("restart",650,830,320,149,"If the app closes",["Pending inputs are in memory.","Reconcile requests / history.","Give support IDs and errors;","never passwords or raw orders."],"gate")
+    c.node("invalid",650,430,320,127,"Validation REJECTED",["Obtain corrected source.","Submit a new intake.","Retain both Request IDs."],"gate")
+    c.arrow([(600,457),(625,457),(625,493),(650,493)],dashed=True)
+    c.node("retry",650,580,320,149,"Review exception",["Unknown: Retry same command.","Keep decision and reason.","Conflict: Reload after conflict;","inspect, then decide again."],"gate")
+    c.arrow([(600,582),(625,582),(625,654),(650,654)],dashed=True)
+    c.node("restart",650,760,320,149,"App closed or unavailable",["Reload after service recovery.","On restart, reconcile requests","and history before resubmitting.","Give support IDs and errors."],"gate")
     manifests.append(c.save())
 
     c=Chart("04-phase2-azure-sql.svg","P2.1 architecture: Azure SQL production","PROPOSED. Published app is assumed; production hosting and adapters are not implemented.",880,"future")
@@ -155,10 +155,10 @@ def charts():
     c.arrow([(820,541),(990,541),(990,674),(757,674),(757,701)],dashed=True)
     manifests.append(c.save())
 
-    c=Chart("05-phase2-functional.svg","Phase 2 flow: review, release, acknowledge","PROPOSED controls and states. None of the release/delivery actions exists today.",890,"future")
-    c.node("intake",30,160,280,104,"Intake and validation",["Parse / canonicalize","Check live reference data"],"future")
+    c=Chart("05-phase2-functional.svg","Phase 2 release and acknowledgement","PROPOSED production workflow. Handoff and downstream receipt are separate events.",890,"future")
+    c.node("intake",30,160,280,104,"Intake receipt",["Source and validation stored","Request ID + received time"],"future")
     c.node("review",360,160,280,104,"Authorized review",["Decision + reason + version","Reject unresolved business data"],"future")
-    c.node("gate",690,160,280,104,"Release eligibility",["Current approval and role","Accepted delivery contract"],"gate")
+    c.node("gate",690,160,280,104,"Release eligibility",["Approval, role and live checks","Accepted delivery contract"],"gate")
     c.arrow([(310,212),(360,212)]);c.arrow([(640,212),(690,212)])
     c.node("hold",30,350,280,125,"Hold and correct",["Invalid / missing references","No business write","Preserve evidence"],"gate")
     c.node("command",360,350,280,125,"Durable release command",["Unique ID + payload + version","One authoritative DB writer","Atomic claim / transaction"],"future")
@@ -166,11 +166,11 @@ def charts():
     c.arrow([(170,264),(170,350)],"invalid",(170,315),True)
     c.arrow([(830,264),(830,350)],"no",(830,315),True)
     c.arrow([(830,264),(830,304),(500,304),(500,350)],"eligible",(535,298))
-    c.node("commit",360,555,280,125,"Verified handoff",["Inserted / duplicate / rejected","Read back committed outcome","Never infer from SENT alone"],"future")
+    c.node("commit",360,555,280,125,"Handoff outcome",["Inserted / duplicate / rejected","Read back committed outcome","Destination reference + time"],"future")
     c.node("uncertain",690,555,280,125,"Outcome uncertain",["Reconcile SAME command","No blind retry / manual insert","Escalate unresolved state"],"gate")
     c.arrow([(500,475),(500,555)]);c.arrow([(640,618),(690,618)],dashed=True)
-    c.node("ack",360,740,610,100,"Downstream acknowledgement + audit",["Record the agreed receipt / rejection separately from DB commit.","Only a defined, observed acknowledgement establishes delivery."],"future")
-    c.arrow([(500,680),(500,740)])
+    c.node("ack",360,740,610,100,"Downstream receipt",["Record receiver reference, outcome and timestamp.","Show accepted or rejected; receipt is not shipment."],"future")
+    c.arrow([(500,680),(500,740)],"accepted handoff",(500,718))
     c.node("route",30,555,280,193,"Exactly one route",["SQL contract is the proposed","baseline for planning.","If Rainbow is selected:","outbox + serializer + transport","need separate acceptance."],"gate")
     manifests.append(c.save())
 
@@ -242,12 +242,11 @@ def build_html():
     css=(OUT/"theme.css").read_text(encoding="utf-8")
     js=(OUT/"guide.js").read_text(encoding="utf-8")
     logo=base64.b64encode((ROOT/"assets/milstrip-app.png").read_bytes()).decode()
-    html=f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="MILSTRIP operator guide: current development workflow, diagrams and proposed Azure SQL to PostgreSQL plan."><title>MILSTRIP | A practical guide</title><style>{css}</style></head><body>
+    html=f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="MILSTRIP operator procedures, current architecture and proposed production migration."><title>MILSTRIP operator guide</title><style>{css}</style></head><body>
 <a class="skip" href="#main">Skip to guide</a>
-<nav class="topbar" aria-label="Guide navigation"><strong>MILSTRIP / Field guide</strong><a href="#use-the-app">Use it</a><a href="#understand-the-workflow">How it works</a><a href="#phase-2-two-production-periods">What's next</a><button id="print-guide" type="button">Print guide</button></nav>
-<header class="cover"><img src="data:image/png;base64,{logo}" alt="MILSTRIP icon"><div><span class="eyebrow">A practical guide · v1.1.1</span><h1>From intake to review.</h1><p>Six steps today. A clear path to production.</p><p class="edition">Evidence dated {DATE} · Works offline</p></div></header>
-<main id="main"><div class="jump"><a href="#use-the-app">Start the six-step SOP →</a><a href="#understand-the-workflow">Explore the diagrams</a><a href="#phase-2-two-production-periods">See Phase 2</a></div>{body}</main>
-<footer>Public documentation edition · {DATE} · Current app: unpublished development draft. Phase 2: proposed. Sharing this guide does not share or publish the app.</footer>
+<nav class="topbar" aria-label="Guide navigation"><strong>MILSTRIP</strong><a href="#use-the-app">SOP</a><a href="#understand-the-workflow">Workflow</a><a href="#phase-2-two-production-periods">Phase 2</a><button id="print-guide" type="button">Print guide</button></nav>
+<header class="cover"><img src="data:image/png;base64,{logo}" alt="MILSTRIP icon"><div><h1>MILSTRIP operator guide</h1><p class="edition">Version {VERSION} · {DATE}</p></div></header>
+<main id="main">{body}</main>
 <dialog id="diagram-viewer" aria-labelledby="viewer-title"><div class="viewer-bar"><strong id="viewer-title">Diagram</strong><span class="viewer-note">Scroll to explore at full size</span><button id="close-viewer" type="button" autofocus>Close</button></div><div class="viewer-scroll" id="viewer-content"></div></dialog>
 <script>{js}</script></body></html>'''
     (OUT/"index.html").write_text(html,encoding="utf-8")
@@ -307,7 +306,7 @@ def render_pdf(browser_path):
           svg.querySelectorAll('[data-node]').forEach(g=>{const r=g.querySelector('rect').getBBox();g.querySelectorAll('text').forEach(t=>{const b=t.getBBox();if(b.x+b.width>r.x+r.width-8||b.y+b.height>r.y+r.height-4)bad.push(g.dataset.node+': '+t.textContent);});});
         });return bad;}''')
         assert not problems,problems
-        footer='<div style="font-size:8px;width:100%;padding:0 45px;color:#526577;display:flex;justify-content:space-between"><span>MILSTRIP · Public guide v1.1.1 · Evidence: September 23, 2026</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>'
+        footer=f'<div style="font-size:8px;width:100%;padding:0 45px;color:#526577;display:flex;justify-content:space-between"><span>MILSTRIP · Version {VERSION} · {DATE}</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>'
         options=dict(print_background=True,prefer_css_page_size=True,display_header_footer=True,header_template='<span></span>',footer_template=footer)
         page.pdf(path=str(OUT/"MILSTRIP-current-and-phase2.pdf"),**options)
         page.evaluate("document.body.classList.add('sop-only');expandForPrint()")

@@ -1,22 +1,16 @@
-# MILSTRIP field guide
+# MILSTRIP operator guide
 
-A practical guide to the current development app and its proposed production path.
+## [Read the guide](https://edfortheblind.github.io/milstrip-guide/)
 
-## [Read the guide online](https://edfortheblind.github.io/milstrip-guide/)
+Version **1.2.0** · Evidence dated **September 23, 2026**.
 
-Open the link and read it in your browser. No download, account or installation.
-Start with the six-step SOP; expand recovery instructions and diagrams as needed.
-The SOP includes the real Intake, Results, Review and History screens, using
-synthetic demonstration data. Use **View larger** for full-size screens or
-diagrams and **Escape** to close.
+Six operator steps with the Intake, Results, Review and History screens. The
+Results screen shows the saved intake receipt. Expand recovery procedures and
+architecture diagrams as needed; select **View larger** to inspect an image.
+The guide opens directly in a browser without downloads or sign-in.
 
-## What is current?
+The app is an **unpublished development draft**. Production handoff and downstream
+receipts are proposed Phase 2 work: Azure SQL first, followed by accepted
+production PostgreSQL with an end-Q4 2026 target. Screens use synthetic data.
 
-Evidence date: **September 23, 2026**. The Power App is an **unpublished development
-draft** with intake, review and history. Approval does not send or ship an order.
-Phase 2 proposes existing Azure SQL first, then accepted production PostgreSQL,
-targeting the end of Q4 2026.
-
-This repository publishes documentation only. Opening the guide does not
-publish, install or grant access to the Power App. Source code, credentials,
-private engineering notes and business records are not part of this release.
+This repository publishes documentation only; it does not grant app access.
