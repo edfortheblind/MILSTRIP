@@ -1,6 +1,6 @@
 # MILSTRIP Intake Automation — Master Document
 
-**Version:** 0.9 **Date:** 2026-09-23 **Status:** BACKEND_OWNER_ACCEPTED_IMPLEMENTATION_PREPARED
+**Version:** 1.0 **Date:** 2026-09-23 **Status:** LOCAL_OPERATOR_API_IMPLEMENTED
 
 Built with the AEKR (AI Engineering Knowledge Repo) workflow — see the root
 `README.md` footer and `meta/OPERATING_PRINCIPLES.md` in the `AEKR` repo for
@@ -140,3 +140,40 @@ and record reads, then auditable review decisions and Power Apps preparation.
 This owner acceptance is not an independent Audit result. Operational legacy
 writes, shared frontend rollout and SQL Server retirement retain their separate
 contracts and acceptance gates.
+
+## 10. Operator API increment
+
+The owner approved implementation of the prepared plan. Request listing,
+record/issue detail, versioned/idempotent local review commands and scoped audit
+history are implemented. Migration 005 is installed locally. The suite passes
+139 tests, including real two-session review conflict verification; installed
+parser parity and live loopback HTTP checks pass. See
+`docs/delivery/OPERATOR_API_IMPLEMENTATION_2026-09-23.md` for evidence and
+`docs/OPERATOR_API_CONTRACT.md` for the API and Power Apps preparation contract.
+
+Local review identity is explicitly configured and is not shared-user
+authentication. Power Platform environment access, an approved API path and
+identity/role mapping are the next connected-integration inputs.
+
+## 11. Laptop-first Power Apps development setup
+
+Current setup (2026-09-23): the owner used the existing organization Default
+environment, created the MILSTRIP solution and MILSTRIP Local Dev API connector,
+and registered the standard MILSTRIP-DEV-LAPTOP gateway. GetHealth returned
+HTTP 200 through the gateway after correcting HTTPS to HTTP for loopback port
+8000. The tested process exposes health only; Basic authentication enforcement
+and application routes through the connector remain pending. The connector
+export is in `powerapps/connectors/`; the supplied app icon is in `assets/`.
+The pre-commit verification passed all 139 tests with the local database enabled
+and confirmed the backend OpenAPI artifact matches the runtime schema.
+
+The owner confirmed the laptop remains the development backend host. The
+setup and handoff procedure is `docs/POWER_APPS_LAPTOP_DEV_SOP.md`: create/select
+a Power Platform Developer workspace, register a standard gateway on the same
+laptop and authenticate the local PAC CLI. This establishes prerequisites for
+the agent to implement connector authentication and the development app.
+The SOP describes the original setup recommendation; the existing Default
+environment was used instead of creating a Developer environment. No cloud
+API/database host is required at this stage. Power Apps
+connector creation also needs an OpenAPI 2.0 artifact; the existing 3.1 export
+remains the runtime API reference.

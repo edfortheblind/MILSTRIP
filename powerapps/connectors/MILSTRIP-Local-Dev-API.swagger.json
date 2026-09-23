@@ -1,0 +1,57 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Default title",
+    "description": "MILSTRIP development API running on Ed's laptop.",
+    "version": "1.0"
+  },
+  "host": "127.0.0.1:8000",
+  "basePath": "/api/v1",
+  "schemes": [
+    "http"
+  ],
+  "consumes": [],
+  "produces": [],
+  "paths": {
+    "/health": {
+      "get": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "description": "status"
+                },
+                "database": {
+                  "type": "string",
+                  "description": "database"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Check API health",
+        "description": "Check whether the local API and database are available.",
+        "operationId": "GetHealth",
+        "parameters": []
+      }
+    }
+  },
+  "definitions": {},
+  "parameters": {},
+  "responses": {},
+  "security": [
+    {
+      "basic-auth": []
+    }
+  ],
+  "tags": [],
+  "securityDefinitions": {
+    "basic-auth": {
+      "type": "basic"
+    }
+  }
+}

@@ -1,6 +1,10 @@
 # Next implementation increment
 
-Date: 2026-09-23. Status: prepared from the owner-accepted backend baseline.
+Date: 2026-09-23. Status: local operator API implemented and verified.
+
+The owner approved implementation. Completion evidence is in
+`OPERATOR_API_IMPLEMENTATION_2026-09-23.md`; the contract is in
+`docs/OPERATOR_API_CONTRACT.md`. All four interfaces below are implemented.
 
 The owner accepted the backend and authorized commit/push and implementation
 preparation. The verified baseline includes 106 passing tests, local migration
@@ -14,7 +18,7 @@ Extend the existing FastAPI service and `milstrip_app` schema. Keep parsing in
 the existing Python package. No additional framework or hosting service is
 needed for this local increment.
 
-Proposed interfaces (not yet implemented):
+Implemented local interfaces:
 
 | Interface | Behavior | Verification |
 | --- | --- | --- |
@@ -29,7 +33,7 @@ address, or grants delivery eligibility. Preserve original intake text and
 candidate values. A correction must be linked to its original record and
 revalidated; define that workflow before adding an editing endpoint.
 
-## Ordered implementation tasks
+## Completed implementation tasks
 
 1. Specify request/response models, error codes and pagination rules in an API
    contract document and OpenAPI examples. Preserve the existing intake POST
@@ -67,7 +71,8 @@ partial decision/audit state; schema and API contracts match their consumers.
   staging/SENT outcomes, audit states and downstream acceptance. The sequential
   temporary-table guard is not a concurrent idempotency guarantee.
 
-These decisions do not block the local read-only API slice or contract work.
+The local API slice and contract work are complete; the above decisions govern
+the next connected increment.
 Backend owner acceptance is recorded separately from independent Audit: no new
 independent Audit has been performed. Production-connected work retains its
 Full-profile acceptance requirements. SQL Server remains authoritative.

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import os
 from typing import Any
 from uuid import uuid4
 
@@ -12,9 +11,12 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from milstrip.service import process_text
+from api.database import connect as _connect
+from api.operator import router as operator_router
 
 
-app = FastAPI(title="MILSTRIP API", version="0.1.0")
+app = FastAPI(title="MILSTRIP API", version="0.2.0")
+app.include_router(operator_router)
 
 
 class IntakeRequest(BaseModel):
@@ -22,17 +24,6 @@ class IntakeRequest(BaseModel):
     source_id: str | None = None
     source_text: str = Field(min_length=1, max_length=1_000_000)
     submitted_by: str | None = None
-
-
-def _database_url() -> str:
-    value = os.getenv("MILSTRIP_DATABASE_URL")
-    if not value:
-        raise HTTPException(status_code=503, detail="Database unavailable")
-    return value
-
-
-def _connect() -> psycopg.Connection[Any]:
-    return psycopg.connect(_database_url(), connect_timeout=5)
 
 
 @app.get("/api/v1/health")

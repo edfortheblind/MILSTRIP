@@ -3,6 +3,19 @@
 **Date:** 2026-09-23
 **Status:** LOCAL_BACKEND_ACCEPTED_POWER_PLATFORM_INPUTS_PENDING
 
+The owner confirmed that the laptop is the backend development environment.
+Follow `docs/POWER_APPS_LAPTOP_DEV_SOP.md`: a Power Platform Developer workspace
+holds the app/solution, while a standard gateway on the same laptop will connect
+to the loopback API and local PostgreSQL. No cloud backend host is needed now.
+The SOP ends at an authenticated CLI/gateway handoff; connector Basic
+authentication still needs implementation before enabling the connection.
+
+Operator API update: all four local review/read interfaces are implemented,
+migration 005 is installed, and 139 tests pass. Use
+`docs/OPERATOR_API_CONTRACT.md` and the exported OpenAPI reference for screen and
+connector preparation. Deployment still needs the environment and identity
+inputs below; the configured local reviewer is not SSO.
+
 ## Completed prerequisites
 
 - Local Windows development is the authorized operating mode.
@@ -36,8 +49,8 @@ one of:
 
 The `milstrip/` package is restored and integrated. The owner accepted the local
 backend after 106 passing tests and the controlled temporary-table handoff.
-The next review API contracts and read endpoints are prepared in
-`docs/delivery/IMPLEMENTATION_PLAN.md`. Power Fx must not become a second,
+The review API contracts and endpoints are implemented as recorded in
+`docs/delivery/OPERATOR_API_IMPLEMENTATION_2026-09-23.md`. Power Fx must not become a second,
 divergent implementation of the MILSTRIP rules.
 
 ### 3. Archive/decommission scope is not specified
@@ -80,7 +93,9 @@ until parity, parser handoff and cutover approval are complete.
 3. Whether the old UI is the current CLI workflow or a separate application.
 4. Archive targets: files, app versions, environments and/or deployments.
 5. Retention period, archive location and rollback owner.
-6. Identity/role mapping and an approved reachable API path for the connector.
+6. Completed laptop DEV handoff from the SOP: authenticated maker/PAC account,
+   same-machine gateway and API health. Dedicated API development credentials
+   are implemented after handoff; shared-user identity remains a later gate.
 
 ## Current decision
 
