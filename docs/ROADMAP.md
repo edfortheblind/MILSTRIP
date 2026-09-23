@@ -3,7 +3,7 @@
 **Planning update (2026-09-23):** the owner requested a new production Phase 2
 with publication assumed: **P2.1 existing Azure SQL**, then **P2.2 production
 PostgreSQL**, targeting end of Q4 2026 after the migration project is fully live.
-The complete [two-period plan](operations-guide/guide.md#5-phase-2-published-app-two-production-periods)
+The complete [two-period plan](operations-guide/guide.md#phase-2-two-production-periods)
 includes capacity, migration scope, freeze reconciliation, release gates and
 rollback. These period labels are separate from the older CSV/FTP 2A/2B labels
 below. The delivery-route decision remains explicit; no live deployment or write

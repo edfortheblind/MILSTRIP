@@ -1,35 +1,55 @@
-# Documentation verification — September 23, 2026
+# Public documentation release verification — September 23, 2026
 
-Scope: the current-state operating guide and proposed two-period Phase 2 plan.
-This is documentation verification, not application UAT or independent Audit.
+Scope: reading edition **1.1.0**, current-state SOP and proposed two-period plan.
+This verifies documentation, not application UAT or independent production Audit.
 
-## Results
+## Editorial result
 
-- Generated seven standalone SVG charts and the offline HTML guide.
-- Browser validation passed: seven embedded charts, rendered SVG text bounds,
-  internal section anchors, browser errors, and page overflow at 390/1440 pixels.
-- Inspected the rendered guide and PDF page layouts for readable charts and tables.
-- Verified that the 20-page PDF contains the end-user SOP, Azure SQL architecture,
-  PostgreSQL architecture, December 31, 2026 target, and source-freeze conflict.
-- Checked local Markdown links in the guide and package README.
-- `git -c core.safecrlf=false diff --check` passed.
+A separate agent reviewed the original guide and the revision: **PASS, no
+must-fix findings**. Its recommendations and applied changes are recorded in
+[EDITORIAL_REVIEW.md](EDITORIAL_REVIEW.md). Full engineering detail remains in
+the private companion notes; the public guide leads with status and six steps.
 
-Rebuild instructions and documentation-only dependencies are in [README.md](README.md).
-Editable prose is in [guide.md](guide.md); diagram and HTML generation is in
-[`build_operations_guide.py`](../../scripts/build_operations_guide.py).
+## Build and reading checks
+
+- Opened a lone copy of `index.html` in an isolated browser directory: no sibling
+  dependencies, no HTTP requests, no browser errors.
+- Seven inline charts, six SOP steps, embedded SVG downloads and section anchors
+  passed. Native disclosures, modal opening and Escape closing were exercised.
+- Print expands every disclosure. Rendered chart text fits node/viewport bounds;
+  page overflow checks passed at 390 and 1440 pixels.
+- Full PDF: **12 pages** (previous edition: 20). Quick SOP: **two pages**, with
+  the complete action sequence on page 1 and all recovery cases on page 2.
+- Independently inspected the rendered desktop guide and quick-SOP page layouts.
+- PDF text and metadata passed the public identifier checks; source-ID intake
+  recovery and same-command review retry are present in both PDFs.
+- The packaging agent ran 11 temporary-fixture checks, including deterministic
+  ZIP/checksum output, exact file allowlist, private references and offline links,
+  status/date/anchor checks, optional SOP handling and unrelated-output protection.
+- Final build and package commands passed; whitespace/diff checks passed.
+
+## Published artifact verification
+
+Public repository: <https://github.com/edfortheblind/milstrip-guide>.
+It contains only the download README. The implementation repository remains private.
+
+Release: [guide-v1.1.0](https://github.com/edfortheblind/milstrip-guide/releases/tag/guide-v1.1.0),
+targeting public documentation commit `6a0237c00d1a4b31d043d799f1c64d5da247aeee`.
+Read back as published, not draft or prerelease.
+
+Unauthenticated HTTP requests returned **200** for the release page and all six
+assets: standalone HTML, illustrated PDF, quick-SOP PDF, complete ZIP, README and
+SHA256 manifest. Every downloaded asset's SHA256 matched the local release file.
+The ZIP uses an explicit allowlist; private notes, evidence, runtime sources,
+credentials, deployment identities and order data are excluded.
 
 ## Evidence boundaries
 
-Current-state claims use repository implementation records and supplied user
-evidence. This documentation task did not re-query the tenant or production
-databases. The current app is recorded as saved and unpublished; publication
-is a Phase 2 assumption. Future-state diagrams describe proposed implementation.
+Current app claims retain their September 23 evidence date. This work did not
+re-query Power Platform or production databases. The app remains a saved,
+unpublished development draft; Phase 2 publication and database cutover are plans.
+The freeze, delivery route, identity/hosting, capacity/recovery and acceptance
+decisions remain open. No runtime or tenant configuration was changed.
 
-Production work still requires resolution of the recorded SQL freeze, selection
-of the SQL or Rainbow delivery route, identity/hosting decisions, measured
-capacity and recovery targets, and migration/cutover acceptance. A PostgreSQL
-go-live at December 31 can extend the separate SQL retention period into January.
-
-No application runtime code, tenant resources, production data, or sibling
-migration repository files were changed for this documentation package. No
-commit or push was performed. Other existing working-tree changes were preserved.
+The owner explicitly authorized public artifact preparation and commit/push for
+this increment. Rebuild and packaging commands are in [README.md](README.md).

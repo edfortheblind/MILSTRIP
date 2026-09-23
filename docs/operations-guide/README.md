@@ -1,10 +1,15 @@
-# MILSTRIP operations and Phase 2 package
+# MILSTRIP field guide — release 1.1.0
 
-**Prepared September 23, 2026. Current facts and proposed future states are labeled separately.**
+**Evidence date: September 23, 2026.** Current development behavior and proposed production work remain separate.
+
+**Share:** [public documentation release](https://github.com/edfortheblind/milstrip-guide/releases/tag/guide-v1.1.0).
+Download [index.html](https://github.com/edfortheblind/milstrip-guide/releases/download/guide-v1.1.0/index.html), then open it in a browser. No repository access or login is required to read it. This publishes documentation, not the Power App.
 
 - [Open the offline visual guide](index.html) — all seven charts, operating instructions, architecture and Phase 2 plan. No web service or CDN is required.
-- [Download / print the PDF](MILSTRIP-current-and-phase2.pdf).
-- [Read the editable source](guide.md) — evidence references and detailed plan.
+- [Read the 12-page illustrated PDF](MILSTRIP-current-and-phase2.pdf).
+- [Print the two-page quick SOP](MILSTRIP-quick-sop.pdf).
+- [Edit the public guide](guide.md), [styles](theme.css) or [interactions](guide.js).
+- [Read the internal engineering notes](engineering-notes.md) for the complete implementation plan, evidence and gates. These notes are excluded from the public release.
 
 | Chart | Status | Standalone file |
 |---|---|---|
@@ -28,20 +33,28 @@ From the repository root:
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r docs\operations-guide\requirements.txt
 .\.venv\Scripts\python.exe scripts\build_operations_guide.py --pdf
+.\.venv\Scripts\python.exe scripts\package_operations_guide.py --output-dir "$env:LOCALAPPDATA\MILSTRIP\release-v1.1.0"
 ```
 
 The builder uses the existing local Brave executable in an **isolated headless
 process**. It does not reuse the signed-in browser session or access the tenant.
 Supply `--browser <absolute chromium executable path>` if necessary. Omit
 `--pdf` to build HTML/SVG without a browser. Edit `guide.md` for text and
-`scripts/build_operations_guide.py` for chart content/layout; generated files
-should not be manually edited.
+`scripts/build_operations_guide.py` for chart content/layout. The HTML embeds CSS,
+JavaScript, the icon and every SVG, including downloadable diagram copies.
+Generated files should not be manually edited.
 
-Validation checks all seven SVGs, rendered node/text bounds, HTML section links,
-browser errors and desktop/mobile overflow. PDF layout is also inspected after
-generation. These documentation checks are not app UAT or an independent Audit.
-No application code, production database, tenant resource or shared Git history
-is changed by the build.
+Validation checks a lone HTML file in an isolated directory, seven SVGs, six SOP
+steps, rendered text bounds, section links, disclosures, keyboard dialog closing,
+print expansion, browser errors, no network dependencies and desktop/mobile
+overflow. The public packager uses an explicit allowlist, checks identifiers and
+offline links, and creates a deterministic ZIP plus SHA256 checksums. PDF text
+and layout are checked separately. See [verification](VERIFICATION.md) and the
+[independent editorial review](EDITORIAL_REVIEW.md).
+
+The public repository contains only a download index; the release contains the
+HTML, two PDFs, ZIP, README and checksums. The source repository stays private.
+No runtime code, production database or tenant resource is changed by these tools.
 
 ## Production design items requiring decisions
 

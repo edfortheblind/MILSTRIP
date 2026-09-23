@@ -5,7 +5,7 @@
 **Current reading guide:** the saved unpublished canvas app, authenticated laptop
 API and local PostgreSQL are implemented. Use the [visual operating package](operations-guide/index.html)
 for the current functional flow, architecture, end-user SOP and evidence limits.
-The [Phase 2 plan](operations-guide/guide.md#5-phase-2-published-app-two-production-periods)
+The [Phase 2 plan](operations-guide/guide.md#phase-2-two-production-periods)
 assumes publication, uses existing Azure SQL first, then accepted production
 PostgreSQL with an end-Q4 2026 target. It is planning, not deployment approval.
 Earlier increment sections below are historical snapshots and are superseded by

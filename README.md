@@ -19,6 +19,10 @@ flow, technical architecture, user SOP and the proposed Phase 2 periods
 Production delivery/cutover remain gated. See [`docs/master.md`](docs/master.md)
 for status and [`docs/ROADMAP.md`](docs/ROADMAP.md) for historical phase context.
 
+**Share with anyone:** [public guide release](https://github.com/edfortheblind/milstrip-guide/releases/tag/guide-v1.1.0)
+with standalone HTML, a two-page SOP, illustrated PDF and seven charts. The
+documentation release does not publish or grant access to the Power App.
+
 ## Quick start
 
 Requires Python 3.10+, nothing else — the Phase 1 toolkit has zero
