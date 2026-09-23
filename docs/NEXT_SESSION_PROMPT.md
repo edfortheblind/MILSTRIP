@@ -1,5 +1,11 @@
 # Next Session Prompt
 
+Use [the current copy-and-paste restart prompt](../sop/restart-prompt.md).
+The [successful PowerApps setup SOP](../sop/powerapps-setup.md) and
+[conversation record](../sop/conversation-record.md) capture the completed
+Default-environment and gateway setup. The remaining notes below retain backend
+evidence and operating boundaries.
+
 Continue from the 2026-09-23 backend correction evidence in
 `docs/delivery/BACKEND_CORRECTION_2026-09-23.md`.
 
@@ -7,13 +13,12 @@ Latest increment: `docs/delivery/OPERATOR_API_IMPLEMENTATION_2026-09-23.md`.
 The approved local operator API is implemented; use
 `docs/OPERATOR_API_CONTRACT.md` and `docs/operator-api.openapi.json` as its contract.
 
-The owner requested laptop-first Power Apps setup. Follow
-`docs/POWER_APPS_LAPTOP_DEV_SOP.md` and read
-`local-discovery/powerapps-dev-handoff.md` when supplied. The API/PostgreSQL remain
-on the laptop; the cloud Developer environment holds Power Apps components.
-Next: verify PAC/solution/gateway access, implement dedicated gateway-compatible
-API authentication and produce an OpenAPI 2.0 connector. The existing OpenAPI 3.1
-export is reference material, not the connector import artifact.
+The owner completed laptop-first Power Apps connectivity using the organization's
+existing Default environment. API/PostgreSQL remain on the laptop. Read
+`local-discovery/powerapps-dev-handoff.md` if supplied, but do not treat it as a
+prerequisite to local implementation. Next: verify automated environment access,
+implement API authentication and extend the existing OpenAPI 2.0 connector.
+The backend OpenAPI 3.1 export remains reference material.
 
 ## Current state
 

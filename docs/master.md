@@ -157,6 +157,10 @@ identity/role mapping are the next connected-integration inputs.
 
 ## 11. Laptop-first Power Apps development setup
 
+The successful procedure is now [PowerApps setup](../sop/powerapps-setup.md).
+See the [conversation record](../sop/conversation-record.md) for decisions and
+the [restart prompt](../sop/restart-prompt.md) to continue in a separate session.
+
 Current setup (2026-09-23): the owner used the existing organization Default
 environment, created the MILSTRIP solution and MILSTRIP Local Dev API connector,
 and registered the standard MILSTRIP-DEV-LAPTOP gateway. GetHealth returned
