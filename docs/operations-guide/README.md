@@ -1,14 +1,14 @@
-﻿# MILSTRIP operator guide — edition 1.3.0
+# MILSTRIP operator guide — edition 1.4.0
 
 **Share:** [MILSTRIP operator guide](https://edfortheblind.github.io/milstrip-guide/).
 The webpage opens without a download or login. App access is separate.
 
-This edition adds Stage/Prod administration and the native database configuration
-screen. Stage and Prod were published on September 24 in the existing solution.
-Stage passed Studio tests against local PostgreSQL. Published-player access is
-blocked by the current account's Power Apps license prompt; no trial was accepted.
-Prod's separate profile remains disabled pending an independent target. Azure SQL runtime
-acceptance, production handoff and downstream receipts remain outstanding.
+Stage and Prod are published and licensing is resolved. Stage passed connection
+and saved-results checks in the published player; Prod opens with its database
+profile disabled. In-app user/database administration is implemented but awaits
+native deployment acceptance. The guide retains the current host configuration
+procedure and existing Studio captures. Azure SQL runtime acceptance, production
+handoff and downstream receipts remain outstanding.
 
 - [Guide source](guide.md), [styles](theme.css), [interactions](guide.js).
 - [Full app and database SOP](../../sop/powerapps-setup.md).
@@ -24,7 +24,7 @@ the earlier downloadable release remains an optional archive.
 | Chart | Scope |
 |---|---|
 | [Functional flow](diagrams/01-current-functional.svg) | Intake/review and the separate manual production process |
-| [Current architecture](diagrams/02-current-architecture.svg) | Credential-bound Stage/Prod profiles, shared API and configurable targets |
+| [Current architecture](diagrams/02-current-architecture.svg) | Fixed Stage/Prod profiles, shared API and configurable targets |
 | [Operator procedure](diagrams/03-current-user-sop.svg) | Six steps and recovery branches |
 | [Azure SQL](diagrams/04-phase2-azure-sql.svg) | Proposed production hosting and adapter qualification |
 | [Release and acknowledgement](diagrams/05-phase2-functional.svg) | Proposed controlled handoff and receiver receipt |

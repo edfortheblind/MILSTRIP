@@ -47,6 +47,115 @@
       ],
       "type": "object"
     },
+    "BrokerEnvelope": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "$ref": "#/definitions/DirectoryPerson"
+        },
+        "operation": {
+          "enum": [
+            "GetCurrentUser",
+            "GetHealth",
+            "ListIntakeRequests",
+            "GetIntakeRequest",
+            "ListRecordResults",
+            "ListAuditEvents",
+            "CreateIntakeRequest",
+            "CreateReviewDecision",
+            "ListUsers",
+            "SaveUserAccess",
+            "AcquireSharingLease",
+            "RecordSharingResult",
+            "ReserveManagementCall",
+            "RecordManagementCall",
+            "GetRuntimeProfiles",
+            "SaveRuntimeDraft",
+            "TestRuntimeDraft",
+            "ApplyRuntimeDraft",
+            "GetAdministrationOperation"
+          ],
+          "type": "string"
+        },
+        "payload_json": {
+          "maxLength": 1100000,
+          "minLength": 2,
+          "type": "string"
+        },
+        "request_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "schema_version": {
+          "enum": [
+            1
+          ],
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "request_id",
+        "actor",
+        "operation",
+        "payload_json"
+      ],
+      "type": "object"
+    },
+    "BrokerResult": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "result_json": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "result_json"
+      ],
+      "type": "object"
+    },
+    "DirectoryPerson": {
+      "additionalProperties": false,
+      "properties": {
+        "account_enabled": {
+          "type": "boolean"
+        },
+        "display_name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        "object_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "upn": {
+          "maxLength": 254,
+          "minLength": 3,
+          "type": "string"
+        },
+        "user_type": {
+          "enum": [
+            "Member",
+            "Guest"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "object_id",
+        "upn",
+        "display_name",
+        "account_enabled",
+        "user_type"
+      ],
+      "type": "object"
+    },
     "EventPage": {
       "properties": {
         "items": {
@@ -508,6 +617,91 @@
     "version": "0.4.0"
   },
   "paths": {
+    "/broker/invoke": {
+      "post": {
+        "operationId": "InvokeBroker",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/BrokerEnvelope"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "schema": {
+              "$ref": "#/definitions/BrokerResult"
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API credentials",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "403": {
+            "description": "Loopback gateway peer required",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "409": {
+            "description": "Review conflict; reload before a new command",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "schema": {
+              "$ref": "#/definitions/HTTPValidationError"
+            }
+          },
+          "503": {
+            "description": "Runtime configuration or database unavailable",
+            "schema": {
+              "properties": {
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "summary": "Invoke"
+      }
+    },
     "/health": {
       "get": {
         "operationId": "GetHealth",

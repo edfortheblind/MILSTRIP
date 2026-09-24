@@ -1,221 +1,238 @@
-# MILSTRIP runtime configuration
+# MILSTRIP administration SOP
 
-**Status date:** September 24, 2026. **Audience:** administrator of the API host.
+**Status: September 24, 2026 - Stage administration draft tested; publication and full acceptance pending.**
 
-**MILSTRIP Stage** and **MILSTRIP Prod** are published in the existing solution
-with separate connections. Stage has an identity in the existing local PostgreSQL database.
-The Prod runtime profile is disabled with no database target selected.
-App IDs and deployment settings are in the
-[canvas deployment manifest](../powerapps/canvas/deployment-manifest.json).
+The existing published **MILSTRIP Stage** player is healthy and can read retained
+results. The published **MILSTRIP Prod** player opens and reports an unavailable,
+disabled database. Licensing is resolved for both. Prod remains disabled because
+its database target and activation authority have not been confirmed.
 
-Standalone player acceptance is blocked by the current account's Power Apps
-licensing. IT owns resolution; no trial was started. Studio Preview checks do
-not remove that requirement.
+The new **Configuration** and **Users** screens below are the deployment target.
+They are not yet accepted in the published apps. This SOP distinguishes their
+source behavior from the currently available host configuration tool. See the
+[current evidence](delivery/IDENTITY_ADMIN_STATUS_2026-09-24.md) for the release boundary.
 
-## What the environments control
+The existing Stage app now has six native draft screens, zero formula errors
+and two literal-predicate warnings. The observed Stage broker calls succeeded,
+and Configuration loaded its expected provider, label and revision. The direct
+API data source was removed from that draft. Ed alone has active application
+membership; the other five initial memberships remain pending. Prod draft
+acceptance, broader sharing, broker-only cutover and new publication remain open.
 
-Each app uses a different connection to the existing custom connector and
-gateway. Its API credential selects a fixed server-side profile. Stage and Prod
-must have separate databases and different API usernames/verifier files.
-Operators do not choose a connection string or environment inside an intake.
+## Access and responsibilities
 
-Both apps share the same local API process and gateway. Restarting or deploying
-that API affects both apps. Separate database profiles provide data isolation;
-independent runtime releases require separate backend deployments.
+Sign in with the existing Travis Association for the Blind Microsoft Entra
+account. Realm discovery confirmed managed Entra SSO for `austinlighthouse.org`;
+no new identity provider or AD FS deployment is required. A live directory probe
+verified all six initial people as enabled internal members.
 
-The administrator screen is a Windows application on the API host. It is not a
-Power Apps screen and does not send database credentials through the connector.
-An operator-facing configuration screen may show health and environment, but
-must not edit the destination.
+| Application role | Initial people | Permissions |
+|---|---|---|
+| Permanent Owner | Claude Furry (`claude.furry@austinlighthouse.org`); Mike Thompson (`mike.thompson@austinlighthouse.org`) | Intake, review, configuration and user administration |
+| Admin | Ed Lopez, Kristen Fleming, Thomas Stivers, Shawn Hinkle | Intake, review, configuration and user administration |
+| Operator | Added by an Owner or Admin | Intake and review |
 
-## Open the administrator screen
+Claude and Mike cannot be removed, disabled or demoted through the application.
+Owner is not an assignable role. Directory disablement still blocks application access.
+Application permissions do not create directory accounts or change tenant roles.
 
-From the repository's PowerShell terminal:
+Ed's existing **Power Platform app Owner** permission is separate from his
+**application Admin** role. The verified existing Owner grant permits viewing
+without being changed. Other app users receive CanView and flow run-only rights,
+including application Owners and Admins. Removing Ed's application access denies
+API use immediately; platform cleanup can remain pending until IT transfers app
+ownership. The application does not transfer ownership.
+
+## Configure a database in the app - after deployment acceptance
+
+Open the app for the environment being changed. Stage cannot configure Prod's
+destination, and Prod cannot configure Stage's. Authorized administration remains
+available when that app's business database is disabled or unavailable.
+
+1. Open **Configuration**, then **Load configuration**. Check the environment,
+   active target and revision.
+2. Select `postgresql` or `sqlserver`, enter a short target label and set
+   **Enabled**. Enter a replacement connection string in the masked field only
+   when changing it. Blank retains the saved string; a provider change requires
+   a replacement.
+3. Select **Save draft**. This stores the proposal privately and clears the
+   visible connection-string field. It does not activate or provision anything.
+4. Select **Test draft**. A pass checks connectivity, the six application tables
+   and the matching Stage/Prod identity. It does not establish write permissions
+   or production readiness. A failed test does not change the active target.
+5. Select **Apply draft**. Enabling a target requires a successful test of this
+   exact draft by the same administrator, within its five-minute validity period.
+   A stale revision or expired test is rejected; reload or test again.
+6. Confirm **APPLIED**, reload configuration and check the app connection. Verify
+   the expected environment and existing history before releasing it for use.
+
+A saved draft locks its form. To change it, select **Discard draft**; this clears
+the draft and test, restores the active settings and clears the replacement
+field. Load configuration again if the active revision changed, then enter and
+save the revised proposal. An expired test can be rerun for the unchanged draft.
+
+Apply waits for that environment's active requests to finish, then changes its
+saved active revision. The other environment can continue. Ordinary profile
+changes do not require restarting the shared API; code deployments and process
+restarts still affect both apps.
+
+To move an enabled environment to a different database, first save and apply a
+draft with **Enabled** cleared and the current target retained. Disabling does
+not require a successful database test. Keep the environment disabled during
+provisioning, migration and reconciliation. Then save the new destination, test
+and apply it. No automatic fallback to another database is allowed.
+
+If the result is unknown, use **Check command status**, then **Retry same
+command** if needed. Do not submit a different change to replace an uncertain
+one. Keep the app open: its retained command is held in session memory. Record
+the displayed command ID before closing the app so the host administrator can
+look up the durable result.
+
+## Manage application users - after deployment acceptance
+
+1. Open **Users** and select **Load users**.
+2. For a new member, select **New user** and enter their complete
+   `@austinlighthouse.org` sign-in name. For an existing member, select their row.
+3. Choose **OPERATOR** or **ADMIN**, then **Save access**. The broker resolves
+   additions against the tenant directory; an email suffix alone is insufficient.
+4. Confirm **Access: active | Sharing: completed**. Pending access is not ready
+   for use. The flow grants only the two app views and their run-only flows.
+5. To revoke access, select the member and **Remove access**. The API denies that
+   member immediately, even when platform cleanup remains pending. Removal also
+   works after the directory account has been disabled or deleted.
+
+For an unconfirmed result, select **Check command status** or **Retry sharing**.
+Retry uses the existing command. Do not replace a pending command with another
+access change. No sharing notification email is sent.
+
+Sharing calls are paced across both apps to stay within the Management
+connector's limit. A response timeout can occur while the flow continues; keep
+the command and check its status. An uncertain Management call also holds a
+shared connection permit, so other user changes may remain pending until the
+host administrator resolves that call.
+
+A failed or timed-out platform write can leave an unknown outcome. The server
+keeps a lock for that target across both apps so an older Add cannot overtake a
+newer Remove. Repeated clicks cannot clear it. The host administrator must inspect
+the recorded plan, execution and flow run; establish that prior external actions
+have stopped; read back current grants; and complete controlled recovery of the
+recorded execution before starting another. Recovery uses the broker-only
+callback with the original lease/execution identifiers and fresh grant readback;
+the [implementation contract](delivery/IDENTITY_ADMIN_IMPLEMENTATION_CONTRACT_2026-09-24.md#5-membership-and-platform-sharing-reconciliation)
+defines those fields. There is no automatic expiry, in-app force-unlock or
+packaged host recovery wizard. Do not delete the lock or control file to bypass recovery.
+
+## API-host setup and recovery
+
+The source uses one private `.cred/control.json` after broker-only cutover. It
+holds application permissions, protected owner identities, active profile
+revisions, drafts and command outcomes. The old `.cred/runtime.json` is imported
+once and is not a second active authority. These files are Git-ignored and
+restricted by Windows permissions; this application does not encrypt them.
+
+Before first cutover, the host command compares the imported profiles with the
+selected legacy runtime while holding the configuration lock. If that source
+changed or is missing, activation stops and leaves the current runtime intact.
+Back up both private files and have the deployment lead reconcile the inactive
+import, including existing drafts and test receipts, before retrying. There is
+no automatic refresh; do not delete control state or discard reviewed drafts to
+clear the error. Once control is active, restart and activation checks no longer
+depend on the legacy runtime file.
+
+Each app calls its fixed broker flow. Office 365 Users must be **Provided by
+run-only user** for caller identification. Directory, sharing-management and
+broker connections remain private to the deployment account. Stage and Prod use
+distinct private broker credentials through the existing custom connector and
+gateway. Neither broker credentials nor saved database strings are returned to
+app users. Secure flow inputs and outputs must be verified in actual run history.
+
+Run one API worker. After a process failure, restart from the authoritative
+control state; a durable Apply is not undone by restarting. If saved and running
+revisions disagree, the affected environment remains blocked until host recovery.
+Never edit active JSON behind the running service or reopen legacy Basic access
+to bypass an incomplete app deployment.
+
+### Current host tool, before cutover
+
+The existing Windows configuration tool remains the current pre-cutover path:
 
 ```powershell
 .\scripts\Configure-Runtime.ps1
 ```
 
-The launcher prepares access-restricted private storage and opens **MILSTRIP
-database configuration**. The default configuration is `.cred/runtime.json`.
-Both launchers use an explicit `-ConfigFile` path first, then
-`MILSTRIP_RUNTIME_CONFIG_FILE`, then this repository default.
-The provisioning command reads that variable or the default. Keep all three
-tools on the same file. An alternate file must still be directly inside `.cred`.
+Select the environment and provider, enter the masked replacement string, test,
+and **Save pending configuration**. Stop the identified MILSTRIP API after active
+requests finish, then start it with `.\scripts\Start-LocalApi.ps1` and verify both
+app connections. Both launchers select explicit `-ConfigFile` first, then
+`MILSTRIP_RUNTIME_CONFIG_FILE`, then `.cred/runtime.json`. A configuration file
+must reside directly inside `.cred`. The legacy tool is not the active-profile
+editor after broker-only cutover and refuses to save in active control mode.
+`-ControlFile`, then `MILSTRIP_CONTROL_FILE`, then `.cred/control.json` selects
+the control authority. Keep launch, configuration and provisioning tools on the
+same intended authority; an alternate legacy file cannot override active control.
 
-Connection strings are stored in that private file. It is Git-ignored and
-protected by Windows permissions, but is not encrypted by this application.
-Keep copies in protected storage; exclude the file from shared documents,
-screenshots and public artifacts. The screen displays only provider,
-host/port and database for the saved target.
+### Provisioning and data moves
 
-Both credential verifiers must exist before the API starts:
-
-| Profile | Default verifier file | Binding |
-|---|---|---|
-| Stage | `.cred/api-credential.json` | Existing Stage API identity |
-| Prod | `.cred/api-prod-credential.json` | Different Prod API identity |
-
-When a verifier needs to be created or deliberately rotated, use
-`Set-LocalApiCredential.ps1 -Environment stage` or `-Environment prod`; the
-utility prompts privately and selects the corresponding file. Do not overwrite
-the Stage verifier while preparing Prod. The connector connection must use the
-matching API username and password, not the database login. A disabled Prod
-profile still needs its verifier so the runtime configuration can load.
-
-## Configure an existing, provisioned destination
-
-1. Select **App environment**: `stage` or `prod`.
-2. Select **Database provider**: `postgresql` or `sqlserver`. Set a short
-   **Display label** identifying the environment.
-3. Enter **Replacement connection string**. The field is masked. Leave it blank
-   to retain the saved string; changing providers requires a replacement.
-4. Select **Test connection**. A pass confirms access, application read probes
-   and the matching environment/schema identity. It does not prove write
-   permissions, concurrency behavior or production readiness.
-5. Select **Enable this environment** when the target is ready. A changed or
-   newly enabled destination must pass its test before saving.
-6. Select **Save pending configuration**. The running API is unchanged. Save the
-   current profile before selecting the other environment.
-7. Follow the restart procedure below and verify each app's environment.
-
-**Test connection** does not create tables, submit an intake or modify records.
-Unknown database targets require provisioning first; repeatedly testing cannot
-create the missing application schema.
-
-## Prepare a new destination
-
-Have the DBA create or approve the database and its runtime identity. Use a
-runtime database login limited to the application's required operations; schema
-provisioning may require a separate administrative account.
-
-Save the new destination while **Enable this environment** is unchecked. This
-allows its connection string to be stored privately without activating it.
-Then use the dedicated `Initialize-ApplicationDatabase.ps1` /
-`initialize_application_database.py` provisioning entry point. It selects the
-saved `stage` or `prod` profile; no connection string belongs on its command line.
-
-Preview the saved target first. This command does not connect to the database:
+The DBA must approve the destination and create the database/runtime identity.
+Schema provisioning is a separate host operation; Save, Test and Apply do not
+create tables. The provisioning CLI selects the authoritative saved profile:
+active control after cutover, otherwise the legacy runtime configuration. It
+does not select an unapplied draft. For a new destination, save and apply it
+with **Enabled** cleared first; it remains unavailable to business requests.
+Confirm the CLI's printed target before a provisioning write:
 
 ```powershell
 .\scripts\Initialize-ApplicationDatabase.ps1 -Environment prod
+.\scripts\Initialize-ApplicationDatabase.ps1 -Environment prod -ProvisionApplicationSchema -ConfirmTarget '<exact preview target>'
 ```
 
-After checking the printed target and the provisioning authority, copy its
-complete `provider | host:port | database` value into the confirmation argument:
+This creates the five application data tables plus `environment_identity` in an
+existing database, preserving compatible rows. It does not create a database,
+relabel another environment, or modify operational shipment tables. An Azure SQL
+production source is not authorized by this SOP; its freeze and deployment
+approval remain separate.
 
-```powershell
-.\scripts\Initialize-ApplicationDatabase.ps1 `
-  -Environment prod `
-  -ProvisionApplicationSchema `
-  -ConfirmTarget '<exact target printed by preview>'
-```
+Changing a connection string does not transfer intake, review or audit history.
+Use an approved backup/restore or provider migration and reconcile IDs, counts,
+canonical values, review versions, sequences and audit events. Preserve the
+retained Stage tests. Returning to an old database after new writes requires
+reconciliation; changing the string back alone is not data recovery.
 
-Use `-Environment stage` for a Stage target. The Python equivalents are
-`--environment`, `--provision-application-schema` and `--confirm-target`.
+### Connection formats
 
-This operation calls `provision_schema` to create five application data tables
-and `environment_identity` (six tables total) in an existing database. Existing compatible tables
-and data are preserved. A mismatched environment or schema needing migration
-is an error, not permission to relabel or rebuild the database. It does not
-create a database or touch operational shipment tables.
-
-After provisioning, return to the configuration screen, test the destination,
-enable it and save. Verify writes with an approved synthetic transaction before
-releasing the app to operators. Do not use the recorded Azure SQL production
-source for this step until its freeze and deployment authority are resolved.
-
-## Connection string formats
-
-These examples contain placeholders. Enter real values privately in the
-administrator screen.
-
-Remote PostgreSQL accepts a libpq URL or keyword string. It requires
-`sslmode=verify-full` and a trusted certificate matching the hostname:
+Enter actual values privately. Examples contain placeholders only.
 
 ```text
 host=pg-stage.example.invalid port=5432 dbname=milstrip_stage user=DB_USER password='PRIVATE_PASSWORD' sslmode=verify-full sslrootcert=C:/Certificates/root-ca.pem
-```
-
-Local PostgreSQL may use the existing loopback configuration. Service-file,
-explicit passfile, host-address override and session-option parameters are not
-supported by this configuration interface. Moving to an IT VM requires its
-actual hostname, database, network access and certificate trust to be accepted.
-
-The API rejects inherited `PGHOSTADDR`, `PGSERVICE`, `PGSERVICEFILE`, `PGOPTIONS`
-and `PGPASSFILE` settings. Remove those overrides from the API process's launch
-environment and use its private profile. This prevents libpq defaults from
-redirecting the saved destination or applying undocumented session settings.
-
-Azure SQL / SQL Server uses a raw ODBC connection string. Install Microsoft
-ODBC Driver 17 or 18 for SQL Server on the API host:
-
-```text
 Driver={ODBC Driver 18 for SQL Server};Server=tcp:sql-stage.example.invalid,1433;Database=milstrip_stage;Uid=DB_USER;Pwd={PRIVATE_PASSWORD};Encrypt=yes;TrustServerCertificate=no;
 ```
 
-Keep encryption and certificate verification enabled. Provider support in code
-does not establish that a particular Azure SQL target has passed runtime tests.
-Use the provider's quoting/escaping rules when credentials contain delimiters.
+Remote PostgreSQL requires verified TLS. Local loopback may use the existing
+configuration. Service files, passfile/host-address overrides and session options
+are rejected, including inherited `PGHOSTADDR`, `PGSERVICE`, `PGSERVICEFILE`,
+`PGOPTIONS` and `PGPASSFILE`. SQL Server requires Microsoft ODBC Driver 17 or 18,
+encryption and certificate validation. Live Azure SQL acceptance remains pending.
 
-## Activate and verify
+## Optional request to the domain administrator ? draft only
 
-1. Arrange a pause for both apps. Let active requests finish and reconcile any
-   unknown submission or review outcome before changing destinations.
-2. Retain the previous private configuration in protected storage for recovery.
-3. Stop the identified running MILSTRIP API process. Do not terminate an unknown
-   process merely because it uses port 8000.
-4. Start the API from the repository:
+> Please provide these optional HTTPS redirects:
+>
+> - `milstrip.austinlighthouse.org` to [MILSTRIP Prod](https://apps.powerapps.com/play/e/default-9f5c0ace-0780-4b48-8c24-b08bb5149210/a/0aa02d8b-c7fa-42cc-87e8-6d287bd4c897).
+> - `milstrip-stage.austinlighthouse.org` to [MILSTRIP Stage](https://apps.powerapps.com/play/e/default-9f5c0ace-0780-4b48-8c24-b08bb5149210/a/7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82).
+>
+> Please confirm certificate ownership and the service
+> that will perform the redirects; a DNS record alone cannot redirect to the
+> app's full path. Keep sign-in with our existing managed Entra tenant. No new
+> SSO provider, federation or application password is requested. At the later
+> approved VM move, please also reserve a separate internal API hostname and
+> confirm its routing, certificate and gateway access. That API name is distinct
+> from the user-facing redirect names.
 
-   ```powershell
-   .\scripts\Start-LocalApi.ps1
-   ```
+This is a prepared request, not a submitted change. No DNS, redirect, hostname
+or SSO-provider changes have been performed. Friendly links do not activate the
+Prod database or establish production readiness.
 
-5. Check `GetHealth` using each app's connection. Confirm the expected
-   `environment`, `provider`, `target_label`, `configuration_revision`, and
-   `ready=true`. A disabled environment reports `ready=false`; it cannot process
-   intakes or reviews.
-6. Open the matching app. Verify existing history and perform the approved
-   acceptance check. Keep its Request ID and inspect the saved receipt, review
-   and audit evidence.
-
-If health reports the wrong environment or missing schema, stop and correct the
-binding/target. Do not work around the failure by using the other app's
-credentials. An unsuccessful connection does not cause an automatic fallback.
-
-## Move data separately
-
-Saving a new connection string changes where future requests run. It does not
-copy existing intake text, records, decisions or history. A newly provisioned
-empty database has no earlier requests.
-
-For PostgreSQL-to-PostgreSQL moves, use an approved backup/restore procedure and
-verify counts, IDs, canonical values, review versions, sequence values and audit
-evidence. A PostgreSQL-to-SQL Server move requires an explicit provider import
-and equivalent verification. Preserve the intended environment identity; a
-restored Stage database remains Stage until an approved migration says otherwise.
-
-After new writes occur at the destination, changing the string back to an old
-database can lose new work or duplicate actions. Pause both writers and reconcile
-the changes before returning. Configuration rollback alone is not data recovery.
-
-The retained September 24 test request
-`1d0c784d-c3bf-495c-928c-0b66687a58a4` must remain in Stage. Connection setup and
-verification do not authorize deleting it.
-
-## Troubleshooting
-
-| Result | Administrator action |
-|---|---|
-| Configuration cannot load | Check file format, both verifier files and distinct usernames; use the native screen to save a valid revision. |
-| Another editor changed configuration | Close and reopen the screen before editing. The stale snapshot was not saved. |
-| Connection test fails | Check target, login, TLS trust and the six application tables, including environment_identity. Raw connection strings are not diagnostic output. |
-| Target is marked for the other environment | Correct the destination. Do not overwrite its marker to bypass isolation. |
-| Saved target has not changed in the app | Restart the shared API and compare the reported configuration revision. |
-| Player asks for a Power Apps plan or trial | Refer the account to IT for the approved license. The owner chose not to start a trial. Publication and a passing Preview do not resolve licensing. |
-| App is published but unavailable | Check API host, gateway, database and connection availability after licensing is resolved. Publication does not replace those services. |
-
-Design and source: [ADR 0005](adr/0005-runtime-profiles.md),
-[configuration screen](../scripts/configure_runtime.py),
-[profile validation](../api/profiles.py), and
-[transaction/provisioning implementation](../api/persistence/repository.py).
+Sources: [ADR 0006](adr/0006-user-identity-and-administration.md),
+[broker flow source](../powerapps/flows/README.md),
+[canvas administration source](../powerapps/canvas/broker/README.md),
+[configuration service](../api/administration.py).

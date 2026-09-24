@@ -58,11 +58,14 @@ def test_nullable_review_uniqueness_and_locking_use_native_dialects():
 
 
 def test_checked_in_sqlserver_ddl_matches_metadata():
-    ddl = Path("db/sqlserver/001_application_schema.sql").read_text(encoding="utf-8")
+    def stable_lines(value):
+        return "\n".join(line.rstrip() for line in value.strip().splitlines())
+    # Editors strip trailing whitespace; that does not change any DDL token.
+    ddl = stable_lines(Path("db/sqlserver/001_application_schema.sql").read_text(encoding="utf-8"))
     for table in metadata.sorted_tables:
-        assert str(CreateTable(table).compile(dialect=mssql.dialect())).strip() in ddl
+        assert stable_lines(str(CreateTable(table).compile(dialect=mssql.dialect()))) in ddl
         for index in table.indexes:
-            assert str(CreateIndex(index).compile(dialect=mssql.dialect())).strip() in ddl
+            assert stable_lines(str(CreateIndex(index).compile(dialect=mssql.dialect()))) in ddl
 
 
 def test_unknown_provider_fails_before_network_access():

@@ -1,0 +1,421 @@
+- UsersTitle:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =18
+      Width: =Parent.Width-282
+      Height: =50
+      Text: ="User access" & " | " & Upper(AppEnvironment)
+      Size: =24
+- UsersMessage:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =82
+      Width: =Parent.Width-48
+      Height: =60
+      Text: =Coalesce(varMessage,"")
+      Live: =Live.Polite
+- UsersBack:
+    Control: Classic/Button
+    Properties:
+      X: =Parent.Width-234
+      Y: =20
+      Width: =210
+      Height: =44
+      Text: ="Intake"
+      OnSelect: =Navigate(scrIntake)
+      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnLoadUsers:
+    Control: Classic/Button
+    Properties:
+      X: =24
+      Y: =148
+      Width: =210
+      Height: =44
+      Text: ="Load users"
+      OnSelect: =If(!Coalesce(varBusy,false) && "users.manage" in colCapabilities.Value,Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("ListUsers",JSON({},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"User list unavailable."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"User list unavailable."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"User list unavailable."); false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"User list unavailable."); false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"User list unavailable."); false,If(IsError(ClearCollect(colUsers,ForAll(Table(varRaw.items)
+        As row,{object_id:Text(row.Value.object_id),upn:Text(row.Value.upn),display_name:Text(row.Value.display_name),role:Text(row.Value.role),desired_active:Boolean(row.Value.desired_active),access_state:Text(row.Value.access_state)}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"User list unavailable."); false,If(IsError(Set(varUsersRevision,Text(varRaw.revision))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"User list unavailable."); false,true))))))); Set(varBusy,false))
+      DisplayMode: =If(Coalesce(varBusy,false) || !("users.manage" in colCapabilities.Value),DisplayMode.Disabled,DisplayMode.Edit)
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnNewUser:
+    Control: Classic/Button
+    Properties:
+      X: =254
+      Y: =148
+      Width: =210
+      Height: =44
+      Text: ="New user"
+      OnSelect: =Set(varSelectedUser,Blank()); Reset(txtUserUPN); Reset(ddUserRole)
+      DisplayMode: =If(Coalesce(varBusy,false) || !("users.manage" in colCapabilities.Value) || !IsBlank(varUserCommand.command_id),DisplayMode.Disabled,DisplayMode.Edit)
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- UserPolicy:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =204
+      Width: =Parent.Width-48
+      Height: =50
+      Text: ="Owners are protected. Admins can manage users and configuration. Operators can submit and review intake."
+- txtUserUPN:
+    Control: Classic/TextInput
+    Properties:
+      X: =24
+      Y: =270
+      Width: =440
+      Height: =44
+      Default: =Coalesce(varSelectedUser.upn,"")
+      HintText: ="name@austinlighthouse.org"
+      DisplayMode: =If(Coalesce(varBusy,false) || !("users.manage" in colCapabilities.Value) || !IsBlank(varUserCommand.command_id)
+        || varSelectedUser.role="OWNER",DisplayMode.Disabled,DisplayMode.Edit)
+      AccessibleLabel: ="Corporate user email address"
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =RGBA(0,0,0,1)
+- ddUserRole:
+    Control: Classic/DropDown
+    Properties:
+      X: =484
+      Y: =270
+      Width: =220
+      Height: =44
+      Items: =If(varSelectedUser.role="OWNER",["OWNER"],["OPERATOR","ADMIN"])
+      Default: =If(varSelectedUser.role="OWNER","OWNER",varSelectedUser.role="ADMIN","ADMIN","OPERATOR")
+      DisplayMode: =If(Coalesce(varBusy,false) || !("users.manage" in colCapabilities.Value) || !IsBlank(varUserCommand.command_id)
+        || varSelectedUser.role="OWNER",DisplayMode.Disabled,DisplayMode.Edit)
+      AccessibleLabel: ="Application role"
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =RGBA(0,0,0,1)
+- btnGrantUser:
+    Control: Classic/Button
+    Properties:
+      X: =724
+      Y: =270
+      Width: =210
+      Height: =44
+      Text: ="Save access"
+      OnSelect: '=If(!Coalesce(varBusy,false) && "users.manage" in colCapabilities.Value,Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varUserCommandId,Text(GUID()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varUserCommand,{command_id:varUserCommandId,payload_json:JSON({command_id:varUserCommandId,expected_revision:varUsersRevision,target_upn:txtUserUPN.Text,role:ddUserRole.Selected.Value,active:true},JSONFormat.Compact)})),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varUserSaveReturned,false)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("SaveUserAccess",varUserCommand.payload_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varUserRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(varUserRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varUserSaveReturned,true)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varMessage,"Access: " & Text(varUserRaw.membership.access_state)
+        & " | Sharing: " & Text(varUserRaw.sharing_plan.status))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(If(Text(varUserRaw.sharing_plan.status)="completed",Set(varUserCommand,Blank()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("ListUsers",JSON({},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(ClearCollect(colUsers,ForAll(Table(varRaw.items)
+        As row,{object_id:Text(row.Value.object_id),upn:Text(row.Value.upn),display_name:Text(row.Value.display_name),role:Text(row.Value.role),desired_active:Boolean(row.Value.desired_active),access_state:Text(row.Value.access_state)}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(Set(varUsersRevision,Text(varRaw.revision))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,true)))))))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,true)))))))))))); Set(varBusy,false))'
+      DisplayMode: =If(Coalesce(varBusy,false) || !("users.manage" in colCapabilities.Value) || !IsBlank(varUserCommand.command_id)
+        || varSelectedUser.role="OWNER" || IsBlank(varUsersRevision) || IsBlank(Trim(txtUserUPN.Text)),DisplayMode.Disabled,DisplayMode.Edit)
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnRemoveUser:
+    Control: Classic/Button
+    Properties:
+      X: =954
+      Y: =270
+      Width: =210
+      Height: =44
+      Text: ="Remove access"
+      OnSelect: '=If(!Coalesce(varBusy,false) && "users.manage" in colCapabilities.Value,Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varUserCommandId,Text(GUID()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varUserCommand,{command_id:varUserCommandId,payload_json:JSON({command_id:varUserCommandId,expected_revision:varUsersRevision,target_upn:txtUserUPN.Text,role:ddUserRole.Selected.Value,active:false},JSONFormat.Compact)})),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varUserSaveReturned,false)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("SaveUserAccess",varUserCommand.payload_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varUserRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(varUserRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varUserSaveReturned,true)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varMessage,"Access: " & Text(varUserRaw.membership.access_state)
+        & " | Sharing: " & Text(varUserRaw.sharing_plan.status))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(If(Text(varUserRaw.sharing_plan.status)="completed",Set(varUserCommand,Blank()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("ListUsers",JSON({},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(ClearCollect(colUsers,ForAll(Table(varRaw.items)
+        As row,{object_id:Text(row.Value.object_id),upn:Text(row.Value.upn),display_name:Text(row.Value.display_name),role:Text(row.Value.role),desired_active:Boolean(row.Value.desired_active),access_state:Text(row.Value.access_state)}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(Set(varUsersRevision,Text(varRaw.revision))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,true)))))))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,true)))))))))))); Set(varBusy,false))'
+      DisplayMode: =If(Coalesce(varBusy,false) || !("users.manage" in colCapabilities.Value) || !IsBlank(varUserCommand.command_id)
+        || varSelectedUser.role="OWNER" || IsBlank(varUsersRevision) || IsBlank(Trim(txtUserUPN.Text)) || IsBlank(varSelectedUser.object_id),DisplayMode.Disabled,DisplayMode.Edit)
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnRetryUser:
+    Control: Classic/Button
+    Properties:
+      X: =24
+      Y: =330
+      Width: =210
+      Height: =44
+      Text: ="Retry sharing"
+      OnSelect: '=If(!Coalesce(varBusy,false) && "users.manage" in colCapabilities.Value,Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varUserSaveReturned,false)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("SaveUserAccess",varUserCommand.payload_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varUserRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(varUserRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varUserSaveReturned,true)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(Set(varMessage,"Access: " & Text(varUserRaw.membership.access_state)
+        & " | Sharing: " & Text(varUserRaw.sharing_plan.status))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(If(Text(varUserRaw.sharing_plan.status)="completed",Set(varUserCommand,Blank()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,If(IsError(If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("ListUsers",JSON({},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(ClearCollect(colUsers,ForAll(Table(varRaw.items)
+        As row,{object_id:Text(row.Value.object_id),upn:Text(row.Value.upn),display_name:Text(row.Value.display_name),role:Text(row.Value.role),desired_active:Boolean(row.Value.desired_active),access_state:Text(row.Value.access_state)}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(Set(varUsersRevision,Text(varRaw.revision))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,true)))))))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varUserSaveReturned,false) && ((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0)
+        in [400,401,403,404,409,422]) || varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || (varFlow.error_code="ACCESS_DENIED"
+        && Coalesce(varFlow.status,0) in [401,403])),Set(varUserCommand,Blank()); Set(varMessage,"Access command
+        rejected. Reload users and check the account and role."),Set(varMessage,"Access change is unconfirmed. Check
+        status or retry the same command.")); false,true)))))))))); Set(varBusy,false))'
+      DisplayMode: =If(Coalesce(varBusy,false) || !("users.manage" in colCapabilities.Value) || IsBlank(varUserCommand.command_id),DisplayMode.Disabled,DisplayMode.Edit)
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnRecoverUser:
+    Control: Classic/Button
+    Properties:
+      X: =254
+      Y: =330
+      Width: =210
+      Height: =44
+      Text: ="Check command status"
+      OnSelect: '=If(!Coalesce(varBusy,false) && "users.manage" in colCapabilities.Value,Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("GetAdministrationOperation",JSON({command_id:varUserCommand.command_id},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"No confirmed result yet. The original flow may still be running; retry the same command.");
+        false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"No confirmed result yet. The original flow may still be running; retry the same command.");
+        false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"No confirmed result yet. The original flow may still be running; retry the same command.");
+        false,If(IsError(Set(varOperationRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"No confirmed result yet. The original flow may still be running; retry the same command.");
+        false,If(IsError(varOperationRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"No confirmed result yet. The original flow may still be running; retry the same command.");
+        false,If(IsError(Set(varUserRaw,varOperationRaw.result)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"No confirmed result yet. The original flow may still be running; retry the same command.");
+        false,If(IsError(Set(varMessage,"Access: " & Text(varUserRaw.membership.access_state) & " | Sharing: " &
+        Text(varUserRaw.sharing_plan.status))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"No confirmed result yet. The original flow may still be running; retry the same command.");
+        false,If(IsError(If(Text(varUserRaw.sharing_plan.status)="completed",Set(varUserCommand,Blank()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"No confirmed result yet. The original flow may still be running; retry the same command.");
+        false,If(IsError(If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("ListUsers",JSON({},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(ClearCollect(colUsers,ForAll(Table(varRaw.items)
+        As row,{object_id:Text(row.Value.object_id),upn:Text(row.Value.upn),display_name:Text(row.Value.display_name),role:Text(row.Value.role),desired_active:Boolean(row.Value.desired_active),access_state:Text(row.Value.access_state)}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,If(IsError(Set(varUsersRevision,Text(varRaw.revision))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Access result confirmed. Reload users to refresh the list."); false,true)))))))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"No confirmed result yet. The original flow may still be running; retry the same command.");
+        false,true))))))))); Set(varBusy,false))'
+      DisplayMode: =If(Coalesce(varBusy,false) || !("users.manage" in colCapabilities.Value) || IsBlank(varUserCommand.command_id),DisplayMode.Disabled,DisplayMode.Edit)
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- galUsers:
+    Control: Gallery
+    Properties:
+      X: =24
+      Y: =396
+      Width: =Parent.Width-48
+      Height: =Parent.Height-414
+      Items: =colUsers
+      TemplateSize: =70
+      AccessibleLabel: ="Application users and access status"
+      ItemAccessibleLabel: =ThisItem.display_name & ", " & ThisItem.role & ", " & ThisItem.access_state
+    Variant: Vertical
+    Children:
+    - UserRow:
+        Control: Classic/Button
+        Properties:
+          X: =0
+          Y: =0
+          Width: =Parent.TemplateWidth
+          Height: =44
+          Text: ="Select " & ThisItem.display_name & " | " & ThisItem.role & " | " & ThisItem.access_state & If(ThisItem.role="OWNER","
+            | protected","")
+          OnSelect: =Set(varSelectedUser,ThisItem); Reset(txtUserUPN); Reset(ddUserRole)
+          DisplayMode: =If(Coalesce(varBusy,false) || !("users.manage" in colCapabilities.Value) || !IsBlank(varUserCommand.command_id),DisplayMode.Disabled,DisplayMode.Edit)
+          TabIndex: =0
+          FocusedBorderThickness: =3
+          FocusedBorderColor: =Self.Color

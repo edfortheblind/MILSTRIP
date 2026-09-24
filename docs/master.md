@@ -1,46 +1,97 @@
 # MILSTRIP Intake Automation — Master Document
 
-**Version:** 1.1 **Date:** 2026-09-24 **Status:** APPS_PUBLISHED_PLAYER_LICENSE_BLOCKED_PROD_DISABLED
+**Version:** 1.2 **Date:** 2026-09-24 **Status:** PLAYERS_VERIFIED_ADMINISTRATION_BLOCKED_PROD_DISABLED
 
-**Current runtime:** API 0.4.0 serves fixed Stage and Prod profiles through the
-existing solution, connector and gateway. Stage is published on the existing
-app ID `7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`, using local PostgreSQL with a Stage
-environment identity. Prod app `0aa02d8b-c7fa-42cc-87e8-6d287bd4c897` has been
-published with its separate connection verified. Both apps and the connector
-were read back in the existing MILSTRIP solution. The Prod runtime profile remains
-disabled until an independent database target is selected.
+**Published apps:** Licensing is resolved for the verified player sessions.
+MILSTRIP Stage (`7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`) passed health and retained
+results reads in the actual published player. MILSTRIP Prod
+(`0aa02d8b-c7fa-42cc-87e8-6d287bd4c897`) opens in its published player and reports
+`Database: DISABLED`. Its independent database target still requires owner approval.
+Stage continues to use local PostgreSQL and the existing solution, connector and
+gateway. No new Canvas version has been published for the administration work.
 
-The standalone Prod player requires a Power Apps plan for the current account.
-The owner left licensing with IT; no trial was started. Studio Preview checks
-passed, but standalone player acceptance remains blocked. Publication does not
-establish end-user readiness.
+**Administration rollout:** Both six-screen v2 drafts are saved and natively
+exported, with no direct API data source. Independent executable comparison
+verified six screens, 81 controls and 679 source properties in each draft. The
+four v2 role-display/message-handling fixes are recorded in the
+[Canvas evidence](delivery/CANVAS_SOURCE_ASSEMBLY_2026-09-24.md).
+Neither administration version is published. The source suite passed **372 tests;
+73 database opt-in tests were skipped**, with two upstream dependency warnings
+in 77.51 seconds.
+The latest pagination/flow/package/sharing batch passed **43 tests**. Skipped tests are not
+live database or tenant acceptance.
+
+The existing connector exposes eight operations, including `InvokeBroker`, and
+gateway connectivity is verified. Both broker references are bound and both
+native flows are **Started**:
+
+- Stage: `04d6229f-5ab8-f111-aaac-7ced8d6f317c`.
+- Prod: `fbe87a93-68ef-4efb-88db-facc21c125f6`.
+
+The **Power Automate Management connection is Connected**, using existing TAB
+SSO: `MILSTRIPManagementSSO`, ID `07c12ec437fa43e289082155a221a981`. Licensing and
+OAuth are resolved; no SSO provider change is required. The
+[TAB sysadmin SOP](TAB_SSO_SETUP_SOP.md) records the working procedure, recovery
+and two successful native Stage run-metadata checks. Protected inputs/outputs
+were verified without opening protected content.
+
+Native Stage checks passed for `GetCurrentUser`, `GetHealth`, `ListUsers`,
+`GetRuntimeProfiles`, saving a configuration draft and testing the unchanged
+target. Prod passed SSO and administration/configuration reads with its database
+disabled. Apply, sharing/recovery and second-user acceptance remain incomplete.
+After three executions returned incomplete app readback, the final built-in
+pagination trial stalled for more than eight minutes at `Before_add_stage_app`
+and was canceled in the native run UI around 23:48 UTC. It reached no permission
+mutation or Management call. The command remains pending and its durable lease
+remains RUNNING; no Management permit is held. Earlier flow grants remain
+verified and neither app CanView grant was added. Stop native retries. The next
+step is independent design of canceled-run reconciliation and finite permission
+readback; do not clear the lease or fabricate completion. The
+[pagination evidence](delivery/MAKERS_PERMISSION_PAGINATION_2026-09-24.md) records
+exact recovery references. No OAuth or IT policy change is needed.
+
+Claude and Mike are ACTIVE protected application Owners after readback of their
+CanView grants on both apps and run-only grants on both flows. Ed is ACTIVE Admin
+and retains platform deployment ownership. Kristen, Thomas and Shawn remain
+PENDING. Private control therefore has three active and three pending memberships;
+security enforcement and runtime authority remain inactive. The published
+four-screen apps still use the shared connection's API identity.
+
+The flows share one durable Management connector permit with a 13-second
+cooldown after each confirmed call. Unknown outcomes hold the permit until
+recovery. Six serial native calls observed post-completion intervals of at least
+13.516 seconds. Concurrent/timeout recovery acceptance remains pending.
 
 The [deployment manifest](../powerapps/canvas/deployment-manifest.json) records
-per-app formulas and source settings. The
-[administrator SOP](RUNTIME_CONFIGURATION.md) covers private configuration,
-explicit application-schema provisioning and activation by API restart.
-[ADR 0005](adr/0005-runtime-profiles.md) defines the profile and provider design.
-The six application tables include the database's environment identity.
+the published apps; [ADR 0006](adr/0006-user-identity-and-administration.md) and the
+[implementation contract](delivery/IDENTITY_ADMIN_IMPLEMENTATION_CONTRACT_2026-09-24.md)
+define the pending rollout. The [administrator SOP](RUNTIME_CONFIGURATION.md)
+covers both configuration authorities and explicit application-schema provisioning.
+Active control mode will use one private `control.json`, per-profile request
+draining and tested configuration changes. Until that cutover, the legacy private
+runtime configuration remains the running authority.
+
 PostgreSQL and SQL Server adapters are implemented; live Azure SQL acceptance is
-not established. Shared API releases and restarts affect both apps.
-The [runtime/publication evidence](delivery/RUNTIME_PROFILES_2026-09-24.md)
-records the final 242-test pass and post-restart Stage Studio health/read checks.
-These checks do not resolve the standalone player licensing blocker.
+not established. Shared API releases and restarts affect both apps. The earlier
+[runtime/publication evidence](delivery/RUNTIME_PROFILES_2026-09-24.md) records the
+242-test increment and its then-current licensing limitation; it is historical.
 
 Use the [visual operating package](operations-guide/index.html) for the functional
 flow, architecture, end-user SOP and evidence limits.
 The [Phase 2 plan](operations-guide/guide.md#phase-2-two-production-periods)
 assumes publication, uses existing Azure SQL first, then accepted production
 PostgreSQL with an end-Q4 2026 target. It is planning, not deployment approval.
-Earlier increment sections below are historical snapshots. This current status
-supersedes their descriptions of an unpublished app or single hard-coded database.
+Earlier increment sections are historical snapshots. The public visual guide
+**1.4.0** is published and verified; it describes the current four-screen release
+and clearly leaves administration acceptance pending. This status supplies the
+more detailed implementation and blocker evidence.
 
 The September 23 [acknowledgement update](delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md)
 added the persistent intake receipt now included in Stage. The
 [retained September 24 runtime test](delivery/RETAINED_RUNTIME_TEST_2026-09-24.md)
 preserves its intake, reviews and audit events in PostgreSQL. Do not delete it.
 Production handoff and downstream receipts remain Phase 2 work; the current API
-still records the shared connection identity rather than the signed-in person.
+still records the shared connection identity on the published app path.
 The illustrated guide has a separate editorial review and publication standard.
 Incoming change documents belong in the local [inbox](../inbox/README.md).
 

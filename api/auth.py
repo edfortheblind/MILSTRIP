@@ -56,10 +56,20 @@ def local_boundary(request):
 
 def authenticate(request: Request, credentials: HTTPBasicCredentials | None = Depends(basic)):
     from api.runtime import RequestContext, snapshot_for
+    from api.control import ControlError, ControlStore
     local_boundary(request)
     challenge = {"WWW-Authenticate": 'Basic realm="MILSTRIP"'}
     if credentials is None:
         raise HTTPException(401, "Authentication required", headers=challenge)
+    if request.url.path == "/api/v1/broker/invoke":
+        from api.broker import authenticate_transport
+        return authenticate_transport(request, credentials)
+    try:
+        store = ControlStore()
+        if store.exists() and store.read()["security"]["enforced"]:
+            raise HTTPException(403, "Direct API access is disabled; use the verified application broker")
+    except ControlError:
+        raise HTTPException(503, "Application access configuration is unavailable") from None
     snapshot = snapshot_for(request)
     selected = None
     for verifier in snapshot.verifiers:

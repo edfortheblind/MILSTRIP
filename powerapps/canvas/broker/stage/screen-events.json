@@ -1,0 +1,20 @@
+{
+  "scrIntake": {
+    "OnVisible": "false"
+  },
+  "scrResults": {
+    "OnVisible": "false"
+  },
+  "scrReview": {
+    "OnVisible": "false"
+  },
+  "scrHistory": {
+    "OnVisible": "false"
+  },
+  "scrConfiguration": {
+    "OnVisible": "Set(varMessage,If(!IsBlank(varAdminCommand.command_id),\"Configuration change is pending. Check command status or retry the same command.\",\"\")); If(!IsBlank(varAdminCommand.command_id) || !IsBlank(varDraft.draft_id),false,Select(btnLoadConfiguration))"
+  },
+  "scrUsers": {
+    "OnVisible": "Set(varMessage,If(!IsBlank(varUserCommand.command_id),\"Access change is pending. Check command status or retry sharing.\",\"\")); Select(btnLoadUsers)"
+  }
+}

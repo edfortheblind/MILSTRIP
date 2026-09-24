@@ -65,6 +65,127 @@
         "title": "AuditEvent",
         "type": "object"
       },
+      "BrokerEnvelope": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "$ref": "#/components/schemas/DirectoryPerson"
+          },
+          "operation": {
+            "enum": [
+              "GetCurrentUser",
+              "GetHealth",
+              "ListIntakeRequests",
+              "GetIntakeRequest",
+              "ListRecordResults",
+              "ListAuditEvents",
+              "CreateIntakeRequest",
+              "CreateReviewDecision",
+              "ListUsers",
+              "SaveUserAccess",
+              "AcquireSharingLease",
+              "RecordSharingResult",
+              "ReserveManagementCall",
+              "RecordManagementCall",
+              "GetRuntimeProfiles",
+              "SaveRuntimeDraft",
+              "TestRuntimeDraft",
+              "ApplyRuntimeDraft",
+              "GetAdministrationOperation"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "payload_json": {
+            "maxLength": 1100000,
+            "minLength": 2,
+            "title": "Payload Json",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "request_id",
+          "actor",
+          "operation",
+          "payload_json"
+        ],
+        "title": "BrokerEnvelope",
+        "type": "object"
+      },
+      "BrokerResult": {
+        "additionalProperties": false,
+        "properties": {
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "result_json": {
+            "title": "Result Json",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "result_json"
+        ],
+        "title": "BrokerResult",
+        "type": "object"
+      },
+      "DirectoryPerson": {
+        "additionalProperties": false,
+        "properties": {
+          "account_enabled": {
+            "title": "Account Enabled",
+            "type": "boolean"
+          },
+          "display_name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "object_id": {
+            "format": "uuid",
+            "title": "Object Id",
+            "type": "string"
+          },
+          "upn": {
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Upn",
+            "type": "string"
+          },
+          "user_type": {
+            "enum": [
+              "Member",
+              "Guest"
+            ],
+            "title": "User Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object_id",
+          "upn",
+          "display_name",
+          "account_enabled",
+          "user_type"
+        ],
+        "title": "DirectoryPerson",
+        "type": "object"
+      },
       "EventPage": {
         "properties": {
           "items": {
@@ -745,6 +866,52 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/broker/invoke": {
+      "post": {
+        "operationId": "InvokeBroker",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrokerEnvelope"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrokerResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "basic-auth": []
+          }
+        ],
+        "summary": "Invoke",
+        "tags": [
+          "broker"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "GetHealth",

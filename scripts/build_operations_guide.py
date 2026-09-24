@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "operations-guide"
 DIAGRAMS = OUT / "diagrams"
 DATE = "September 24, 2026"
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 PALETTE = {
     "dev": ("#e8f5f1", "#087f6c", "CURRENT"),
     "manual": ("#f0f3f7", "#53657d", "EXISTING MANUAL"),
@@ -103,11 +103,11 @@ def charts():
     for x in [240,480,720]:c.arrow([(x,699),(x+40,699)])
     manifests.append(c.save())
 
-    c=Chart("02-current-architecture.svg","Stage and Prod architecture","Both apps published. Player licensing and the Prod database remain pending.",980)
+    c=Chart("02-current-architecture.svg","Stage and Prod architecture","Published players open. Prod database and in-app administration acceptance remain pending.",980)
     c.panel(20,150,960,290,"POWER PLATFORM CLOUD  /  existing solution, connector and gateway")
-    c.node("stage-app",50,205,370,90,"MILSTRIP Stage",["Published; Studio runtime tested","Player license gate unresolved"])
+    c.node("stage-app",50,205,370,90,"MILSTRIP Stage",["Published player runtime checked","Licensing resolved"])
     c.node("prod-app",50,320,370,90,"MILSTRIP Prod",["Published; separate connection","Disabled until target is configured"])
-    c.node("connector",570,250,370,110,"Existing custom connector",["Seven typed API operations","Separate credentials select profiles"])
+    c.node("connector",570,250,370,110,"Existing custom connector",["Seven routes plus SSO broker","Broker deployment being validated"])
     c.arrow([(420,250),(500,250),(500,280),(570,280)])
     c.arrow([(420,365),(500,365),(500,320),(570,320)])
     c.panel(20,480,960,190,"API HOST  /  currently the laptop")
@@ -199,7 +199,7 @@ def charts():
     manifests.append(c.save())
 
     c=Chart("07-phase2-transition.svg","Two periods: qualify, switch, stabilize","Q4 2026 is the owner's target. Dates never override the acceptance gates.",860,"future")
-    c.node("now",30,165,280,145,"NOW / September 24",["Both apps published","Stage Studio runtime tested","Player license gate unresolved","Prod target pending; disabled"],"dev")
+    c.node("now",30,165,280,145,"NOW / September 24",["Both published players open","Stage runtime checked","SSO administration in validation","Prod target pending; disabled"],"dev")
     c.node("p21",360,165,280,145,"P2.1 / target October",["Published production pilot","Existing Azure SQL DB","API moved off laptop","Measured load and operations"],"future")
     c.node("p22",690,165,280,145,"P2.2 / target December",["Accepted PG Production","One writer switch","Stable IDs / history / commands","Qualified downstream flow"],"future")
     c.arrow([(310,237),(360,237)],dashed=True);c.arrow([(640,237),(690,237)],dashed=True)

@@ -16,8 +16,10 @@ def test_connector_is_valid_swagger_and_matches_runtime():
     assert generated['basePath'] == '/api/v1'
     assert generated['schemes'] == ['http']
     operations = [(path, method, op) for path, methods in generated['paths'].items() for method, op in methods.items()]
-    assert len(operations) == 7
-    assert len({op['operationId'] for _, _, op in operations}) == 7
+    expected = {'GetHealth', 'ListIntakeRequests', 'CreateIntakeRequest', 'GetIntakeRequest',
+                'ListRecordResults', 'ListAuditEvents', 'CreateReviewDecision', 'InvokeBroker'}
+    assert len(operations) == len(expected)
+    assert {op['operationId'] for _, _, op in operations} == expected
     for path, method, op in operations:
         source = app.openapi()['paths']['/api/v1' + path][method]
         assert source['operationId'] == op['operationId']

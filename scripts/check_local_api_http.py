@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from dataclasses import replace
 
 import httpx
 import psycopg
@@ -18,6 +19,7 @@ from uuid import uuid4
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from api.auth import ITERATIONS, password_digest
+from api.profiles import RuntimeProfile, empty_runtime_config, save_runtime_config
 from scripts.run_controlled_handoff_test import SYNTHETIC_RECORD
 
 
@@ -98,6 +100,28 @@ def cleanup(database_url, marker):
     print('PASS: synthetic application rows removed; no legacy-table writes')
 
 
+def isolated_runtime_environment(directory, database_url):
+    """Synthetic credentials and profiles cannot inherit the live authority."""
+    private = Path(directory) / '.cred'
+    private.mkdir()
+    username, password = 'synthetic-http-check', secrets.token_urlsafe(32)
+    for filename, account, secret in (
+        ('api-credential.json', username, password),
+        ('api-prod-credential.json', 'synthetic-prod-http-check', secrets.token_urlsafe(32)),
+    ):
+        salt = secrets.token_hex(32)
+        (private / filename).write_text(json.dumps(dict(version=1, iterations=ITERATIONS,
+            username=account, salt=salt, digest=password_digest(secret, salt))), encoding='utf-8')
+    path = private / 'runtime.json'
+    config = empty_runtime_config(path)
+    profiles = dict(config.profiles)
+    profiles['stage'] = RuntimeProfile('stage', 'postgresql', 'Synthetic HTTP Stage', database_url, True)
+    save_runtime_config(replace(config, profiles=profiles), path)
+    environment = dict(os.environ, MILSTRIP_RUNTIME_CONFIG_FILE=str(path),
+                       MILSTRIP_CONTROL_FILE=str(private / 'control.json'))
+    return environment, username, password
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workflow', action='store_true', help='Exercise all seven operations and remove this run\'s synthetic metadata')
@@ -111,16 +135,11 @@ def main():
             and not config.get('service'), 'Only the approved local database is allowed')
     marker = 'standalone-' + str(uuid4())
     with tempfile.TemporaryDirectory(prefix='http-check-', dir=ROOT / '.cred') as directory:
-        username, password, salt = 'synthetic-http-check', secrets.token_urlsafe(32), secrets.token_hex(32)
-        path = Path(directory) / 'credential.json'
-        path.write_text(json.dumps(dict(version=1, iterations=ITERATIONS, username=username,
-                                       salt=salt, digest=password_digest(password, salt))))
-        environment = dict(os.environ, MILSTRIP_API_CREDENTIAL_FILE=str(path))
-        environment.setdefault('MILSTRIP_DATABASE_URL', 'postgresql://TabAdmin@localhost:5432/trav3pl-psqldb-stage')
+        environment, username, password = isolated_runtime_environment(directory, database_url)
         with socket.socket() as probe:
             probe.bind(('127.0.0.1', 0))
             port = probe.getsockname()[1]
-        process = subprocess.Popen([sys.executable, '-m', 'uvicorn', 'api.app:app', '--host', '127.0.0.1', '--port', str(port), '--no-proxy-headers', '--no-access-log'], cwd=ROOT, env=environment, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        process = subprocess.Popen([sys.executable, '-m', 'uvicorn', 'api.app:app', '--host', '127.0.0.1', '--port', str(port), '--workers', '1', '--no-proxy-headers', '--no-access-log'], cwd=ROOT, env=environment, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
             with httpx.Client(base_url=f'http://127.0.0.1:{port}', timeout=15, trust_env=False) as client:
                 for attempt in range(50):

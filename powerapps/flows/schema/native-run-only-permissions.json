@@ -1,0 +1,71 @@
+{
+  "source": "Sanitized native /flows/owners and /flows/users readback, 2026-09-24. All object, tenant, flow and assignment IDs replaced with synthetic values. Legacy checker booleans omitted; raw permission records are the evidence.",
+  "profiles": {
+    "stage": {
+      "flow_id": "11111111-1111-4111-8111-000000000001",
+      "owners": [
+        {
+          "name": "11111111-1111-4111-8111-000000000002",
+          "id": "/providers/Microsoft.ProcessSimple/environments/Default-11111111-1111-4111-8111-000000000003/flows/11111111-1111-4111-8111-000000000001/owners/11111111-1111-4111-8111-000000000002",
+          "type": "/providers/Microsoft.ProcessSimple/environments/flows/owners",
+          "properties": {
+            "permissionType": "Principal",
+            "principal": {
+              "id": "11111111-1111-4111-8111-000000000002",
+              "type": "User",
+              "tenantId": "11111111-1111-4111-8111-000000000003"
+            }
+          }
+        }
+      ],
+      "users": [
+        {
+          "name": "11111111-1111-4111-8111-000000000002",
+          "id": "/providers/Microsoft.ProcessSimple/environments/Default-11111111-1111-4111-8111-000000000003/flows/11111111-1111-4111-8111-000000000001/users/11111111-1111-4111-8111-000000000002",
+          "type": "/providers/Microsoft.ProcessSimple/environments/flows/users",
+          "properties": {
+            "permissionType": "Principal",
+            "principal": {
+              "id": "11111111-1111-4111-8111-000000000002",
+              "type": "User",
+              "tenantId": "11111111-1111-4111-8111-000000000003"
+            }
+          }
+        }
+      ]
+    },
+    "prod": {
+      "flow_id": "11111111-1111-4111-8111-000000000004",
+      "owners": [
+        {
+          "name": "11111111-1111-4111-8111-000000000002",
+          "id": "/providers/Microsoft.ProcessSimple/environments/Default-11111111-1111-4111-8111-000000000003/flows/11111111-1111-4111-8111-000000000004/owners/11111111-1111-4111-8111-000000000002",
+          "type": "/providers/Microsoft.ProcessSimple/environments/flows/owners",
+          "properties": {
+            "permissionType": "Principal",
+            "principal": {
+              "id": "11111111-1111-4111-8111-000000000002",
+              "type": "User",
+              "tenantId": "11111111-1111-4111-8111-000000000003"
+            }
+          }
+        }
+      ],
+      "users": [
+        {
+          "name": "11111111-1111-4111-8111-000000000002",
+          "id": "/providers/Microsoft.ProcessSimple/environments/Default-11111111-1111-4111-8111-000000000003/flows/11111111-1111-4111-8111-000000000004/users/11111111-1111-4111-8111-000000000002",
+          "type": "/providers/Microsoft.ProcessSimple/environments/flows/users",
+          "properties": {
+            "permissionType": "Principal",
+            "principal": {
+              "id": "11111111-1111-4111-8111-000000000002",
+              "type": "User",
+              "tenantId": "11111111-1111-4111-8111-000000000003"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

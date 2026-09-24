@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "status": "SOURCE_REQUIRES_NATIVE_COMPILATION_AND_ACCEPTANCE",
+  "screens": [
+    "scrIntake",
+    "scrResults",
+    "scrReview",
+    "scrHistory",
+    "scrConfiguration",
+    "scrUsers"
+  ],
+  "profiles": {
+    "stage": {
+      "flow": "MILSTRIPStageBroker",
+      "directory": "stage"
+    },
+    "prod": {
+      "flow": "MILSTRIPProdBroker",
+      "directory": "prod"
+    }
+  },
+  "app_properties": {
+    "Formulas": "app-environment.fx",
+    "OnStart": "app-onstart.fx",
+    "StartScreen": "scrIntake"
+  },
+  "requirements": [
+    "Bind only the matching broker flow",
+    "Apply screen-events.json OnVisible properties",
+    "Enable formula-level error management",
+    "Compile and test in Power Apps Studio",
+    "Complete trusted broker acceptance before enforcing broker-only access"
+  ]
+}

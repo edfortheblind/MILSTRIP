@@ -1,0 +1,160 @@
+{
+  "captured": "2026-09-24",
+  "operations": {
+    "Edit-AppRoleAssignment": {
+      "body_parameter": "body",
+      "connector": "shared_powerappsforappmakers",
+      "schema": {
+        "properties": {
+          "delete": {
+            "description": "delete",
+            "items": {
+              "properties": {
+                "id": {
+                  "description": "Role Id of User.",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "put": {
+            "description": "put",
+            "items": {
+              "properties": {
+                "properties": {
+                  "description": "properties",
+                  "properties": {
+                    "NotifyShareTargetOption": {
+                      "description": "Notify ShareTarget Option.",
+                      "enum": [
+                        "Notify",
+                        "DoNotNotify"
+                      ],
+                      "type": "string"
+                    },
+                    "principal": {
+                      "description": "principal",
+                      "properties": {
+                        "email": {
+                          "description": "Email of the User.",
+                          "type": "string"
+                        },
+                        "id": {
+                          "description": "ID of the user.",
+                          "type": "string"
+                        },
+                        "tenantId": {
+                          "description": "Tenant Id of the User.",
+                          "type": "string"
+                        },
+                        "type": {
+                          "description": "Type of User.",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "roleName": {
+                      "description": "Role Name of User.",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "ModifyRunOnlyUsers": {
+      "body_parameter": "permissions",
+      "connector": "shared_flowmanagement",
+      "schema": {
+        "properties": {
+          "delete": {
+            "items": {
+              "properties": {
+                "properties": {
+                  "properties": {
+                    "principal": {
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "x-ms-summary": "Remove User Object Id",
+                          "x-ms-visibility": "important"
+                        },
+                        "type": {
+                          "enum": [
+                            "User",
+                            "Group"
+                          ],
+                          "type": "string",
+                          "x-ms-summary": "Remove User Type",
+                          "x-ms-visibility": "important"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "title": "Remove User",
+            "type": "array"
+          },
+          "put": {
+            "items": {
+              "properties": {
+                "properties": {
+                  "properties": {
+                    "principal": {
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "x-ms-summary": "Add User Object Id",
+                          "x-ms-visibility": "important"
+                        },
+                        "type": {
+                          "enum": [
+                            "User",
+                            "Group"
+                          ],
+                          "type": "string",
+                          "x-ms-summary": "Add User Type",
+                          "x-ms-visibility": "important"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "title": "Add User",
+            "type": "array"
+          }
+        },
+        "type": "object"
+      }
+    }
+  },
+  "source": "Official tenant connector Swagger via Get-PowerAppConnector -ReturnConnectorSwagger"
+}

@@ -1,0 +1,128 @@
+- HistoryIcon:
+    Control: Image
+    Properties:
+      X: =24
+      Y: =16
+      Width: =64
+      Height: =64
+      Image: ='milstrip-app'
+- HistoryTitle:
+    Control: Label
+    Properties:
+      X: =104
+      Y: =16
+      Width: =Parent.Width-128
+      Height: =64
+      Text: ="MILSTRIP " & If(AppEnvironment="stage","Stage","Prod") & " | " & "Audit history"
+      Size: =24
+- HistoryMessage:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =84
+      Width: =Parent.Width-48
+      Height: =60
+      Text: =Coalesce(varMessage, "")
+      Live: =Live.Polite
+- HistoryRequest:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =144
+      Width: =Parent.Width-48
+      Height: =42
+      Text: '="Request: " & varRequestId'
+- btnLoadHistory:
+    Control: Classic/Button
+    Properties:
+      X: =24
+      Y: =200
+      Width: =210
+      Height: =44
+      Text: ="Load / refresh history"
+      OnSelect: =If(!Coalesce(varBusy,false) && Coalesce(varEnvironmentReady,false),Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varFlow,MILSTRIPProdBroker.Run("ListAuditEvents",JSON({request_id:varRequestId,limit:50},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(ClearCollect(colEvents,ForAll(Table(varRaw.items)
+        As row,{event_id:Value(row.Value.event_id),aggregate_type:Text(row.Value.aggregate_type),aggregate_id:Text(row.Value.aggregate_id),event_type:Text(row.Value.event_type),actor:Text(row.Value.actor),occurred_at:DateTimeValue(Text(row.Value.occurred_at))}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(Set(varEventsCursor,Text(varRaw.next_cursor))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(Set(varHistoryRequest,varRequestId)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(Set(varMessage,"")),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,true))))))))); Set(varBusy,false))
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit))
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnMoreHistory:
+    Control: Classic/Button
+    Properties:
+      X: =254
+      Y: =200
+      Width: =210
+      Height: =44
+      Text: ="More history"
+      OnSelect: =If(!Coalesce(varBusy,false) && Coalesce(varEnvironmentReady,false),Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varFlow,MILSTRIPProdBroker.Run("ListAuditEvents",JSON({request_id:varRequestId,limit:50,cursor:varEventsCursor},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(Collect(colEvents,ForAll(Table(varRaw.items)
+        As row,{event_id:Value(row.Value.event_id),aggregate_type:Text(row.Value.aggregate_type),aggregate_id:Text(row.Value.aggregate_id),event_type:Text(row.Value.event_type),actor:Text(row.Value.actor),occurred_at:DateTimeValue(Text(row.Value.occurred_at))}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(Set(varEventsCursor,Text(varRaw.next_cursor))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(Set(varHistoryRequest,varRequestId)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,If(IsError(Set(varMessage,"")),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"History unavailable. Current events and cursor retained."); false,true))))))))); Set(varBusy,false))
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || IsBlank(varEventsCursor)
+        || varHistoryRequest<>varRequestId,DisplayMode.Disabled,DisplayMode.Edit))
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnHistoryBack:
+    Control: Classic/Button
+    Properties:
+      X: =484
+      Y: =200
+      Width: =210
+      Height: =44
+      Text: ="Results"
+      OnSelect: =Navigate(scrResults)
+      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- galHistory:
+    Control: Gallery
+    Properties:
+      X: =24
+      Y: =260
+      Width: =Parent.Width-48
+      Height: =Parent.Height-280
+      Items: =If(varHistoryRequest=varRequestId,colEvents,Filter(colEvents,false))
+      TemplateSize: =132
+      AccessibleLabel: ="Request audit history"
+      ItemAccessibleLabel: =ThisItem.event_type & ", " & Text(ThisItem.occurred_at,DateTimeFormat.ShortDateTime)
+        & ", actor " & Coalesce(ThisItem.actor,"not recorded")
+    Variant: Vertical
+    Children:
+    - EventSummary:
+        Control: Label
+        Properties:
+          X: =0
+          Y: =0
+          Width: =Parent.TemplateWidth
+          Height: =44
+          Text: =Text(ThisItem.occurred_at) & " | " & ThisItem.event_type & " | " & Coalesce(ThisItem.actor, "")
+    - EventData:
+        Control: Label
+        Properties:
+          X: =0
+          Y: =46
+          Width: =Parent.TemplateWidth
+          Height: =80
+          Text: '=ThisItem.aggregate_type & ": " & ThisItem.aggregate_id & " | event " & Text(ThisItem.event_id)'

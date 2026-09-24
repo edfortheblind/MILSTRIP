@@ -5,7 +5,8 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from api.persistence import provision_schema
-from api.profiles import load_runtime_config, target_summary
+from api.profiles import target_summary
+from scripts.runtime_host import configured_profile
 
 
 def main():
@@ -15,7 +16,7 @@ def main():
     parser.add_argument('--confirm-target')
     args = parser.parse_args()
     try:
-        profile = load_runtime_config().profiles[args.environment]
+        profile = configured_profile(args.environment)
         if not profile.connection_string:
             raise ValueError('No connection string')
         target = target_summary(profile)
@@ -29,7 +30,7 @@ def main():
         provision_schema(profile.provider, profile.connection_string, profile.profile_id)
     except Exception:
         raise SystemExit('Not completed. Verify private configuration, target confirmation, authorization and schema compatibility.') from None
-    print('Application schema and environment identity verified. Existing rows preserved. Test in Configure-Runtime before enabling.')
+    print('Application schema and environment identity verified. Existing rows preserved. Test the selected configuration before enabling it.')
 
 
 if __name__ == '__main__':

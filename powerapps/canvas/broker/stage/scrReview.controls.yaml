@@ -1,0 +1,275 @@
+- ReviewIcon:
+    Control: Image
+    Properties:
+      X: =24
+      Y: =16
+      Width: =64
+      Height: =64
+      Image: ='milstrip-app'
+- ReviewTitle:
+    Control: Label
+    Properties:
+      X: =104
+      Y: =16
+      Width: =Parent.Width-128
+      Height: =64
+      Text: ="MILSTRIP " & If(AppEnvironment="stage","Stage","Prod") & " | " & "Operator review"
+      Size: =24
+- ReviewMessage:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =84
+      Width: =Parent.Width-48
+      Height: =60
+      Text: =Coalesce(varMessage, "")
+      Live: =Live.Polite
+- ReviewIdentity:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =144
+      Width: =Parent.Width-48
+      Height: =42
+      Text: '=varRecord.record_id & " | validation: " & varRecord.status & " | version: " & Text(varRecord.review_version)'
+- CanonicalLabel:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =188
+      Width: =Parent.Width-48
+      Height: =42
+      Text: '="Canonical length: " & Text(Len(varRecord.canonical_record)) & " (trailing spaces preserved)"'
+- txtCanonical:
+    Control: Classic/TextInput
+    Properties:
+      X: =24
+      Y: =234
+      Width: =Parent.Width-48
+      Height: =70
+      Default: =varRecord.canonical_record
+      Mode: =TextMode.MultiLine
+      DisplayMode: =DisplayMode.View
+      Font: ="Courier New"
+      AccessibleLabel: ="Canonical MILSTRIP record, read only"
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =RGBA(0,0,0,1)
+- ReviewIssues:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =310
+      Width: =Parent.Width-48
+      Height: =80
+      Text: '=Concat(varRecord.issues,issue_code & ": " & message,Char(10))'
+- ddDecision:
+    Control: Classic/DropDown
+    Properties:
+      X: =24
+      Y: =400
+      Width: =220
+      Height: =44
+      Items: =["REJECTED","APPROVED"]
+      Default: ="REJECTED"
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id),DisplayMode.Disabled,DisplayMode.Edit))
+      AccessibleLabel: ="Review decision"
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =RGBA(0,0,0,1)
+- txtReason:
+    Control: Classic/TextInput
+    Properties:
+      X: =264
+      Y: =400
+      Width: =Parent.Width-288
+      Height: =110
+      Default: =""
+      HintText: ="Reason required (1-1000 characters)"
+      MaxLength: =1000
+      Mode: =TextMode.MultiLine
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id),DisplayMode.Disabled,DisplayMode.Edit))
+      AccessibleLabel: ="Review reason, required"
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =RGBA(0,0,0,1)
+- btnSaveReview:
+    Control: Classic/Button
+    Properties:
+      X: =24
+      Y: =534
+      Width: =210
+      Height: =44
+      Text: ="Save review"
+      OnSelect: =If(!Coalesce(varBusy,false) && Coalesce(varEnvironmentReady,false),Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varPending,{decision:ddDecision.Selected.Value,reason:txtReason.Text,expected_version:varRecord.review_version,command_id:Text(GUID())})),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varPendingRecord,varRecord.record_id)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("CreateReviewDecision",JSON({record_id:varPendingRecord,command_id:varPending.command_id,decision:varPending.decision,expected_version:varPending.expected_version,reason:varPending.reason},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("ListRecordResults",JSON({request_id:varRequestId,limit:50,cursor:varRecordPageCursor},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(ClearCollect(colRefreshedRecords,ForAll(Table(varRaw.items) As row,{record_id:Text(row.Value.record_id),request_id:Text(row.Value.request_id),record_sequence:Value(row.Value.record_sequence),canonical_record:Text(row.Value.canonical_record),normalized_record:Text(row.Value.normalized_record),raw_candidate:Text(row.Value.raw_candidate),status:Text(row.Value.status),review_version:Value(row.Value.review_version),issues:ForAll(Table(row.Value.issues)
+        As issue,{issue_id:Value(issue.Value.issue_id),issue_code:Text(issue.Value.issue_code),severity:Text(issue.Value.severity),field_name:Text(issue.Value.field_name),position_start:Value(issue.Value.position_start),position_end:Value(issue.Value.position_end),message:Text(issue.Value.message)}),latest_review:{decision:Text(row.Value.latest_review.decision),reason:Text(row.Value.latest_review.reason),decided_by:Text(row.Value.latest_review.decided_by),decided_at:If(IsBlank(Text(row.Value.latest_review.decided_at)),Blank(),DateTimeValue(Text(row.Value.latest_review.decided_at))),review_version:Value(row.Value.latest_review.review_version)}}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varReloaded,LookUp(colRefreshedRecords,record_id=varPendingRecord))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(If(IsBlank(varReloaded.record_id),Error({Kind:ErrorKind.Custom,Message:"Record missing"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varRecord,varReloaded)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varPending,Blank())),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varConflict,false)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varMessage,"Review saved. Delivery is not connected.")),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,true))))))))))))))))))); Set(varBusy,false))
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id)
+        || IsBlank(Trim(txtReason.Text)) || (ddDecision.Selected.Value="APPROVED" && !(varRecord.status in ["VALID","REQUIRES_REVIEW"])),DisplayMode.Disabled,DisplayMode.Edit))
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnRetryReview:
+    Control: Classic/Button
+    Properties:
+      X: =254
+      Y: =534
+      Width: =210
+      Height: =44
+      Text: ="Retry same command"
+      OnSelect: =If(!Coalesce(varBusy,false) && Coalesce(varEnvironmentReady,false),Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("CreateReviewDecision",JSON({record_id:varPendingRecord,command_id:varPending.command_id,decision:varPending.decision,expected_version:varPending.expected_version,reason:varPending.reason},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("ListRecordResults",JSON({request_id:varRequestId,limit:50,cursor:varRecordPageCursor},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(ClearCollect(colRefreshedRecords,ForAll(Table(varRaw.items) As row,{record_id:Text(row.Value.record_id),request_id:Text(row.Value.request_id),record_sequence:Value(row.Value.record_sequence),canonical_record:Text(row.Value.canonical_record),normalized_record:Text(row.Value.normalized_record),raw_candidate:Text(row.Value.raw_candidate),status:Text(row.Value.status),review_version:Value(row.Value.review_version),issues:ForAll(Table(row.Value.issues)
+        As issue,{issue_id:Value(issue.Value.issue_id),issue_code:Text(issue.Value.issue_code),severity:Text(issue.Value.severity),field_name:Text(issue.Value.field_name),position_start:Value(issue.Value.position_start),position_end:Value(issue.Value.position_end),message:Text(issue.Value.message)}),latest_review:{decision:Text(row.Value.latest_review.decision),reason:Text(row.Value.latest_review.reason),decided_by:Text(row.Value.latest_review.decided_by),decided_at:If(IsBlank(Text(row.Value.latest_review.decided_at)),Blank(),DateTimeValue(Text(row.Value.latest_review.decided_at))),review_version:Value(row.Value.latest_review.review_version)}}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varReloaded,LookUp(colRefreshedRecords,record_id=varPendingRecord))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(If(IsBlank(varReloaded.record_id),Error({Kind:ErrorKind.Custom,Message:"Record missing"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varRecord,varReloaded)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varPending,Blank())),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varConflict,false)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,If(IsError(Set(varMessage,"Review saved. Delivery is not connected.")),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varConflict,Coalesce(varFlow.status,0)=409); Set(varMessage,If(varConflict,"Conflict. Reload and inspect
+        the current version.","Review outcome unknown. Retry the same command; reason and decision are retained."));
+        false,true))))))))))))))))); Set(varBusy,false))
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || IsBlank(varPending.command_id)
+        || Coalesce(varConflict,false),DisplayMode.Disabled,DisplayMode.Edit))
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnReconcile:
+    Control: Classic/Button
+    Properties:
+      X: =484
+      Y: =534
+      Width: =210
+      Height: =44
+      Text: ="Reload after conflict"
+      OnSelect: =If(!Coalesce(varBusy,false) && Coalesce(varEnvironmentReady,false),Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("ListRecordResults",JSON({request_id:varRequestId,limit:50,cursor:varRecordPageCursor},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Reload failed. Pending command retained."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Reload failed. Pending command retained."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Reload failed. Pending command retained."); false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Reload failed. Pending command retained."); false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Reload failed. Pending command retained."); false,If(IsError(ClearCollect(colRefreshedRecords,ForAll(Table(varRaw.items)
+        As row,{record_id:Text(row.Value.record_id),request_id:Text(row.Value.request_id),record_sequence:Value(row.Value.record_sequence),canonical_record:Text(row.Value.canonical_record),normalized_record:Text(row.Value.normalized_record),raw_candidate:Text(row.Value.raw_candidate),status:Text(row.Value.status),review_version:Value(row.Value.review_version),issues:ForAll(Table(row.Value.issues)
+        As issue,{issue_id:Value(issue.Value.issue_id),issue_code:Text(issue.Value.issue_code),severity:Text(issue.Value.severity),field_name:Text(issue.Value.field_name),position_start:Value(issue.Value.position_start),position_end:Value(issue.Value.position_end),message:Text(issue.Value.message)}),latest_review:{decision:Text(row.Value.latest_review.decision),reason:Text(row.Value.latest_review.reason),decided_by:Text(row.Value.latest_review.decided_by),decided_at:If(IsBlank(Text(row.Value.latest_review.decided_at)),Blank(),DateTimeValue(Text(row.Value.latest_review.decided_at))),review_version:Value(row.Value.latest_review.review_version)}}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Reload failed. Pending command retained."); false,If(IsError(Set(varReloaded,LookUp(colRefreshedRecords,record_id=varRecord.record_id))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Reload failed. Pending command retained."); false,If(IsError(If(IsBlank(varReloaded.record_id),Set(varMessage,"Record
+        absent from this page. Pending command retained."),Set(varRecord,varReloaded); Set(varPending,Blank());
+        Set(varConflict,false); Set(varMessage,"Current version loaded. Inspect it before saving a new decision."))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Reload failed. Pending command retained."); false,true)))))))); Set(varBusy,false))
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || !Coalesce(varConflict,false),DisplayMode.Disabled,DisplayMode.Edit))
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnReviewBack:
+    Control: Classic/Button
+    Properties:
+      X: =714
+      Y: =534
+      Width: =210
+      Height: =44
+      Text: ="Results"
+      OnSelect: =Navigate(scrResults)
+      DisplayMode: =If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id),DisplayMode.Disabled,DisplayMode.Edit)
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color

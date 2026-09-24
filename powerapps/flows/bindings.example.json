@@ -1,0 +1,39 @@
+{
+  "connector_api_id": "/providers/microsoft.powerapps/apis/shared_tab-5fmilstrip-20local-20dev-20api-5f9baef836fe8c097c",
+  "deployed_owner_object_id": "__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__",
+  "environment_name": "__POWER_PLATFORM_ENVIRONMENT__",
+  "management_metadata_verified": false,
+  "profiles": {
+    "prod": {
+      "app_id": "0aa02d8b-c7fa-42cc-87e8-6d287bd4c897",
+      "broker_connection": "__PROD_PRIVATE_BROKER_CONNECTION__",
+      "broker_reference": "__PROD_BROKER_REFERENCE__",
+      "flow_id": "__PROD_FLOW_ID__"
+    },
+    "stage": {
+      "app_id": "7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82",
+      "broker_connection": "__STAGE_PRIVATE_BROKER_CONNECTION__",
+      "broker_reference": "__STAGE_BROKER_REFERENCE__",
+      "flow_id": "__STAGE_FLOW_ID__"
+    }
+  },
+  "shared_connections": {
+    "directory": {
+      "connection_name": "__DIRECTORY_CONNECTION__",
+      "logical_name": "__DIRECTORY_REFERENCE__"
+    },
+    "invoker": {
+      "connection_name": "__INVOKER_CONNECTION__",
+      "logical_name": "__INVOKER_REFERENCE__"
+    },
+    "makers": {
+      "connection_name": "__MAKERS_CONNECTION__",
+      "logical_name": "__MAKERS_REFERENCE__"
+    },
+    "management": {
+      "connection_name": "__MANAGEMENT_CONNECTION__",
+      "logical_name": "__MANAGEMENT_REFERENCE__"
+    }
+  },
+  "tenant_id": "__TENANT_ID__"
+}

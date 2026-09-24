@@ -1,0 +1,35 @@
+{
+  "deployment": {
+    "category": 5,
+    "clientdata": "Serialize the entire generated JSON object as the workflow clientdata string",
+    "initial_state": "Draft / Off",
+    "primaryentity": "none",
+    "type": 1
+  },
+  "flows": {
+    "prod": {
+      "app_id": "0aa02d8b-c7fa-42cc-87e8-6d287bd4c897",
+      "flow_id": "__PROD_FLOW_ID__",
+      "name": "MILSTRIPProdBroker",
+      "sha256": "99863bffa6775bed99fa63aff41f57abe0c64a1fcaa34964dbd59d13cfcf9788",
+      "source": "MILSTRIP-Prod-Broker.json"
+    },
+    "stage": {
+      "app_id": "7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82",
+      "flow_id": "__STAGE_FLOW_ID__",
+      "name": "MILSTRIPStageBroker",
+      "sha256": "9b0a975c73bbc99102c4d7af552377aeb204b2dc8338ef290aa21335269ca8c4",
+      "source": "MILSTRIP-Stage-Broker.json"
+    }
+  },
+  "generator": "scripts/build_broker_flows.py",
+  "requires": [
+    "Distinct private Stage/Prod broker credentials and connection references",
+    "Invoker-owned Office 365 Users connection; private fixed-tenant directory/management connections",
+    "Live caller identity, write-only history, sharing readback and failure-path acceptance",
+    "Server broker-only cutover before exposing either app"
+  ],
+  "solution": "MILSTRIP",
+  "status": "SOURCE_DRAFT_REQUIRES_BINDINGS",
+  "version": 1
+}

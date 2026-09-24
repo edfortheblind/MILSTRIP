@@ -1,4 +1,4 @@
-﻿# App screen evidence — edition 1.3.0
+# App screen evidence — edition 1.4.0
 
 **September 24, 2026.** Four PNGs were captured directly from the renamed
 MILSTRIP Stage app in Power Apps Studio Preview. They show the same synthetic
@@ -32,10 +32,12 @@ their removed fixtures belong to edition 1.2.0 and are superseded here.
 Publication was verified by the tenant's **Publish successful** messages on
 September 24: Stage at **1:01:57 PM**, Prod at **1:15:52 PM**. Both apps were
 verified in the existing MILSTRIP solution; Stage retained its original ID.
-The images show Studio Preview, not the published player. Player access prompted
-for a Power Apps plan; no trial was accepted. Published-player runtime acceptance
-therefore remains pending. Prod has a separate connection, a fixed expected
-environment and a disabled database profile; it cannot accept intake yet.
+The unchanged images show Studio Preview, not the published player or the new
+administration screens. After these captures, licensing was resolved and Stage
+passed connection and saved-results checks in the published player. Prod opens
+with a separate connection, fixed environment and disabled database profile; it
+cannot accept intake yet. New individual-user enforcement and in-app
+administration remain pending native deployment acceptance.
 
 The administrator image is a direct capture of the real Tkinter configuration
 screen loaded with a separate demonstration configuration. Its `example-stage`

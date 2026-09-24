@@ -7,27 +7,57 @@ of it (`download_ship940` → ADF → `ShipMaster` → Boomi → SCALE).
 
 ## Status
 
-**2026-09-24: MILSTRIP Stage and Prod published; player licensing remains with IT.**
+**2026-09-24: Published players verified; administration rollout withheld after a canceled sharing test.**
 Stage retains app ID `7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`. The separate Prod app
 is `0aa02d8b-c7fa-42cc-87e8-6d287bd4c897`; its separate connection is verified, and
 its runtime profile is disabled while the database target is undecided. Both are
 in the existing MILSTRIP solution and reuse its connector and gateway.
 
-The standalone Prod player requested a Power Apps plan for the current account.
-The owner assigned licensing to IT; no trial was started. Studio Preview checks
-passed, but end-user player acceptance remains blocked until licensing is resolved.
+Licensing is resolved for the verified sessions. The published Stage player
+passed health and retained-results reads. The Prod player opens and reports
+`Database: DISABLED`; its independent target still requires owner approval.
 
 API **0.4.0** binds separate API credentials to fixed Stage/Prod profiles and
 checks the database's environment identity. Stage uses local PostgreSQL;
 PostgreSQL and SQL Server persistence adapters are implemented. Live Azure SQL
-acceptance remains pending. Configure destinations privately through the
-[administrator screen and SOP](docs/RUNTIME_CONFIGURATION.md).
+acceptance remains pending. The current and post-cutover configuration procedures
+are in the [administrator SOP](docs/RUNTIME_CONFIGURATION.md).
+
+The administration source suite passed **372 tests; 73 database opt-in tests
+were skipped**, with two upstream dependency warnings in 77.51 seconds. The prior
+pagination, flow, package and sharing checks passed **43 tests**. Both broker flows are
+**Started**, their references are bound, and Management OAuth is **Connected**.
+The existing eight-operation connector and gateway are reused.
+
+Both six-screen v2 administration drafts are saved and exported, with no direct API
+data source. Independent comparison verified each draft's six screens, 81
+controls and 679 source properties against the executable export. Stage native
+checks passed for identity, health, users, runtime profiles, saving a draft and
+testing that unchanged database target. Prod passed SSO and administration/config
+reads while its database remains disabled. Apply, sharing/recovery and second-user
+acceptance are still pending; neither draft is published.
+
+Claude and Mike are ACTIVE protected application Owners after verified CanView
+access to both apps and run-only access to both flows. Ed is ACTIVE Admin and
+retains platform deployment ownership. Kristen, Thomas and Shawn remain PENDING;
+the final pagination attempt stalled for more than eight minutes on its first
+app-permission read and was canceled. It made no permission mutation or
+Management call. Earlier verified flow grants remain; app CanView grants
+were not added. The durable sharing lease remains RUNNING; no Management permit
+is held. Stop native retries pending an independently reviewed cancellation
+reconciliation and finite permission-read design. See the
+[pagination evidence](docs/delivery/MAKERS_PERMISSION_PAGINATION_2026-09-24.md).
+SSO works; this is developer work, not an IT setup block. Security/runtime
+authority remains inactive and the published apps still use the shared API account.
+
+Two native Stage run-metadata checks confirmed protected inputs/outputs without
+opening protected content. The [TAB sysadmin SOP](docs/TAB_SSO_SETUP_SOP.md)
+records the evidence, working connection procedure and recovery steps. Existing
+TAB SSO is reused; no provider change is required.
 
 Synthetic intake, review, receipt and history have passed through the existing
 app. The retained runtime test remains in Stage; see
 [its evidence and read-only query](docs/delivery/RETAINED_RUNTIME_TEST_2026-09-24.md).
-Audit identity is still the shared API account. Remaining canvas acceptance and
-individual-user authorization are separate work.
 
 Start with the [visual operating guide](docs/operations-guide/index.html) or
 [PDF](docs/operations-guide/MILSTRIP-current-and-phase2.pdf): current functional
@@ -38,7 +68,10 @@ for status and [`docs/ROADMAP.md`](docs/ROADMAP.md) for historical phase context
 
 **Share with anyone:** [read the guide online](https://edfortheblind.github.io/milstrip-guide/).
 The SOP, diagrams and Phase 2 plan open directly in a browser. No download or
-login is needed. Reading the guide does not grant access to the Power App.
+login is needed. Published guide **1.4.0** records the current four-screen release
+and pending administration acceptance; use the status above for the detailed
+rollout blocker. Reading the guide does not
+grant access to the Power App.
 
 ## Quick start
 
@@ -74,8 +107,10 @@ failure handling, see [`docs/USER_SOP.md`](docs/USER_SOP.md).
 
 - [`docs/master.md`](docs/master.md) — single source of truth: scope,
   governance profile, status, outstanding decisions.
-- [`docs/RUNTIME_CONFIGURATION.md`](docs/RUNTIME_CONFIGURATION.md) — native
-  administrator setup, explicit schema provisioning, restart and database moves.
+- [`docs/RUNTIME_CONFIGURATION.md`](docs/RUNTIME_CONFIGURATION.md) — current host
+  configuration, pending in-app administration, provisioning and database moves.
+- [`docs/TAB_SSO_SETUP_SOP.md`](docs/TAB_SSO_SETUP_SOP.md) — working management
+  connection procedure, native broker acceptance and sysadmin recovery.
 - [`powerapps/canvas/deployment-manifest.json`](powerapps/canvas/deployment-manifest.json)
   — Stage/Prod app IDs, source variants and deployment status.
 - [`docs/MILSTRIP_SPEC.md`](docs/MILSTRIP_SPEC.md) — the fixed-width field

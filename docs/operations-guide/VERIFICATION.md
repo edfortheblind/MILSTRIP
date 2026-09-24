@@ -1,3 +1,20 @@
+# Web edition 1.4.0 ? September 24, 2026
+
+Published at [the existing guide URL](https://edfortheblind.github.io/milstrip-guide/).
+GitHub Pages built public commit `af9334de8eec8d81afc945489a3e5ee9515b1613`
+on September 24 at 23:32:24 UTC. Anonymous HTTP returned 200, and its
+2,156,601-byte response exactly matched the committed `index.html`:
+`95352cb6c39537c559dc26d30762b174e0eb28d3b49ac4f0127ea62ad74f4dcb`.
+
+The local browser/PDF checks are recorded in [publicverification.md](publicverification.md).
+The public package was independently checked for private configuration, tokens,
+tenant/app IDs and personal email addresses. Existing synthetic screenshots remain;
+the History capture retains the service audit name, not an authentication secret.
+This publication updates documentation; it does not publish the new app drafts or
+activate user enforcement. Earlier release evidence below is historical.
+
+---
+
 # Public documentation release verification — September 23, 2026
 
 Scope: reading edition **1.1.0**, current-state SOP and proposed two-period plan.
@@ -173,3 +190,32 @@ The public webpage is served from commit
 Anonymous HTTPS returned 200 and `text/html`; served bytes match the committed
 HTML exactly, and match the source after Git's CRLF-to-LF normalization.
 SHA256: `4e7505e60fa3ee82d0f9001c86bc4c596ee718f16c2583b0941efcb21af033cf`.
+
+## Edition 1.4.0 — local verification, publication pending
+
+Licensing is resolved. Stage passed connection and saved-results checks in the
+published player; Prod opens with its database disabled. The existing Studio
+captures are unchanged. Corporate SSO connections are configured, but
+individual-user enforcement and the implemented administration screens await
+native deployment acceptance. No live SSO enforcement is claimed.
+
+The reading edition was reduced from 1,137 to **1,000 words**; its closed-detail
+view contains **473 words**. Six operator steps and recovery distinctions remain.
+The administrator section separates the current host procedure from pending
+in-app administration. README and screenshot provenance now reflect this status.
+The root agent's independent final editorial review remains pending.
+
+`build_operations_guide.py --pdf` and `package_operations_guide.py` passed. The
+isolated browser verified five decoded images, seven charts, six steps, internal
+anchors, enlargement/Escape, disclosure controls, print expansion, SVG text
+bounds, and no overflow at 390/1440 pixels. No external asset requests or browser
+errors occurred. The 13-page guide and four-page SOP passed extracted-text,
+metadata, link and page-boundary checks. Visual inspection covered all four SOP
+pages and the current/pending administration page.
+
+The public package uses the existing explicit allowlist. A separate public
+verification note contains no internal user names, resource IDs or source links.
+Local HTML SHA256:
+`2c775e8edeeac4789c330b9dae33bbd7b66fe80fa670a6dedb3bf3d934bcff7b`.
+Copying verified files into the public checkout does not publish them; no commit,
+push or Pages deployment was performed during this verification.

@@ -27,6 +27,7 @@ def api_credentials(tmp_path, monkeypatch):
         os.getenv('MILSTRIP_TEST_DATABASE_URL', 'postgresql://localhost/trav3pl-psqldb-stage'), True)
     save_runtime_config(replace(config, profiles=profiles), config_path)
     monkeypatch.setenv('MILSTRIP_RUNTIME_CONFIG_FILE', str(config_path))
+    monkeypatch.setenv('MILSTRIP_CONTROL_FILE', str(directory / 'control.json'))
     return username, password
 
 

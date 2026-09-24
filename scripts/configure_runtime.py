@@ -10,9 +10,10 @@ from tkinter import messagebox, ttk
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from api.profiles import (
     ConfigurationError, RuntimeConfig, RuntimeProfile, empty_runtime_config,
-    load_runtime_config, runtime_config_path, save_runtime_config,
+    load_runtime_config, runtime_config_path,
     target_summary, validate_runtime_config,
 )
+from scripts.runtime_host import require_legacy_editor, save_legacy_configuration
 
 
 def test_profile(profile: RuntimeProfile) -> bool:
@@ -27,6 +28,7 @@ def test_profile(profile: RuntimeProfile) -> bool:
 
 class ConfigurationScreen:
     def __init__(self, window: tk.Tk, path: Path):
+        require_legacy_editor()
         self.window, self.path = window, path
         self.config = load_runtime_config(path) if path.exists() else empty_runtime_config(path)
         self.saved_revision = self.config.revision if path.exists() else None
@@ -122,6 +124,7 @@ class ConfigurationScreen:
 
     def test_connection(self):
         try:
+            require_legacy_editor()
             profile = self.candidate().profiles[self.selected]
             if not profile.connection_string:
                 raise ConfigurationError("Enter a connection string before testing.")
@@ -167,7 +170,7 @@ class ConfigurationScreen:
                 if (profile.enabled and (not previous.enabled or self.identity(profile) != self.identity(previous))
                         and self.identity(profile) not in self.verified):
                     raise ConfigurationError("Test the new destination successfully before enabling and saving it.")
-            self.config = save_runtime_config(candidate, self.path, expected_revision=self.saved_revision)
+            self.config = save_legacy_configuration(candidate, self.path, expected_revision=self.saved_revision)
             self.saved_revision = self.config.revision
         except ConfigurationError as error:
             self.status.set(str(error))
@@ -186,6 +189,11 @@ class ConfigurationScreen:
 
 
 def main():
+    try:
+        require_legacy_editor()
+    except ConfigurationError as error:
+        print(str(error), file=sys.stderr)
+        return 1
     window = tk.Tk()
     try:
         ConfigurationScreen(window, runtime_config_path())

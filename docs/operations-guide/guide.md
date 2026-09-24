@@ -1,8 +1,8 @@
-**Status — September 24, 2026:** Stage and Prod are published. Player access is blocked for the current account; IT is handling licensing. Stage passed Studio runtime tests against local PostgreSQL. Prod awaits a database. Approval records a review; delivery is not connected.
+**Status — September 24, 2026:** Both apps are published; licensing is resolved. Stage passed published-player connection and saved-results checks. Prod opens but is disabled pending database selection. In-app administration awaits acceptance. Review approval does not deliver an order.
 
 ## Use the app
 
-Use **MILSTRIP Stage** for testing. After activation, use **MILSTRIP Prod** for authorized work. Select **Check connection** and confirm the environment and **Ready**. The gateway, API and database must run.
+Use **MILSTRIP Stage** for testing and **MILSTRIP Prod** after activation. Select **Check connection**; confirm the environment and **Ready**. The gateway, API and database must run.
 
 <div class="screen-step-group" markdown="1">
 
@@ -69,7 +69,7 @@ For an unknown outcome, select **Retry same command** without changing the retai
 <details markdown="1" class="recovery">
 <summary>Service is unavailable or the app restarted</summary>
 
-Reload after recovery. If the environment is wrong or unavailable, stop and contact support. After restarting, reconcile requests and history; unsaved input and pending commands exist only in memory. Provide the environment, Request ID, record number, time and error.
+For environment problems, stop and contact support. After recovery or restart, reconcile requests and history; unsaved input and pending commands are lost on closing. Provide environment, Request ID, record number, time and error.
 </details>
 
 <details markdown="1" class="diagram-detail">
@@ -93,31 +93,41 @@ Canonical records contain 80 characters. Production item and address lookups rem
 
 ![Intake workflow alongside the separate manual production process.](diagrams/01-current-functional.svg)
 
-The separate manual process loads raw MILS staging, checks references and duplicates, and writes to the order table.
+Manual production loads MILS staging, checks references/duplicates, and writes the order table.
 </details>
 
 <details markdown="1" class="diagram-detail">
 <summary>Current architecture and acceptance limits</summary>
 
-![Separate app connections select fixed database profiles through the existing API.](diagrams/02-current-architecture.svg)
+![Separate app connections select fixed database profiles.](diagrams/02-current-architecture.svg)
 
-Each API credential selects one environment. Stage and Prod cannot share a database. PostgreSQL has runtime evidence; the SQL Server adapter still requires an Azure SQL acceptance test. Individual-user authorization remains pending.
+Each app's API credential selects a separate database profile. PostgreSQL has runtime evidence; Azure SQL acceptance is pending. Corporate SSO connections are configured; individual-user enforcement and administration screens await deployment acceptance.
 </details>
 
 ## Administrator: database configuration
 
 <details markdown="1" class="planning-detail">
-<summary>Change a database destination</summary>
+<summary>Current procedure: change a database destination on the host</summary>
 
 ![Administrator configuration screen with the replacement connection string hidden.](screens/runtime-configuration.png)
 
-Run **Configure-Runtime.ps1** on the API host. Select **stage** or **prod**, choose **postgresql** or **sqlserver**, and enter IT's connection string and certificate settings. Existing strings remain hidden.
+Run **Configure-Runtime.ps1** on the API host. Select the environment and provider; enter IT's connection string and certificate settings. Saved strings remain hidden.
 
-Select **Test connection**. It checks access, application tables and environment identity without changing data. New destinations need separately approved schema provisioning. Enable the environment only after the test succeeds, then select **Save pending configuration**.
+Select **Test connection** to check access, tables and environment identity without changing data. Provision new destinations separately with approval. After a successful test, enable the environment and select **Save pending configuration**.
 
-Stop intake during the change. Restart the API and verify each app's environment, availability and saved results. Saving configuration alone does not redirect a running API.
+Stop intake, restart the API, then verify both apps' environments, availability and saved results. Saving alone does not change the running API.
 
-Changing a string does not transfer requests, reviews or audit history. Reconcile migrated data before switching. Both apps share the API implementation: backend changes and restarts affect both. Separate apps isolate canvas releases, not backend deployments.
+Reconcile migrated requests, reviews and history before switching; a connection string does not transfer them. Backend releases and restarts affect both apps.
+</details>
+
+<details markdown="1" class="planning-detail">
+<summary>In-app administration — awaiting acceptance</summary>
+
+The implemented **Configuration** screen provides **Load configuration**, **Save draft**, **Test draft** and **Apply draft**. Strings stay hidden. Disable the environment before changing its destination. Once activated, this screen replaces the host editor.
+
+In **Users**, administrators manage corporate access; two protected Owners retain full access. Additions require confirmed access to both apps and supporting flows. Removal denies API access immediately; pending sharing remains incomplete.
+
+These screens have not passed published-player acceptance. Continue using the host procedure. IT's setup SOP records SSO configuration and the remaining user checks.
 </details>
 
 ## Phase 2: two production periods
@@ -126,13 +136,13 @@ Publication alone does not activate production integration.
 
 | Period | Implementation | Acceptance |
 |---|---|---|
-| **1 — Azure SQL** | Configure separate Stage/Prod targets; qualify the implemented adapter, hosted API, authorization and handoff | SQL freeze resolved; runtime, pilot and recovery tests |
-| **2 — PostgreSQL** | Migrate application data, audit history and pending commands; qualify downstream integration | Accepted migration and one writer switch; target December 31, 2026 |
+| **1 — Azure SQL** | Qualify separate Stage/Prod targets, SQL adapter, hosted API, authorization and handoff | SQL freeze resolved; runtime, pilot and recovery tests |
+| **2 — PostgreSQL** | Migrate data, audit history and pending commands; qualify downstream integration | Accepted migration and one writer switch; target December 31, 2026 |
 
 <details markdown="1" class="planning-detail">
 <summary>Production decisions</summary>
 
-Resolve the SQL freeze before new writes. Choose the recovered SQL handoff or Rainbow CSV/FTP route. Agree hosting, authorization and the downstream receipt source; procedure completion, file creation and SENT do not establish receipt.
+Resolve the SQL freeze before writes. Select SQL handoff or Rainbow CSV/FTP; agree hosting, authorization and a receiver receipt. Procedure completion, file creation and SENT are not receipts.
 </details>
 
 <details markdown="1" class="diagram-detail">
@@ -144,9 +154,9 @@ Resolve the SQL freeze before new writes. Choose the recovered SQL handoff or Ra
 <details markdown="1" class="diagram-detail">
 <summary>Proposed release and acknowledgement flow</summary>
 
-![Proposed approval, controlled release and acknowledgement.](diagrams/05-phase2-functional.svg)
+![Proposed release and acknowledgement.](diagrams/05-phase2-functional.svg)
 
-Release requires current approval, live checks, an authorized role and a durable command ID. Reconcile uncertain outcomes against that command before another attempt.
+Release requires approval, live checks, authorization and a durable command ID. Reconcile uncertain outcomes against that ID before retrying.
 </details>
 
 <details markdown="1" class="diagram-detail">
@@ -154,13 +164,13 @@ Release requires current approval, live checks, an authorized role and a durable
 
 ![Proposed PostgreSQL production architecture.](diagrams/06-phase2-postgresql.svg)
 
-Separate databases on one VM share its outage risk.
+Databases on one VM share outages.
 </details>
 
 <details markdown="1" class="planning-detail">
 <summary>Capacity and cutover</summary>
 
-Measure workload and test both platforms at twice expected peak. Rehearse migration, stop writers, reconcile application data and pending commands, then switch. Recovery must preserve new PostgreSQL writes before returning to SQL.
+Test both platforms at twice expected peak. Rehearse migration; stop writers, reconcile data and pending commands, then switch. Preserve new PostgreSQL writes before returning to SQL.
 </details>
 
 <details markdown="1" class="diagram-detail">
@@ -168,9 +178,9 @@ Measure workload and test both platforms at twice expected peak. Rehearse migrat
 
 ![Qualification, production cutover and stabilization schedule.](diagrams/07-phase2-transition.svg)
 
-Allow two months of qualification and 30 stable days after PostgreSQL acceptance before deciding on SQL retirement. A December 31 launch extends retention into January 2027.
+Qualify for two months; retain SQL for 30 stable days after PostgreSQL acceptance. A December 31 launch extends retention into January 2027.
 </details>
 
 ## About this edition
 
-Version **1.3.0**. September 24 runtime tests and app/configuration captures. Screens use synthetic data. Production databases were not re-inspected.
+Version **1.4.0**. September 24 player checks and administration implementation status. App/configuration captures show the currently published workflow and host editor; screens use synthetic data. Production databases were not re-inspected.

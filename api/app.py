@@ -9,9 +9,12 @@ from api.auth import authenticate
 from api.operator import router as operator_router
 from api.operator_models import IntakeAcknowledgement, RequestSummary, HealthResponse
 from api.runtime import lifespan, profile_for, repository, snapshot_for
+from api.broker import router as broker_router, install_error_handlers
 
 app = FastAPI(title="MILSTRIP API", version="0.4.0", lifespan=lifespan, dependencies=[Depends(authenticate)])
 app.include_router(operator_router)
+app.include_router(broker_router)
+install_error_handlers(app)
 
 
 class IntakeRequest(BaseModel):

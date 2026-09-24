@@ -1,4 +1,15 @@
-Start with **index.html** below: download it and open it in a browser. It is a
+# Web edition 1.4.0 ? September 24, 2026
+
+Read the [operator guide](https://edfortheblind.github.io/milstrip-guide/) directly
+in a browser. This published edition records resolved licensing, verified Stage
+player checks, disabled Prod and administration awaiting deployment acceptance.
+Existing Studio captures are retained. Public commit: `af9334d`.
+
+## Archived edition 1.1.0
+
+The following describes the earlier optional downloadable release.
+
+Start with **index.html** in that archive: download it and open it in a browser. It is a
 complete offline guide, with no login or installation needed to read it.
 
 - Six-step operator SOP with recovery instructions available when needed.

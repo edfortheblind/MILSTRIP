@@ -22,9 +22,10 @@ def configured(path, stage="host=localhost dbname=stage user=test password=PRIVA
 
 
 @pytest.fixture
-def private_path(tmp_path):
+def private_path(tmp_path, monkeypatch):
     directory = tmp_path / ".cred"
     directory.mkdir()
+    monkeypatch.setenv('MILSTRIP_CONTROL_FILE', str(directory / 'control.json'))
     return directory / "runtime.json"
 
 

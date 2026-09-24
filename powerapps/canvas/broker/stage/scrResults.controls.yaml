@@ -1,0 +1,171 @@
+- ResultsIcon:
+    Control: Image
+    Properties:
+      X: =24
+      Y: =16
+      Width: =64
+      Height: =64
+      Image: ='milstrip-app'
+- ResultsTitle:
+    Control: Label
+    Properties:
+      X: =104
+      Y: =16
+      Width: =Parent.Width-128
+      Height: =64
+      Text: ="MILSTRIP " & If(AppEnvironment="stage","Stage","Prod") & " | " & "Validation results"
+      Size: =24
+- ResultsMessage:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =84
+      Width: =Parent.Width-48
+      Height: =60
+      Text: =Coalesce(varMessage, "")
+      Live: =Live.Polite
+- RequestIdentity:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =144
+      Width: =Parent.Width-48
+      Height: =110
+      Size: =14
+      Text: '="Request: " & varRequestId & Char(10) & If(!IsBlank(varAck.request_id) && varAck.request_id=varRequestId,
+        "Intake saved | Received: " & Text(varAck.received_at,DateTimeFormat.ShortDateTime) & Char(10) & "Validation
+        at intake: " & Text(varAck.records) & " records | " & Text(varAck.rejected) & " rejected | " & Text(varAck.requires_review)
+        & " flagged for review | Delivery: not connected", If(!IsBlank(varRequestDetail.request_id) && varRequestDetail.request_id=varRequestId,
+        "Intake saved | Received: " & Text(varRequestDetail.received_at,DateTimeFormat.ShortDateTime) & Char(10)
+        & "Delivery: not connected", "Load results to confirm the saved intake."))'
+- btnLoadResults:
+    Control: Classic/Button
+    Properties:
+      X: =24
+      Y: =272
+      Width: =210
+      Height: =44
+      Text: ="Load / refresh results"
+      OnSelect: =If(!Coalesce(varBusy,false) && Coalesce(varEnvironmentReady,false),Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("GetIntakeRequest",JSON({request_id:varRequestId},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(Set(varDetailRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(varDetailRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(Set(varRequestDetail,{request_id:Text(varDetailRaw.request_id),source_type:Text(varDetailRaw.source_type),source_id:Text(varDetailRaw.source_id),status:Text(varDetailRaw.status),received_at:DateTimeValue(Text(varDetailRaw.received_at)),completed_at:If(IsBlank(Text(varDetailRaw.completed_at)),Blank(),DateTimeValue(Text(varDetailRaw.completed_at)))})),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("ListRecordResults",JSON({request_id:varRequestId,limit:50},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(ClearCollect(colRecords,ForAll(Table(varRaw.items)
+        As row,{record_id:Text(row.Value.record_id),request_id:Text(row.Value.request_id),record_sequence:Value(row.Value.record_sequence),canonical_record:Text(row.Value.canonical_record),normalized_record:Text(row.Value.normalized_record),raw_candidate:Text(row.Value.raw_candidate),status:Text(row.Value.status),review_version:Value(row.Value.review_version),issues:ForAll(Table(row.Value.issues)
+        As issue,{issue_id:Value(issue.Value.issue_id),issue_code:Text(issue.Value.issue_code),severity:Text(issue.Value.severity),field_name:Text(issue.Value.field_name),position_start:Value(issue.Value.position_start),position_end:Value(issue.Value.position_end),message:Text(issue.Value.message)}),latest_review:{decision:Text(row.Value.latest_review.decision),reason:Text(row.Value.latest_review.reason),decided_by:Text(row.Value.latest_review.decided_by),decided_at:If(IsBlank(Text(row.Value.latest_review.decided_at)),Blank(),DateTimeValue(Text(row.Value.latest_review.decided_at))),review_version:Value(row.Value.latest_review.review_version)}}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(Set(varRecordsCursor,Text(varRaw.next_cursor))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(Set(varRecordPageCursor,Blank())),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(Set(varLoadedRequest,varRequestId)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,If(IsError(Set(varMessage,"")),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varLoadedRequest,Blank()); Set(varMessage,"Results unavailable. Reload before reviewing."); false,true))))))))))))))));
+        Set(varBusy,false))
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit))
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnNextRecords:
+    Control: Classic/Button
+    Properties:
+      X: =254
+      Y: =272
+      Width: =210
+      Height: =44
+      Text: ="Next results page"
+      OnSelect: =If(!Coalesce(varBusy,false) && Coalesce(varEnvironmentReady,false),Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("ListRecordResults",JSON({request_id:varRequestId,limit:50,cursor:varRecordsCursor},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Next page failed. Results and cursor retained."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Next page failed. Results and cursor retained."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Next page failed. Results and cursor retained."); false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Next page failed. Results and cursor retained."); false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Next page failed. Results and cursor retained."); false,If(IsError(Set(varRecordPageCursor,varRecordsCursor)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Next page failed. Results and cursor retained."); false,If(IsError(ClearCollect(colRecords,ForAll(Table(varRaw.items)
+        As row,{record_id:Text(row.Value.record_id),request_id:Text(row.Value.request_id),record_sequence:Value(row.Value.record_sequence),canonical_record:Text(row.Value.canonical_record),normalized_record:Text(row.Value.normalized_record),raw_candidate:Text(row.Value.raw_candidate),status:Text(row.Value.status),review_version:Value(row.Value.review_version),issues:ForAll(Table(row.Value.issues)
+        As issue,{issue_id:Value(issue.Value.issue_id),issue_code:Text(issue.Value.issue_code),severity:Text(issue.Value.severity),field_name:Text(issue.Value.field_name),position_start:Value(issue.Value.position_start),position_end:Value(issue.Value.position_end),message:Text(issue.Value.message)}),latest_review:{decision:Text(row.Value.latest_review.decision),reason:Text(row.Value.latest_review.reason),decided_by:Text(row.Value.latest_review.decided_by),decided_at:If(IsBlank(Text(row.Value.latest_review.decided_at)),Blank(),DateTimeValue(Text(row.Value.latest_review.decided_at))),review_version:Value(row.Value.latest_review.review_version)}}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Next page failed. Results and cursor retained."); false,If(IsError(Set(varRecordsCursor,Text(varRaw.next_cursor))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Next page failed. Results and cursor retained."); false,true)))))))); Set(varBusy,false))
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || IsBlank(varRecordsCursor)
+        || varLoadedRequest<>varRequestId,DisplayMode.Disabled,DisplayMode.Edit))
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnHistory:
+    Control: Classic/Button
+    Properties:
+      X: =484
+      Y: =272
+      Width: =210
+      Height: =44
+      Text: ="History"
+      OnSelect: =Navigate(scrHistory)
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit))
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- btnBackToIntake:
+    Control: Classic/Button
+    Properties:
+      X: =714
+      Y: =272
+      Width: =210
+      Height: =44
+      Text: ="Intake"
+      OnSelect: =Navigate(scrIntake)
+      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color
+- galRecords:
+    Control: Gallery
+    Properties:
+      X: =24
+      Y: =332
+      Width: =Parent.Width-48
+      Height: =Parent.Height-352
+      Items: =If(varLoadedRequest=varRequestId,colRecords,Filter(colRecords,false))
+      TemplateSize: =150
+      AccessibleLabel: ="Validation results"
+      ItemAccessibleLabel: ="Record " & Text(ThisItem.record_sequence) & ", " & ThisItem.status & ", " & Text(CountRows(ThisItem.issues))
+        & " validation issues"
+    Variant: Vertical
+    Children:
+    - RecordSummary:
+        Control: Label
+        Properties:
+          X: =0
+          Y: =0
+          Width: =Parent.TemplateWidth-220
+          Height: =50
+          Text: '="Record " & Text(ThisItem.record_sequence) & " | " & ThisItem.status & " | review: " & Coalesce(Text(ThisItem.latest_review.decision),"NONE")'
+    - RecordIssues:
+        Control: Label
+        Properties:
+          X: =0
+          Y: =50
+          Width: =Parent.TemplateWidth-220
+          Height: =85
+          Text: '=Concat(ThisItem.issues,issue_code & ": " & message,Char(10))'
+    - btnOpenReview:
+        Control: Classic/Button
+        Properties:
+          X: =Parent.TemplateWidth-215
+          Y: =0
+          Width: =210
+          Height: =44
+          Text: ="Review record " & Text(ThisItem.record_sequence)
+          OnSelect: =Set(varRecord,ThisItem); Set(varMessage,""); Navigate(scrReview)
+          DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false)
+            || !IsBlank(varPending.command_id),DisplayMode.Disabled,DisplayMode.Edit))
+          TabIndex: =0
+          FocusedBorderThickness: =3
+          FocusedBorderColor: =Self.Color

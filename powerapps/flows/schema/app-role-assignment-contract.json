@@ -1,0 +1,75 @@
+{
+  "captured": "2026-09-24",
+  "operations": {
+    "Edit-AppRoleAssignment": {
+      "method": "post",
+      "parameters": [
+        {
+          "description": "Name field of the PowerApp.",
+          "in": "path",
+          "name": "app",
+          "required": true,
+          "type": "string",
+          "x-ms-summary": "PowerApp Name"
+        },
+        {
+          "default": "2016-11-01",
+          "description": "The date value of the API version.",
+          "in": "query",
+          "name": "api-version",
+          "required": false,
+          "type": "string",
+          "x-ms-summary": "API Version"
+        },
+        {
+          "default": "environment eq ''",
+          "description": "A filter query parameter.",
+          "in": "query",
+          "name": "$filter",
+          "required": false,
+          "type": "string",
+          "x-ms-summary": "Filter Query"
+        }
+      ],
+      "path": "/{connectionId}/providers/Microsoft.PowerApps/apps/{app}/modifyPermissions"
+    },
+    "Get-AppRoleAssignment": {
+      "method": "get",
+      "parameters": [
+        {
+          "description": "Name field of the PowerApp.",
+          "in": "path",
+          "name": "app",
+          "required": true,
+          "type": "string",
+          "x-ms-summary": "PowerApp Name"
+        },
+        {
+          "default": "2017-06-01",
+          "description": "The date value of the API version.",
+          "in": "query",
+          "name": "api-version",
+          "required": false,
+          "type": "string",
+          "x-ms-summary": "API Version"
+        },
+        {
+          "default": 250,
+          "description": "Number of App Role Assignments.",
+          "in": "query",
+          "name": "$top",
+          "required": false,
+          "type": "integer",
+          "x-ms-summary": "Page size",
+          "x-ms-visibility": "advanced"
+        }
+      ],
+      "path": "/{connectionId}/providers/Microsoft.PowerApps/apps/{app}/permissions",
+      "x-ms-pageable": {
+        "nextLinkName": "nextLink"
+      }
+    }
+  },
+  "reference": "https://learn.microsoft.com/en-us/connectors/powerappsforappmakers/",
+  "source": "Microsoft tenant connector Swagger, shared_powerappsforappmakers"
+}
