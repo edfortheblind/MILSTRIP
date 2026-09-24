@@ -64,7 +64,7 @@ def build():
                 responses[code] = {"description": response["description"]}
                 if "content" in response:
                     responses[code]["schema"] = schema(response["content"]["application/json"]["schema"])
-            for code, description in {"401": "Missing or invalid API credentials", "403": "Outside laptop boundary", "404": "Not found", "409": "Review conflict; reload before a new command", "503": "Local configuration or database unavailable"}.items():
+            for code, description in {"401": "Missing or invalid API credentials", "403": "Loopback gateway peer required", "404": "Not found", "409": "Review conflict; reload before a new command", "503": "Runtime configuration or database unavailable"}.items():
                 responses[code] = {"description": description, "schema": {"type": "object", "properties": {"detail": {"type": "string"}}}}
             converted[method] = dict(operationId=operation["operationId"], summary=operation.get("summary", operation["operationId"]), parameters=parameters, responses=responses)
     return result

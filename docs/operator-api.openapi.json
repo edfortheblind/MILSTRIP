@@ -108,6 +108,10 @@
       },
       "HealthResponse": {
         "properties": {
+          "configuration_revision": {
+            "title": "Configuration Revision",
+            "type": "string"
+          },
           "database": {
             "title": "Database",
             "type": "string"
@@ -123,14 +127,43 @@
             ],
             "title": "Detail"
           },
+          "environment": {
+            "enum": [
+              "stage",
+              "prod"
+            ],
+            "title": "Environment",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "postgresql",
+              "sqlserver"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "ready": {
+            "title": "Ready",
+            "type": "boolean"
+          },
           "status": {
             "title": "Status",
+            "type": "string"
+          },
+          "target_label": {
+            "title": "Target Label",
             "type": "string"
           }
         },
         "required": [
           "status",
-          "database"
+          "database",
+          "environment",
+          "provider",
+          "target_label",
+          "configuration_revision",
+          "ready"
         ],
         "title": "HealthResponse",
         "type": "object"
@@ -708,7 +741,7 @@
   },
   "info": {
     "title": "MILSTRIP API",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "openapi": "3.1.0",
   "paths": {

@@ -1,31 +1,47 @@
-# App screen evidence — edition 1.2.0
+﻿# App screen evidence — edition 1.3.0
 
-**September 23, 2026.** Four fresh PNGs were captured directly from the existing
-MILSTRIP Intake Dev app in Power Apps Studio Preview. The captures contain only
-the app canvas; no browser tabs, tenant/profile controls or taskbar. No UI
-reconstruction or pixel editing was used.
+**September 24, 2026.** Four PNGs were captured directly from the renamed
+MILSTRIP Stage app in Power Apps Studio Preview. They show the same synthetic
+intake and its review. The captures contain the app canvas only; browser tabs,
+tenant controls and the taskbar are excluded. No UI reconstruction or pixel
+editing was used.
 
 | Image | Visible state | SOP steps |
 |---|---|---|
-| 01-intake.png | Synthetic source entered; Submit intake enabled | 1–2 |
-| 02-results.png | Persistent saved receipt; one VALID and one REJECTED record | 3 |
+| 01-intake.png | MILSTRIP Stage; STAGE / Ready; Check connection; synthetic source entered | 1–2 |
+| 02-results.png | Persistent receipt for two records, one rejected; downstream delivery not connected | 3 |
 | 03-review.png | APPROVED saved at version 1; canonical length 80 | 4–5 |
-| 04-history.png | Matching REVIEW_DECIDED event and record identifier | 6 |
+| 04-history.png | Matching REVIEW_DECIDED and intake REJECTED events | 6 |
+| runtime-configuration.png | Native administrator screen using an Example Stage database target; no credentials displayed | Administrator configuration |
 
-The capture fixture uses fictitious requisition `ZZ999926600003`, source header
-`SYNTHETIC RECEIPT DEMO 2026-09-23`, and request
-`660ee537-9552-44ad-bfc6-165f83873954`. There is one APPROVED review at version 1.
-History shows event metadata; the decision is read back in Review/Results.
+The Results image was recaptured after Stage publication and the API restart.
+The completed load shows record 1 as VALID / APPROVED, record 2 as REJECTED /
+NONE, the persisted receipt and enabled inspection controls.
 
-The implementer verified the saved decision against the approved local database.
-Cleanup matched the exact request, source, actor, source type, record count and
-review version before removing that request and its related application rows.
-The separate zero-candidate receipt test
-`24cc56d9-ceec-4f72-8206-f90d17cf1525` was removed with equivalent fixture guards.
-Absence of both requests was verified. No legacy operational table was written.
+The canvas fixture uses fictitious requisition `ZZ999926600001`, source header
+`SYNTHETIC STAGE PUBLICATION TEST 2026-09-24`, and request
+`ff3f3cb5-04f5-4135-af74-f8db41962673`. It remains in PostgreSQL with two
+records, one APPROVED review and two audit events. History shows event metadata;
+Review/Results supplies the saved decision. No cleanup was performed.
 
-The existing app's receipt formulas were updated and saved. Studio reported all
-changes saved at **16:35:37**; the app remains **unpublished**. A separate
-`acknowledgement_review` agent checked the four images against the instructions.
-No credentials or personal/tenant chrome are visible. The website embeds the
-images, so readers do not download them separately.
+The earlier retained runtime request
+`1d0c784d-c3bf-495c-928c-0b66687a58a4` also remains unchanged: one intake,
+two records, two reviews and three audit events. The September 23 captures and
+their removed fixtures belong to edition 1.2.0 and are superseded here.
+
+Publication was verified by the tenant's **Publish successful** messages on
+September 24: Stage at **1:01:57 PM**, Prod at **1:15:52 PM**. Both apps were
+verified in the existing MILSTRIP solution; Stage retained its original ID.
+The images show Studio Preview, not the published player. Player access prompted
+for a Power Apps plan; no trial was accepted. Published-player runtime acceptance
+therefore remains pending. Prod has a separate connection, a fixed expected
+environment and a disabled database profile; it cannot accept intake yet.
+
+The administrator image is a direct capture of the real Tkinter configuration
+screen loaded with a separate demonstration configuration. Its `example-stage`
+database name is illustrative. It does not establish a connection to that
+database. The actual Stage connection test was verified separately; private
+target details are excluded from the public image.
+
+No passwords, connection strings, personal information or tenant controls are
+visible. The guide embeds all five images and provides enlargement controls.

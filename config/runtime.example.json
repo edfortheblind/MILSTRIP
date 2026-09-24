@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "revision": "00000000-0000-4000-8000-000000000001",
+  "profiles": {
+    "stage": {
+      "provider": "postgresql",
+      "label": "MILSTRIP Stage",
+      "connection_string": "",
+      "enabled": false
+    },
+    "prod": {
+      "provider": "postgresql",
+      "label": "MILSTRIP Prod",
+      "connection_string": "",
+      "enabled": false
+    }
+  },
+  "bindings": [
+    {"profile_id": "stage", "credential_file": "api-credential.json"},
+    {"profile_id": "prod", "credential_file": "api-prod-credential.json"}
+  ]
+}

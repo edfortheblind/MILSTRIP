@@ -1,4 +1,7 @@
 import pytest
+import json
+import os
+from pathlib import Path
 from fastapi.testclient import TestClient
 from api.app import app
 
@@ -29,25 +32,49 @@ def test_malformed_auth_is_401(api_credentials, authorization):
 
 
 def test_valid_auth_and_forwarded_identity_ignored(api_credentials, monkeypatch):
-    from api import app as api
+    from api import runtime
     from contextlib import contextmanager
+    observed = []
+    class Available:
+        def health(self):
+            return True
+        def validate_identity(self, profile_id):
+            observed.append(profile_id)
     @contextmanager
-    def unavailable():
-        raise RuntimeError("Private diagnostic")
-        yield
-    monkeypatch.setattr(api, "_connect", unavailable)
+    def available(provider, connection_string):
+        yield Available()
+    monkeypatch.setattr(runtime, "open_repository", available)
     monkeypatch.setenv("MILSTRIP_LOCAL_REVIEWER", "spoofed")
     with TestClient(app, client=("127.0.0.1", 1234)) as client:
         response = client.get("/api/v1/health", auth=api_credentials, headers={"X-Forwarded-User": "spoofed"})
     assert response.status_code == 200
-    assert "Private diagnostic" not in response.text
+    assert response.json()["status"] == "OK"
+    assert observed == ["stage"]
+    assert "spoofed" not in response.text
 
 
 @pytest.mark.parametrize("url", ["postgresql://remote.example/trav3pl-psqldb-stage", "postgresql://localhost/other", "host=localhost hostaddr=192.0.2.1 dbname=trav3pl-psqldb-stage", "postgresql://localhost:5433/trav3pl-psqldb-stage"])
-def test_database_boundary_on_reads(api_credentials, monkeypatch, url):
-    monkeypatch.setenv("MILSTRIP_DATABASE_URL", url)
+def test_legacy_environment_variable_cannot_redirect_authenticated_profile(api_credentials, monkeypatch, url):
+    from contextlib import contextmanager
+    from api import runtime
+    from api.profiles import load_runtime_config
+    expected = load_runtime_config().profiles["stage"].connection_string
+    destinations = []
+    class Available:
+        def health(self):
+            return True
+        def validate_identity(self, profile_id):
+            assert profile_id == "stage"
+    @contextmanager
+    def available(provider, connection_string):
+        destinations.append((provider, connection_string))
+        yield Available()
+    monkeypatch.setattr(runtime, "open_repository", available)
     with TestClient(app, client=("127.0.0.1", 1234)) as client:
-        assert client.get("/api/v1/intake/requests", auth=api_credentials).status_code == 403
+        monkeypatch.setenv("MILSTRIP_DATABASE_URL", url)
+        response = client.get("/api/v1/health", auth=api_credentials)
+    assert response.status_code == 200
+    assert destinations == [("postgresql", expected)]
 
 
 def test_remote_peer_cannot_spoof_loopback(api_credentials):
@@ -56,11 +83,56 @@ def test_remote_peer_cannot_spoof_loopback(api_credentials):
     assert response.status_code == 403
 
 
-def test_corrupt_configuration_fails_closed(api_credentials, monkeypatch, tmp_path):
-    path = tmp_path / "bad.json"
+def test_corrupt_configuration_fails_closed(api_credentials):
+    path = Path(os.environ["MILSTRIP_RUNTIME_CONFIG_FILE"]).parent / "api-credential.json"
     path.write_text('{"username": "private"}')
-    monkeypatch.setenv("MILSTRIP_API_CREDENTIAL_FILE", str(path))
     with TestClient(app, client=("127.0.0.1", 1234)) as client:
         response = client.get("/api/v1/health", auth=api_credentials)
     assert response.status_code == 503
     assert "private" not in response.text
+
+
+def test_credential_changes_require_restart(api_credentials, monkeypatch):
+    from contextlib import contextmanager
+    from api import runtime
+    class Available:
+        def health(self):
+            return True
+        def validate_identity(self, profile_id):
+            assert profile_id == "stage"
+    @contextmanager
+    def available(provider, connection_string):
+        yield Available()
+    monkeypatch.setattr(runtime, "open_repository", available)
+    path = Path(os.environ["MILSTRIP_RUNTIME_CONFIG_FILE"]).parent / "api-credential.json"
+    with TestClient(app, client=("127.0.0.1", 1234)) as client:
+        path.write_text('{"username":"replacement"}')
+        assert client.get("/api/v1/health", auth=api_credentials).json()["status"] == "OK"
+    with TestClient(app, client=("127.0.0.1", 1234)) as client:
+        assert client.get("/api/v1/health", auth=api_credentials).status_code == 503
+
+
+def test_duplicate_usernames_cannot_bind_to_two_environments(api_credentials):
+    directory = Path(os.environ["MILSTRIP_RUNTIME_CONFIG_FILE"]).parent
+    stage = json.loads((directory / "api-credential.json").read_text())
+    (directory / "api-prod-credential.json").write_text(json.dumps(stage))
+    with TestClient(app, client=("127.0.0.1", 1234)) as client:
+        response = client.get("/api/v1/health", auth=api_credentials)
+    assert response.status_code == 503
+    assert stage["digest"] not in response.text
+
+
+def test_disabled_prod_does_not_open_database(api_credentials, monkeypatch):
+    from api import runtime
+    def forbidden(*_args):
+        pytest.fail("Disabled Prod must not open a database")
+    monkeypatch.setattr(runtime, "open_repository", forbidden)
+    auth = ("synthetic-prod-reviewer", "synthetic-prod-password-only")
+    with TestClient(app, client=("127.0.0.1", 1234)) as client:
+        health = client.get("/api/v1/health", auth=auth)
+        submit = client.post("/api/v1/intake/requests", auth=auth,
+                             json={"source_type": "PASTE", "source_text": "A2A"})
+    assert health.status_code == 200
+    assert health.json()["database"] == "DISABLED"
+    assert health.json()["ready"] is False
+    assert submit.status_code == 503

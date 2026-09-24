@@ -1,20 +1,48 @@
 # MILSTRIP Intake Automation — Master Document
 
-**Version:** 1.0 **Date:** 2026-09-23 **Status:** CANVAS_DRAFT_IMPLEMENTED_WITH_CONCERNS
+**Version:** 1.1 **Date:** 2026-09-24 **Status:** APPS_PUBLISHED_PLAYER_LICENSE_BLOCKED_PROD_DISABLED
 
-**Current reading guide:** the saved unpublished canvas app, authenticated laptop
-API and local PostgreSQL are implemented. Use the [visual operating package](operations-guide/index.html)
-for the current functional flow, architecture, end-user SOP and evidence limits.
+**Current runtime:** API 0.4.0 serves fixed Stage and Prod profiles through the
+existing solution, connector and gateway. Stage is published on the existing
+app ID `7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`, using local PostgreSQL with a Stage
+environment identity. Prod app `0aa02d8b-c7fa-42cc-87e8-6d287bd4c897` has been
+published with its separate connection verified. Both apps and the connector
+were read back in the existing MILSTRIP solution. The Prod runtime profile remains
+disabled until an independent database target is selected.
+
+The standalone Prod player requires a Power Apps plan for the current account.
+The owner left licensing with IT; no trial was started. Studio Preview checks
+passed, but standalone player acceptance remains blocked. Publication does not
+establish end-user readiness.
+
+The [deployment manifest](../powerapps/canvas/deployment-manifest.json) records
+per-app formulas and source settings. The
+[administrator SOP](RUNTIME_CONFIGURATION.md) covers private configuration,
+explicit application-schema provisioning and activation by API restart.
+[ADR 0005](adr/0005-runtime-profiles.md) defines the profile and provider design.
+The six application tables include the database's environment identity.
+PostgreSQL and SQL Server adapters are implemented; live Azure SQL acceptance is
+not established. Shared API releases and restarts affect both apps.
+The [runtime/publication evidence](delivery/RUNTIME_PROFILES_2026-09-24.md)
+records the final 242-test pass and post-restart Stage Studio health/read checks.
+These checks do not resolve the standalone player licensing blocker.
+
+Use the [visual operating package](operations-guide/index.html) for the functional
+flow, architecture, end-user SOP and evidence limits.
 The [Phase 2 plan](operations-guide/guide.md#phase-2-two-production-periods)
 assumes publication, uses existing Azure SQL first, then accepted production
 PostgreSQL with an end-Q4 2026 target. It is planning, not deployment approval.
-Earlier increment sections below are historical snapshots and are superseded by
-the final canvas execution update where they describe pending work already done.
+Earlier increment sections below are historical snapshots. This current status
+supersedes their descriptions of an unpublished app or single hard-coded database.
 
 The September 23 [acknowledgement update](delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md)
-adds a persistent, verified intake receipt to the same saved app. Production
-handoff and downstream receipts remain Phase 2 work. The illustrated operator
-guide is edition 1.2.0 with a separate editorial review and publication standard.
+added the persistent intake receipt now included in Stage. The
+[retained September 24 runtime test](delivery/RETAINED_RUNTIME_TEST_2026-09-24.md)
+preserves its intake, reviews and audit events in PostgreSQL. Do not delete it.
+Production handoff and downstream receipts remain Phase 2 work; the current API
+still records the shared connection identity rather than the signed-in person.
+The illustrated guide has a separate editorial review and publication standard.
+Incoming change documents belong in the local [inbox](../inbox/README.md).
 
 Built with the AEKR (AI Engineering Knowledge Repo) workflow — see the root
 `README.md` footer and `meta/OPERATING_PRINCIPLES.md` in the `AEKR` repo for

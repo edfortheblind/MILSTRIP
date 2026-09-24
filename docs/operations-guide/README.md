@@ -1,82 +1,68 @@
-# MILSTRIP operator guide — web edition 1.2.0
+﻿# MILSTRIP operator guide — edition 1.3.0
 
-**Evidence date: September 23, 2026.** Current development behavior and proposed production work remain separate.
+**Share:** [MILSTRIP operator guide](https://edfortheblind.github.io/milstrip-guide/).
+The webpage opens without a download or login. App access is separate.
 
-**Share this webpage:** [MILSTRIP operator guide](https://edfortheblind.github.io/milstrip-guide/).
-It opens directly in a browser, with no download or login. This publishes documentation, not the Power App.
+This edition adds Stage/Prod administration and the native database configuration
+screen. Stage and Prod were published on September 24 in the existing solution.
+Stage passed Studio tests against local PostgreSQL. Published-player access is
+blocked by the current account's Power Apps license prompt; no trial was accepted.
+Prod's separate profile remains disabled pending an independent target. Azure SQL runtime
+acceptance, production handoff and downstream receipts remain outstanding.
 
-- [Open the offline visual guide](index.html) — all seven charts, operating instructions, architecture and Phase 2 plan. No web service or CDN is required.
-- [Read the 12-page illustrated PDF](MILSTRIP-current-and-phase2.pdf).
-- [Print the four-page illustrated SOP](MILSTRIP-quick-sop.pdf).
-- [Edit the public guide](guide.md), [styles](theme.css) or [interactions](guide.js).
-- [Read the internal engineering notes](engineering-notes.md) for the complete implementation plan, evidence and gates. These notes are excluded from the public release.
-- [Acknowledgement design](../delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md) distinguishes the implemented intake receipt from proposed production handoff and downstream receipt.
-- [Editorial standard](EDITORIAL_STANDARD.md) defines the writing and peer-review requirements for future editions.
+- [Guide source](guide.md), [styles](theme.css), [interactions](guide.js).
+- [Full app and database SOP](../../sop/powerapps-setup.md).
+- [Database configuration reference](../RUNTIME_CONFIGURATION.md).
+- [Engineering notes](engineering-notes.md) and [acknowledgement design](../delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md).
+- [Editorial standard](EDITORIAL_STANDARD.md), [verification](VERIFICATION.md) and [screenshot provenance](screens/README.md).
+- [Incoming change documents](../../inbox/README.md).
 
-| Chart | Status | Standalone file |
-|---|---|---|
-| Functional flow | Current development app and separate existing manual production path | [SVG](diagrams/01-current-functional.svg) |
-| Technical architecture | Current cloud connector / laptop API / local PostgreSQL | [SVG](diagrams/02-current-architecture.svg) |
-| End-user SOP | Current controls, decisions and exception paths | [SVG](diagrams/03-current-user-sop.svg) |
-| P2.1 architecture | Proposed published app using existing Azure SQL | [SVG](diagrams/04-phase2-azure-sql.svg) |
-| Phase 2 release flow | Proposed eligibility, command, handoff and acknowledgement | [SVG](diagrams/05-phase2-functional.svg) |
-| P2.2 architecture | Proposed PostgreSQL production after migration acceptance | [SVG](diagrams/06-phase2-postgresql.svg) |
-| Transition roadmap | Proposed two-period timing, qualification and rollback windows | [SVG](diagrams/07-phase2-transition.svg) |
+Internal references are not included in the public repository. Its standalone
+`index.html` contains the operating instructions, screenshots and seven charts;
+the earlier downloadable release remains an optional archive.
 
-The current app is saved **unpublished**. Publication is an explicit assumption
-for Phase 2, not a current fact. The PostgreSQL production target is end of Q4
-2026, subject to migration and operational acceptance. SQL retirement has a
-separate stabilization/approval gate and may extend into January 2027.
+| Chart | Scope |
+|---|---|
+| [Functional flow](diagrams/01-current-functional.svg) | Intake/review and the separate manual production process |
+| [Current architecture](diagrams/02-current-architecture.svg) | Credential-bound Stage/Prod profiles, shared API and configurable targets |
+| [Operator procedure](diagrams/03-current-user-sop.svg) | Six steps and recovery branches |
+| [Azure SQL](diagrams/04-phase2-azure-sql.svg) | Proposed production hosting and adapter qualification |
+| [Release and acknowledgement](diagrams/05-phase2-functional.svg) | Proposed controlled handoff and receiver receipt |
+| [PostgreSQL](diagrams/06-phase2-postgresql.svg) | VM/database transition after migration acceptance |
+| [Transition schedule](diagrams/07-phase2-transition.svg) | Qualification, cutover and stabilization |
 
-## Rebuild
-
-From the repository root:
+## Rebuild and review
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r docs\operations-guide\requirements.txt
-.\.venv\Scripts\python.exe scripts\build_operations_guide.py --pdf
-.\.venv\Scripts\python.exe scripts\package_operations_guide.py --output-dir "$env:LOCALAPPDATA\MILSTRIP\release-v1.2.0"
+.\.venv\Scripts\python.exe scripts\build_operations_guide.py
 ```
 
-The builder uses the existing local Brave executable in an **isolated headless
-process**. It does not reuse the signed-in browser session or access the tenant.
-Supply `--browser <absolute chromium executable path>` if necessary. Omit
-`--pdf` to build HTML/SVG without a browser. Edit `guide.md` for text and
-`scripts/build_operations_guide.py` for chart content/layout. The HTML embeds CSS,
-JavaScript, the icon, four real app screenshots and every SVG, including downloadable diagram copies.
-Generated files should not be manually edited.
+Add `--pdf` only when generating the optional full guide and quick SOP. Browser
+validation uses an isolated headless Brave process, never the signed-in session.
+Use `--browser <absolute chromium path>` to select another installed executable.
 
-Validation checks a lone HTML file in an isolated directory, four screenshots, seven SVGs, six SOP
-steps, rendered text bounds, section links, disclosures, keyboard dialog closing,
-print expansion, browser errors, no network dependencies and desktop/mobile
-overflow. The public packager uses an explicit allowlist, checks identifiers and
-offline links, and creates a deterministic ZIP plus SHA256 checksums. PDF text
-and layout are checked separately. See [verification](VERIFICATION.md) and the
-[independent editorial review](EDITORIAL_REVIEW.md).
+Edit `guide.md` for prose and `scripts/build_operations_guide.py` for chart content.
+Generated HTML/SVG files must be rebuilt. The output embeds its assets and makes
+no network requests. Validation covers six steps, images, seven charts, internal
+anchors, disclosures, enlargement dialogs, keyboard dismissal, print expansion
+and desktop/mobile overflow.
 
-The public repository hosts the standalone `index.html` through GitHub Pages
-from the root of `main`, with `.nojekyll`. The webpage is the primary deliverable;
-the earlier release assets remain optional archives. The source repository stays private.
-No runtime code, production database or tenant resource is changed by these tools.
+Follow the editorial standard and obtain a separate factual/editorial review
+before publication. Confirm visible controls, current status, screenshot dates
+and unknown-outcome recovery. New administration material belongs in a closed
+section; the six operator steps remain the main reading path.
 
-Screenshots sit beside their corresponding SOP steps and open at full size.
-See [capture provenance](screens/README.md). The current webpage is edition 1.2.0;
-the previously published 1.1.0 download release is retained unchanged as an archive.
+GitHub Pages serves the public repository's root `index.html` on `main` with
+`.nojekyll`. Publishing this guide does not publish the canvas app or activate a
+database configuration. Confirm the deployed page matches the committed HTML.
 
-This edition replaces repeated status cards and explanatory prose with six
-operator steps, recovery disclosures and a short confirmation table. The Results
-screen now retains the saved intake receipt while the operator refreshes results
-or reviews a record. All four screenshots were recaptured from the saved draft.
+## Pending production acceptance
 
-## Production design items requiring decisions
+Resolve the SQL freeze and approve new application objects before Azure SQL
+writes. Accept one delivery contract, individual authorization, hosting,
+recovery targets and the migration scope. Changing a connection string does not
+transfer existing history. Both apps share API releases and outages.
 
-1. Reconcile the migration repo's recorded SQL freeze with the requested Azure
-   SQL operating period and refresh the final migration baseline as necessary.
-2. Accept one delivery route: the recovered SQL boundary or the older Rainbow
-   CSV/FTP proposal. Database hosting alone does not choose that route.
-3. Approve individual-user authorization, API/network hosting, workload/recovery
-   targets, final migration scope and the writer cutover plan.
-
-The package is complete as a documentation/design deliverable. Those decisions
-gate later production implementation; they are explicitly identified rather than
-represented as completed work.
+The PostgreSQL production target remains end of Q4 2026, subject to migration
+acceptance. SQL retirement requires separate approval after stabilization.

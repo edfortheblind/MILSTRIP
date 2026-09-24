@@ -7,10 +7,27 @@ of it (`download_ship940` → ADF → `ShipMaster` → Boomi → SCALE).
 
 ## Status
 
-**2026-09-23: CLI accepted; canvas development draft implemented, unpublished.**
-The four-screen app uses the existing connector/gateway, authenticated laptop API
-and local PostgreSQL metadata. Synthetic intake, review and history passed;
-shared-user authorization and remaining canvas acceptance are still open.
+**2026-09-24: MILSTRIP Stage and Prod published; player licensing remains with IT.**
+Stage retains app ID `7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`. The separate Prod app
+is `0aa02d8b-c7fa-42cc-87e8-6d287bd4c897`; its separate connection is verified, and
+its runtime profile is disabled while the database target is undecided. Both are
+in the existing MILSTRIP solution and reuse its connector and gateway.
+
+The standalone Prod player requested a Power Apps plan for the current account.
+The owner assigned licensing to IT; no trial was started. Studio Preview checks
+passed, but end-user player acceptance remains blocked until licensing is resolved.
+
+API **0.4.0** binds separate API credentials to fixed Stage/Prod profiles and
+checks the database's environment identity. Stage uses local PostgreSQL;
+PostgreSQL and SQL Server persistence adapters are implemented. Live Azure SQL
+acceptance remains pending. Configure destinations privately through the
+[administrator screen and SOP](docs/RUNTIME_CONFIGURATION.md).
+
+Synthetic intake, review, receipt and history have passed through the existing
+app. The retained runtime test remains in Stage; see
+[its evidence and read-only query](docs/delivery/RETAINED_RUNTIME_TEST_2026-09-24.md).
+Audit identity is still the shared API account. Remaining canvas acceptance and
+individual-user authorization are separate work.
 
 Start with the [visual operating guide](docs/operations-guide/index.html) or
 [PDF](docs/operations-guide/MILSTRIP-current-and-phase2.pdf): current functional
@@ -44,8 +61,9 @@ After cloning onto Windows, run the included smoke test:
 run_milstrip.bat samples\known_valid.txt
 ```
 
-Every current run is a Phase 1 dry run — no CSV is created, nothing is written
-to a database and nothing is sent over the network. `--json` is a developer
+The CLI commands above are Phase 1 dry runs — no CSV is created, nothing is written
+to a database and nothing is sent over the network. The canvas app does persist
+intake and review metadata through the API. `--json` is a developer
 diagnostic report, not the Rainbow deliverable. The future operational output
 is CSV; its format will not be invented before the official layout arrives.
 
@@ -56,6 +74,10 @@ failure handling, see [`docs/USER_SOP.md`](docs/USER_SOP.md).
 
 - [`docs/master.md`](docs/master.md) — single source of truth: scope,
   governance profile, status, outstanding decisions.
+- [`docs/RUNTIME_CONFIGURATION.md`](docs/RUNTIME_CONFIGURATION.md) — native
+  administrator setup, explicit schema provisioning, restart and database moves.
+- [`powerapps/canvas/deployment-manifest.json`](powerapps/canvas/deployment-manifest.json)
+  — Stage/Prod app IDs, source variants and deployment status.
 - [`docs/MILSTRIP_SPEC.md`](docs/MILSTRIP_SPEC.md) — the fixed-width field
   specification, with evidence and confidence levels for every position.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — current-state and target
@@ -64,16 +86,16 @@ failure handling, see [`docs/USER_SOP.md`](docs/USER_SOP.md).
   Phase 2 CSV/transfer contract template, open fields and acceptance evidence.
 - [`docs/DISCOVERY_EVIDENCE.md`](docs/DISCOVERY_EVIDENCE.md) — source-to-claim
   register for SQL, calls, DLM appendices and sanitized malformed-email facts.
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — phased plan (Phase 1 accepted, Rainbow
-  CSV/FTP in Phase 2, application database in Phase 3).
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — current production plan and historical
+  phase decisions; SQL versus Rainbow handoff remains unresolved.
 - [`docs/OPEN_QUESTIONS.md`](docs/OPEN_QUESTIONS.md) — ten precise questions,
   each tagged with which phase it blocks.
 - [`docs/OWNER_QUESTIONNAIRE.md`](docs/OWNER_QUESTIONNAIRE.md) — owner
   decisions for Rainbow CSV/FTP and the future application database.
 - [`docs/USER_SOP.md`](docs/USER_SOP.md) — English operator SOP with the
   current Phase 1 procedure and planned Rainbow CSV/FTP procedure.
-- [`api/README.md`](api/README.md) — local Windows API scope and setup for the
-  application-owned PostgreSQL boundary.
+- [`api/README.md`](api/README.md) — local API reference; the current Stage/Prod
+  configuration procedure is in the administrator SOP above.
 - [`db/migrations/001_create_milstrip_app.sql`](db/migrations/001_create_milstrip_app.sql)
   — isolated local development schema migration; no legacy table writes.
 - [`docs/POSTGRESQL_HOSTING_DESIGN.md`](docs/POSTGRESQL_HOSTING_DESIGN.md) —
@@ -98,8 +120,10 @@ pip install -r requirements-dev.txt
 python -m pytest -v
 ```
 
-46 passing, including legacy examples and sanitized regressions derived from
-the malformed-email evidence. Static type checking is clean.
+The suite covers parser regressions, API authentication, runtime profiles and
+persistence contracts. Database integration checks require an explicitly
+configured test target; they are not live Azure SQL acceptance. Use the current
+delivery evidence for executed test results rather than a historical test count.
 
 ## Project layout
 

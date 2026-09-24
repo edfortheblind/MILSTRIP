@@ -19,3 +19,7 @@ milstrip-app cred.txt
 # DLM source documents are also kept local; version only derived facts and
 # sanitized fixtures unless redistribution rights are confirmed.
 local-discovery/
+
+# Owner's incoming change documents stay local until reviewed for publication.
+inbox/*
+!inbox/README.md

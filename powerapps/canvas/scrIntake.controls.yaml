@@ -13,15 +13,15 @@
       Y: =16
       Width: =Parent.Width-128
       Height: =64
-      Text: ="MILSTRIP intake"
+      Text: ="MILSTRIP " & If(AppEnvironment="stage","Stage","Prod") & " | Intake"
       Size: =24
 - IntakeMessage:
     Control: Label
     Properties:
       X: =24
-      Y: =84
+      Y: =78
       Width: =Parent.Width-48
-      Height: =60
+      Height: =34
       Text: =Coalesce(varMessage, "")
 - txtSource:
     Control: Classic/TextInput
@@ -33,7 +33,7 @@
       Default: =""
       Mode: =TextMode.MultiLine
       HintText: ="Paste the original email or ticket text"
-      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit))
 - btnSubmit:
     Control: Classic/Button
     Properties:
@@ -42,18 +42,20 @@
       Width: =210
       Height: =44
       Text: ="Submit intake"
-      OnSelect: '=Set(varBusy,true); Set(varSourceId,Text(GUID()));
+      OnSelect: '=If(Coalesce(varEnvironmentReady,false),Set(varBusy,true); Set(varSourceId,Text(GUID()));
 
         IfError(
 
         Set(varAck,MILSTRIPLocalDevAPI.CreateIntakeRequest(txtSource.Text,"PASTE",{source_id:varSourceId})); varAck,
 
-        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep this text. Load recent
-        requests and compare the source ID before another submission: " & varSourceId); false,
+        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep this text. Load recent requests
+        and compare the source ID before another submission: " & varSourceId); false,
 
-        Set(varRequestId,varAck.request_id); Set(varIntakeUncertain,false); Set(varMessage,"Intake saved. Load results
-        to inspect validation."); Navigate(scrResults); true); Set(varBusy,false)'
-      DisplayMode: =If(Coalesce(varBusy,false) || IsBlank(txtSource.Text) || Coalesce(varIntakeUncertain,false),DisplayMode.Disabled,DisplayMode.Edit)
+        Set(varRequestId,varAck.request_id); Set(varIntakeUncertain,false); Set(varMessage,"Intake saved. Load results to
+        inspect validation."); Navigate(scrResults); true); Set(varBusy,false),Notify("Environment unavailable. Return to
+        Intake and check the connection.",NotificationType.Error))'
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || IsBlank(txtSource.Text)
+        || Coalesce(varIntakeUncertain,false),DisplayMode.Disabled,DisplayMode.Edit))
 - btnRecent:
     Control: Classic/Button
     Properties:
@@ -62,7 +64,7 @@
       Width: =210
       Height: =44
       Text: ="Load recent requests"
-      OnSelect: '=Set(varBusy,true);
+      OnSelect: '=If(Coalesce(varEnvironmentReady,false),Set(varBusy,true);
 
         IfError(
 
@@ -70,9 +72,9 @@
 
         Set(varMessage,"Could not load requests. Input retained."); false,
 
-        ClearCollect(colRequests,varRequestsPage.items); Set(varRequestsCursor,varRequestsPage.next_cursor); true);
-        Set(varBusy,false)'
-      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+        ClearCollect(colRequests,varRequestsPage.items); Set(varRequestsCursor,varRequestsPage.next_cursor); true); Set(varBusy,false),Notify("Environment
+        unavailable. Return to Intake and check the connection.",NotificationType.Error))'
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit))
 - btnIntakeRetryConfirm:
     Control: Classic/Button
     Properties:
@@ -81,9 +83,9 @@
       Width: =210
       Height: =44
       Text: ="Allow new submission"
-      OnSelect: =Set(varIntakeUncertain,false); Set(varMessage,"A new submission creates another request. Submit
-        only after checking recent requests.")
-      DisplayMode: =If(Coalesce(varBusy,false) || !Coalesce(varIntakeUncertain,false),DisplayMode.Disabled,DisplayMode.Edit)
+      OnSelect: =Set(varIntakeUncertain,false); Set(varMessage,"A new submission creates another request. Submit only after
+        checking recent requests.")
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || !Coalesce(varIntakeUncertain,false),DisplayMode.Disabled,DisplayMode.Edit))
 - galRequests:
     Control: Gallery
     Properties:
@@ -104,6 +106,7 @@
           Height: =64
           Text: =ThisItem.request_id & " | " & ThisItem.status & " | " & Coalesce(ThisItem.source_id, "")
           OnSelect: =Set(varRequestId,ThisItem.request_id); Set(varMessage,""); Navigate(scrResults)
+          DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,DisplayMode.Edit)
 - btnMoreRequests:
     Control: Classic/Button
     Properties:
@@ -112,11 +115,37 @@
       Width: =210
       Height: =44
       Text: ="More requests"
-      OnSelect: '=Set(varBusy,true); IfError(
+      OnSelect: '=If(Coalesce(varEnvironmentReady,false),Set(varBusy,true); IfError(
 
         Set(varRequestsPage,MILSTRIPLocalDevAPI.ListIntakeRequests({limit:50,cursor:varRequestsCursor})); varRequestsPage,
 
         Set(varMessage,"Could not load the next page. Retry retains the cursor."); false,
 
-        Collect(colRequests,varRequestsPage.items); Set(varRequestsCursor,varRequestsPage.next_cursor); true); Set(varBusy,false)'
-      DisplayMode: =If(Coalesce(varBusy,false) || IsBlank(varRequestsCursor),DisplayMode.Disabled,DisplayMode.Edit)
+        Collect(colRequests,varRequestsPage.items); Set(varRequestsCursor,varRequestsPage.next_cursor); true); Set(varBusy,false),Notify("Environment
+        unavailable. Return to Intake and check the connection.",NotificationType.Error))'
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || IsBlank(varRequestsCursor),DisplayMode.Disabled,DisplayMode.Edit))
+- EnvironmentStatus:
+    Control: Label
+    Properties:
+      X: =24
+      Y: =110
+      Width: =Parent.Width-282
+      Height: =36
+      Text: =Upper(AppEnvironment) & " | " & If(Coalesce(varEnvironmentReady,false),"Ready | " & varEnvironment.target_label,"Unavailable")
+      Color: =If(Coalesce(varEnvironmentReady,false),Color.DarkGreen,Color.DarkRed)
+      Size: =13
+- btnCheckEnvironment:
+    Control: Classic/Button
+    Properties:
+      X: =Parent.Width-234
+      Y: =110
+      Width: =210
+      Height: =36
+      Text: ="Check connection"
+      OnSelect: =Set(varBusy,true); Set(varEnvironmentReady,false); Set(varEnvironment,Blank()); IfError(Set(varEnvironment,MILSTRIPLocalDevAPI.GetHealth());
+        Set(varEnvironmentReady,varEnvironment.environment=AppEnvironment && varEnvironment.ready); true, Set(varEnvironmentReady,false);
+        false); If(!varEnvironmentReady,Set(varMessage,If(!IsBlank(varEnvironment.environment) && varEnvironment.environment<>AppEnvironment,"Wrong
+        environment connection. Contact the administrator.","Environment unavailable. Contact the administrator."))); If(varEnvironmentReady
+        && varMessage in ["Wrong environment connection. Contact the administrator.","Environment unavailable. Contact the
+        administrator."],Set(varMessage,"")); Set(varBusy,false)
+      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)

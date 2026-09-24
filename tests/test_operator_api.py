@@ -7,24 +7,22 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api import app as api
-from api import database as storage
+from api import runtime
+from api.persistence import Repository
+from api.profiles import load_runtime_config
 from api.operator import _encode
 from api.operator_models import RequestCursor
 from scripts.run_controlled_handoff_test import SYNTHETIC_RECORD
 
 
 @pytest.fixture
-def client(database, monkeypatch, api_credentials):
-    @contextmanager
-    def connect():
-        with database.transaction():
-            yield database
-    monkeypatch.setattr(api, "_connect", connect)
-    monkeypatch.setattr(storage, "connect", connect)
-    monkeypatch.setenv("MILSTRIP_DATABASE_URL", "postgresql://localhost/trav3pl-psqldb-stage")
-    with TestClient(api.app, client=("127.0.0.1", 50000)) as value:
-        value.auth = api_credentials
-        yield value
+def client(runtime_client):
+    return runtime_client
+
+
+@pytest.fixture
+def database(portable_database):
+    return portable_database.driver
 
 
 def intake(client, text=SYNTHETIC_RECORD):
@@ -138,14 +136,15 @@ def test_stale_version_and_command_reuse_are_conflicts(client, monkeypatch):
     assert review(client, request_id, command()).status_code == 409
     assert review(client, request_id, {**body, "reason": "Changed reason"}).status_code == 409
     import json
-    import os
-    from pathlib import Path
-    path = Path(os.environ["MILSTRIP_API_CREDENTIAL_FILE"])
+    path = next(binding.credential_file for binding in load_runtime_config().bindings if binding.profile_id == "stage")
     config = json.loads(path.read_text())
     config["username"] = "another-reviewer"
     path.write_text(json.dumps(config))
-    client.auth = ("another-reviewer", "synthetic-test-password-only")
-    assert review(client, request_id, body).status_code == 409
+    # Credentials are an immutable startup snapshot. The changed identity is
+    # intentionally loaded only when the API starts again.
+    with TestClient(api.app, client=("127.0.0.1", 50000)) as restarted:
+        restarted.auth = ("another-reviewer", "synthetic-test-password-only")
+        assert review(restarted, request_id, body).status_code == 409
 
 
 def test_rejected_record_cannot_be_approved(client):
@@ -171,15 +170,18 @@ def test_missing_record_is_404(client):
     assert review(client, "missing").status_code == 404
 
 
-def test_credentials_configuration_is_required(client, monkeypatch):
-    monkeypatch.setenv("MILSTRIP_API_CREDENTIAL_FILE", "missing-credential.json")
-    assert review(client, "missing").status_code == 503
+def test_credentials_configuration_is_required(api_credentials):
+    path = next(binding.credential_file for binding in load_runtime_config().bindings if binding.profile_id == "stage")
+    path.unlink()
+    with TestClient(api.app, client=("127.0.0.1", 50000)) as restarted:
+        restarted.auth = api_credentials
+        assert review(restarted, "missing").status_code == 503
 
 
-def test_remote_database_or_peer_cannot_review(client, monkeypatch):
+def test_legacy_database_variable_does_not_reroute_and_remote_peer_cannot_review(client, monkeypatch):
+    request_id = intake(client)
     monkeypatch.setenv("MILSTRIP_DATABASE_URL", "postgresql://remote.example/test")
-    assert review(client, "missing").status_code == 403
-    monkeypatch.setenv("MILSTRIP_DATABASE_URL", "postgresql://localhost/trav3pl-psqldb-stage")
+    assert review(client, request_id).status_code == 201
     with TestClient(api.app, client=("192.0.2.1", 50000)) as remote:
         assert review(remote, "missing").status_code == 403
 
@@ -194,9 +196,9 @@ def test_review_failure_rolls_back_decision_version_and_audit(client, database):
 
 
 def test_database_failure_is_controlled(client, monkeypatch):
-    def fail():
+    def fail(provider, connection_string):
         raise psycopg.OperationalError("Sensitive connection detail")
-    monkeypatch.setattr(storage, "connect", fail)
+    monkeypatch.setattr(runtime, "open_repository", fail)
     response = client.get("/api/v1/intake/requests")
     assert response.status_code == 503
     assert response.json() == {"detail": "Database unavailable"}
@@ -204,30 +206,34 @@ def test_database_failure_is_controlled(client, monkeypatch):
 
 def test_openapi_exposes_typed_operator_contract():
     schema = api.app.openapi()
-    assert schema["info"]["version"] == "0.3.0"
+    assert schema["info"]["version"] == "0.4.0"
     assert "/api/v1/records/{record_id}/review-decisions" in schema["paths"]
     assert schema["components"]["schemas"]["ReviewCommand"]["additionalProperties"] is False
 
 
-def test_commit_failure_does_not_return_success(client, database, monkeypatch):
+def test_commit_failure_does_not_return_success(client, database, portable_database, monkeypatch):
     request_id = intake(client)
 
     @contextmanager
-    def failed_commit():
-        with database.transaction():
-            yield database
+    def failed_commit(provider, connection_string):
+        with portable_database.connection.begin_nested():
+            yield Repository(portable_database.connection)
             raise psycopg.OperationalError("Simulated commit failure")
 
-    monkeypatch.setattr(storage, "connect", failed_commit)
+    monkeypatch.setattr(runtime, "open_repository", failed_commit)
     response = review(client, request_id)
     assert response.status_code == 503
     assert database.execute("SELECT review_version FROM milstrip_app.milstrip_record WHERE record_id=%s", (request_id + ":1",)).fetchone()[0] == 0
     assert database.execute("SELECT count(*) FROM milstrip_app.review_decision WHERE record_id=%s", (request_id + ":1",)).fetchone()[0] == 0
 
 
-def test_invalid_connection_configuration_is_controlled(client, monkeypatch):
-    monkeypatch.setenv("MILSTRIP_DATABASE_URL", "invalid connection string")
-    assert review(client, "missing").status_code == 503
+def test_invalid_runtime_configuration_is_controlled(api_credentials, monkeypatch, tmp_path):
+    bad_path = tmp_path / "invalid-runtime.json"
+    bad_path.write_text('{"version":1,"profiles":"invalid"}', encoding="utf-8")
+    monkeypatch.setenv("MILSTRIP_RUNTIME_CONFIG_FILE", str(bad_path))
+    with TestClient(api.app, client=("127.0.0.1", 50000)) as restarted:
+        restarted.auth = api_credentials
+        assert review(restarted, "missing").status_code == 503
 
 
 def test_concurrent_commands_have_one_winner(monkeypatch, api_credentials):
@@ -243,7 +249,10 @@ def test_concurrent_commands_have_one_winner(monkeypatch, api_credentials):
     config = conninfo_to_dict(url)
     assert config.get("host") in {"localhost", "127.0.0.1", "::1"}
     assert config.get("dbname") == "trav3pl-psqldb-stage"
-    monkeypatch.setenv("MILSTRIP_DATABASE_URL", url)
+    with psycopg.connect(url, connect_timeout=5) as db:
+        if db.execute("SELECT to_regclass('milstrip_app.environment_identity')").fetchone()[0] is None:
+            pytest.skip("Provision the approved local Stage identity before the two-session test")
+        assert db.execute("SELECT profile_id FROM milstrip_app.environment_identity WHERE singleton_id=1").fetchone() == ("stage",)
     request_id = str(uuid4())
     record_id = request_id + ":1"
     try:
@@ -252,14 +261,17 @@ def test_concurrent_commands_have_one_winner(monkeypatch, api_credentials):
             db.execute("INSERT INTO milstrip_app.milstrip_record(record_id,request_id,record_sequence,canonical_record,status) VALUES (%s,%s,1,%s,'VALID')", (record_id, request_id, SYNTHETIC_RECORD))
         barrier = Barrier(2)
 
-        def submit(body):
-            with TestClient(api.app, client=("127.0.0.1", 50000)) as client:
-                client.auth = api_credentials
-                barrier.wait(timeout=5)
-                return review(client, request_id, body)
+        # A real API process has one lifespan. Share that startup snapshot
+        # while each request opens its own real PostgreSQL transaction.
+        with TestClient(api.app, client=("127.0.0.1", 50000)) as concurrent_client:
+            concurrent_client.auth = api_credentials
 
-        with ThreadPoolExecutor(max_workers=2) as pool:
-            results = list(pool.map(submit, [command(), command(decision="REJECTED")]))
+            def submit(body):
+                barrier.wait(timeout=5)
+                return review(concurrent_client, request_id, body)
+
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                results = list(pool.map(submit, [command(), command(decision="REJECTED")]))
         assert sorted(result.status_code for result in results) == [201, 409]
         with psycopg.connect(url, connect_timeout=5) as db:
             assert db.execute("SELECT review_version FROM milstrip_app.milstrip_record WHERE record_id=%s", (record_id,)).fetchone()[0] == 1

@@ -79,6 +79,9 @@
     },
     "HealthResponse": {
       "properties": {
+        "configuration_revision": {
+          "type": "string"
+        },
         "database": {
           "type": "string"
         },
@@ -86,13 +89,38 @@
           "type": "string",
           "x-nullable": true
         },
+        "environment": {
+          "enum": [
+            "stage",
+            "prod"
+          ],
+          "type": "string"
+        },
+        "provider": {
+          "enum": [
+            "postgresql",
+            "sqlserver"
+          ],
+          "type": "string"
+        },
+        "ready": {
+          "type": "boolean"
+        },
         "status": {
+          "type": "string"
+        },
+        "target_label": {
           "type": "string"
         }
       },
       "required": [
         "status",
-        "database"
+        "database",
+        "environment",
+        "provider",
+        "target_label",
+        "configuration_revision",
+        "ready"
       ],
       "type": "object"
     },
@@ -477,7 +505,7 @@
   "host": "127.0.0.1:8000",
   "info": {
     "title": "MILSTRIP Local Dev API",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "paths": {
     "/health": {
@@ -503,7 +531,7 @@
             }
           },
           "403": {
-            "description": "Outside laptop boundary",
+            "description": "Loopback gateway peer required",
             "schema": {
               "properties": {
                 "detail": {
@@ -536,7 +564,7 @@
             }
           },
           "503": {
-            "description": "Local configuration or database unavailable",
+            "description": "Runtime configuration or database unavailable",
             "schema": {
               "properties": {
                 "detail": {
@@ -606,7 +634,7 @@
             }
           },
           "403": {
-            "description": "Outside laptop boundary",
+            "description": "Loopback gateway peer required",
             "schema": {
               "properties": {
                 "detail": {
@@ -645,7 +673,7 @@
             }
           },
           "503": {
-            "description": "Local configuration or database unavailable",
+            "description": "Runtime configuration or database unavailable",
             "schema": {
               "properties": {
                 "detail": {
@@ -689,7 +717,7 @@
             }
           },
           "403": {
-            "description": "Outside laptop boundary",
+            "description": "Loopback gateway peer required",
             "schema": {
               "properties": {
                 "detail": {
@@ -728,7 +756,7 @@
             }
           },
           "503": {
-            "description": "Local configuration or database unavailable",
+            "description": "Runtime configuration or database unavailable",
             "schema": {
               "properties": {
                 "detail": {
@@ -772,7 +800,7 @@
             }
           },
           "403": {
-            "description": "Outside laptop boundary",
+            "description": "Loopback gateway peer required",
             "schema": {
               "properties": {
                 "detail": {
@@ -811,7 +839,7 @@
             }
           },
           "503": {
-            "description": "Local configuration or database unavailable",
+            "description": "Runtime configuration or database unavailable",
             "schema": {
               "properties": {
                 "detail": {
@@ -872,7 +900,7 @@
             }
           },
           "403": {
-            "description": "Outside laptop boundary",
+            "description": "Loopback gateway peer required",
             "schema": {
               "properties": {
                 "detail": {
@@ -911,7 +939,7 @@
             }
           },
           "503": {
-            "description": "Local configuration or database unavailable",
+            "description": "Runtime configuration or database unavailable",
             "schema": {
               "properties": {
                 "detail": {
@@ -972,7 +1000,7 @@
             }
           },
           "403": {
-            "description": "Outside laptop boundary",
+            "description": "Loopback gateway peer required",
             "schema": {
               "properties": {
                 "detail": {
@@ -1011,7 +1039,7 @@
             }
           },
           "503": {
-            "description": "Local configuration or database unavailable",
+            "description": "Runtime configuration or database unavailable",
             "schema": {
               "properties": {
                 "detail": {
@@ -1069,7 +1097,7 @@
             }
           },
           "403": {
-            "description": "Outside laptop boundary",
+            "description": "Loopback gateway peer required",
             "schema": {
               "properties": {
                 "detail": {
@@ -1108,7 +1136,7 @@
             }
           },
           "503": {
-            "description": "Local configuration or database unavailable",
+            "description": "Runtime configuration or database unavailable",
             "schema": {
               "properties": {
                 "detail": {

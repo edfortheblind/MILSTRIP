@@ -11,6 +11,11 @@ class HealthResponse(BaseModel):
     status: str
     database: str
     detail: str | None = None
+    environment: Literal["stage", "prod"]
+    provider: Literal["postgresql", "sqlserver"]
+    target_label: str
+    configuration_revision: str
+    ready: bool
 
 
 class IntakeAcknowledgement(BaseModel):

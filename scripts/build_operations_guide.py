@@ -11,6 +11,7 @@ from html import escape
 import json
 import os
 import re
+import struct
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -19,10 +20,10 @@ import markdown
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "operations-guide"
 DIAGRAMS = OUT / "diagrams"
-DATE = "September 23, 2026"
-VERSION = "1.2.0"
+DATE = "September 24, 2026"
+VERSION = "1.3.0"
 PALETTE = {
-    "dev": ("#e8f5f1", "#087f6c", "CURRENT DEV"),
+    "dev": ("#e8f5f1", "#087f6c", "CURRENT"),
     "manual": ("#f0f3f7", "#53657d", "EXISTING MANUAL"),
     "future": ("#ecf2ff", "#315fc1", "PROPOSED"),
     "gate": ("#fff3da", "#a86b0c", "GATE"),
@@ -86,8 +87,8 @@ class Chart:
 
 def charts():
     manifests=[]
-    c=Chart("01-current-functional.svg","Current functional flow","Development intake, validation, review and audit.",850)
-    c.panel(20,150,960,400,"CURRENT DEV  /  implemented and tested with synthetic input")
+    c=Chart("01-current-functional.svg","Current functional flow","Intake, validation, review and audit within the authenticated environment.",850)
+    c.panel(20,150,960,400,"CURRENT  /  implemented and tested with synthetic input")
     c.node("source",40,205,280,102,"Original source",["Email or ticket text","Pasted by the operator"])
     c.node("intake",360,205,280,102,"Submit intake",["Source sent for validation","Receipt after storage commits"])
     c.node("parser",680,205,280,102,"Parse and validate",["Conservative normalization","Preserve / pad to 80 chars"])
@@ -102,24 +103,29 @@ def charts():
     for x in [240,480,720]:c.arrow([(x,699),(x+40,699)])
     manifests.append(c.save())
 
-    c=Chart("02-current-architecture.svg","Technical architecture: current development","Existing Default environment, MILSTRIP solution, app, connector and gateway.",835)
-    c.panel(20,150,960,190,"POWER PLATFORM CLOUD  /  saved, unpublished app")
-    c.node("app",50,205,370,100,"MILSTRIP Intake Dev",["Four canvas screens; in-memory inputs","Power Apps user sign-in"])
-    c.node("connector",570,205,370,100,"MILSTRIP Local Dev API",["Seven typed API operations","Dedicated Basic connection identity"])
-    c.arrow([(420,255),(570,255)])
-    c.panel(20,380,960,315,"DEVELOPMENT LAPTOP  /  required for current execution")
-    c.node("gateway",40,440,280,105,"Standard gateway",["Existing DEV gateway","Existing cloud-to-local bridge"])
-    c.node("api",360,440,280,105,"FastAPI + parser",["127.0.0.1:8000 / api/v1","Basic auth; loopback guard"])
-    c.node("pg",680,440,280,105,"Local PostgreSQL",["Approved local DEV database","milstrip_app metadata"])
-    c.arrow([(755,305),(755,357),(180,357),(180,440)])
-    c.arrow([(320,492),(360,492)]);c.arrow([(640,492),(680,492)])
-    c.text(48,590,"Gateway → API: HTTP on loopback only. API → DB: psycopg / localhost:5432.",20)
-    c.text(48,622,"Review audit uses the shared connection identity, not the Power Apps user.",20)
-    c.text(48,654,"Credentials remain private; no secrets are included in the app or this guide.",19)
-    c.panel(20,727,960,63,"NO RUNTIME LINK TO PRODUCTION SQL  /  no legacy writer, CSV export or FTP delivery","manual")
+    c=Chart("02-current-architecture.svg","Stage and Prod architecture","Both apps published. Player licensing and the Prod database remain pending.",980)
+    c.panel(20,150,960,290,"POWER PLATFORM CLOUD  /  existing solution, connector and gateway")
+    c.node("stage-app",50,205,370,90,"MILSTRIP Stage",["Published; Studio runtime tested","Player license gate unresolved"])
+    c.node("prod-app",50,320,370,90,"MILSTRIP Prod",["Published; separate connection","Disabled until target is configured"])
+    c.node("connector",570,250,370,110,"Existing custom connector",["Seven typed API operations","Separate credentials select profiles"])
+    c.arrow([(420,250),(500,250),(500,280),(570,280)])
+    c.arrow([(420,365),(500,365),(500,320),(570,320)])
+    c.panel(20,480,960,190,"API HOST  /  currently the laptop")
+    c.node("gateway",40,535,280,105,"Standard gateway",["Existing cloud-to-local bridge","HTTP to the loopback API"])
+    c.node("api",360,535,280,105,"Shared API + parser",["Authenticated environment","One backend for both apps"])
+    c.node("profiles",680,535,280,105,"Fixed database profiles",["Native configuration screen","Activate by API restart"])
+    c.arrow([(755,360),(755,462),(180,462),(180,535)])
+    c.arrow([(320,587),(360,587)]);c.arrow([(640,587),(680,587)])
+    c.panel(20,710,960,160,"DATABASE TARGETS  /  Stage and Prod must be different")
+    c.node("stage-db",45,755,430,90,"Stage: local PostgreSQL",["Intake, validation, reviews and audit","Runtime tested; retained test preserved"])
+    c.node("prod-db",525,755,430,90,"Prod: disabled",["PostgreSQL or Azure SQL configurable","Independent target and acceptance required"])
+    c.arrow([(820,640),(820,690),(255,690),(255,755)])
+    c.arrow([(820,690),(740,690),(740,755)],dashed=True)
+    c.text(45,908,"Both apps share backend releases and restarts. Changing a string does not move data.",19)
+    c.text(45,939,"Azure SQL runtime and production handoff remain unverified; no downstream delivery.",19)
     manifests.append(c.save())
 
-    c=Chart("03-current-user-sop.svg","Operator procedure","Open MILSTRIP Intake Dev in Preview with development services running.",940)
+    c=Chart("03-current-user-sop.svg","Operator procedure","Use the intended environment; confirm availability before entering source text.",940)
     steps=[("source",155,"1  Enter the source",["Paste the original email or ticket text.","Obtain missing values from the source owner."]),
            ("submit",280,"2  Submit the intake",["Select Submit intake once.","Confirm Intake saved, Request ID and received time."]),
            ("inspect",405,"3  Inspect the results",["Load / refresh results, then Inspect / review.","Read each issue; use Next results page if enabled."]),
@@ -137,10 +143,10 @@ def charts():
     c.node("restart",650,760,320,149,"App closed or unavailable",["Reload after service recovery.","On restart, reconcile requests","and history before resubmitting.","Give support IDs and errors."],"gate")
     manifests.append(c.save())
 
-    c=Chart("04-phase2-azure-sql.svg","P2.1 architecture: Azure SQL production","PROPOSED. Published app is assumed; production hosting and adapters are not implemented.",880,"future")
+    c=Chart("04-phase2-azure-sql.svg","P2.1 architecture: Azure SQL production","PROPOSED deployment. Adapter implemented; Azure SQL runtime acceptance is pending.",880,"future")
     c.node("app",30,160,280,126,"Published canvas app",["Same intake / review contract","Per-user Entra sign-in","Production release gate"],"future")
     c.node("api",360,160,280,126,"Managed API host",["Proposed Azure App Service","HTTPS + Entra authorization","Python parser; role checks"],"future")
-    c.node("adapter",690,160,280,126,"SQL repository",["New T-SQL persistence adapter","Stable IDs / review versions","Bounded pools + transactions"],"future")
+    c.node("adapter",690,160,280,126,"SQL repository",["SQLAlchemy + ODBC adapter","Stable IDs / review versions","Bounded calls + transactions"],"future")
     c.arrow([(310,223),(360,223)]);c.arrow([(640,223),(690,223)])
     c.panel(20,355,960,285,"EXISTING AZURE SQL WORKBENCH  /  new application objects need explicit approval","future")
     c.node("metadata",45,415,275,126,"milstrip_app",["Intake, review and audit","Durable command ledger","Proposed application schema"],"future")
@@ -193,7 +199,7 @@ def charts():
     manifests.append(c.save())
 
     c=Chart("07-phase2-transition.svg","Two periods: qualify, switch, stabilize","Q4 2026 is the owner's target. Dates never override the acceptance gates.",860,"future")
-    c.node("now",30,165,280,145,"NOW / September 23",["Unpublished working DEV app","SQL manual authority retained","Freeze, route, identity gates","Finish canvas acceptance"],"dev")
+    c.node("now",30,165,280,145,"NOW / September 24",["Both apps published","Stage Studio runtime tested","Player license gate unresolved","Prod target pending; disabled"],"dev")
     c.node("p21",360,165,280,145,"P2.1 / target October",["Published production pilot","Existing Azure SQL DB","API moved off laptop","Measured load and operations"],"future")
     c.node("p22",690,165,280,145,"P2.2 / target December",["Accepted PG Production","One writer switch","Stable IDs / history / commands","Qualified downstream flow"],"future")
     c.arrow([(310,237),(360,237)],dashed=True);c.arrow([(640,237),(690,237)],dashed=True)
@@ -224,10 +230,14 @@ def build_html():
     body=re.sub(r'<p><img alt="([^"]*)" src="(diagrams/[^"]+)"\s*/></p>',embed,body)
     def embed_screen(match):
         alt,path=match.groups()
-        allowed={f"screens/{name}" for name in ["01-intake.png","02-results.png","03-review.png","04-history.png"]}
+        allowed={f"screens/{name}" for name in ["01-intake.png","02-results.png","03-review.png","04-history.png","runtime-configuration.png"]}
         assert path in allowed,path
-        data=base64.b64encode((OUT/path).read_bytes()).decode()
-        return (f'<figure class="app-screen"><img src="data:image/png;base64,{data}" alt="{alt}" width="1918" height="867">'
+        image=(OUT/path).read_bytes()
+        assert image[:8]==b'\x89PNG\r\n\x1a\n' and image[12:16]==b'IHDR',path
+        width,height=struct.unpack('>II',image[16:24])
+        assert width>0 and height>0,path
+        data=base64.b64encode(image).decode()
+        return (f'<figure class="app-screen"><img src="data:image/png;base64,{data}" alt="{alt}" width="{width}" height="{height}">'
                 f'<figcaption>{alt}</figcaption><div class="figure-tools">'
                 '<button type="button" data-view-chart>View larger</button></div></figure>')
     body=re.sub(r'<p><img alt="([^"]*)" src="(screens/[^"]+)"\s*/></p>',embed_screen,body)
@@ -244,7 +254,7 @@ def build_html():
     logo=base64.b64encode((ROOT/"assets/milstrip-app.png").read_bytes()).decode()
     html=f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="MILSTRIP operator procedures, current architecture and proposed production migration."><title>MILSTRIP operator guide</title><style>{css}</style></head><body>
 <a class="skip" href="#main">Skip to guide</a>
-<nav class="topbar" aria-label="Guide navigation"><strong>MILSTRIP</strong><a href="#use-the-app">SOP</a><a href="#understand-the-workflow">Workflow</a><a href="#phase-2-two-production-periods">Phase 2</a><button id="print-guide" type="button">Print guide</button></nav>
+<nav class="topbar" aria-label="Guide navigation"><strong>MILSTRIP</strong><a href="#use-the-app">SOP</a><a href="#understand-the-workflow">Workflow</a><a href="#administrator-database-configuration">Configuration</a><a href="#phase-2-two-production-periods">Phase 2</a><button id="print-guide" type="button">Print guide</button></nav>
 <header class="cover"><img src="data:image/png;base64,{logo}" alt="MILSTRIP icon"><div><h1>MILSTRIP operator guide</h1><p class="edition">Version {VERSION} · {DATE}</p></div></header>
 <main id="main">{body}</main>
 <dialog id="diagram-viewer" aria-labelledby="viewer-title"><div class="viewer-bar"><strong id="viewer-title">Diagram</strong><span class="viewer-note">Scroll to explore at full size</span><button id="close-viewer" type="button" autofocus>Close</button></div><div class="viewer-scroll" id="viewer-content"></div></dialog>
@@ -268,8 +278,9 @@ def render_pdf(browser_path):
         page.evaluate("document.fonts.ready")
         assert page.locator("figure svg").count()==7
         assert page.locator(".steps > li").count()==6
-        assert page.locator(".app-screen img").count()==4
-        assert page.locator(".app-screen img").evaluate_all('(images)=>images.every(i=>i.complete && i.naturalWidth===1918 && i.naturalHeight===867)')
+        assert page.locator(".screen-step-group .app-screen img").count()==4
+        assert page.locator(".app-screen img").count()==5
+        assert page.locator(".app-screen img").evaluate_all('(images)=>images.every(i=>i.complete && i.naturalWidth===Number(i.getAttribute("width")) && i.naturalHeight===Number(i.getAttribute("height")))')
         assert page.locator("details[open]").count()==0
         assert not page.evaluate("Array.from(document.querySelectorAll('a[href^=\"#\"]')).filter(a=>!document.getElementById(a.hash.slice(1))).map(a=>a.hash)")
         assert page.locator('a[download]').count()==7
@@ -289,11 +300,13 @@ def render_pdf(browser_path):
         panel.locator('summary').click()
         # Every app screenshot is visible beside its instructions and opens larger.
         for figure in page.locator('.app-screen').all():
+            was_closed=figure.evaluate('(f)=>{const d=f.closest("details");if(d&&!d.open){d.open=true;return true;}return false;}')
             figure.locator('[data-view-chart]').click()
             assert page.locator('#diagram-viewer').evaluate('(d)=>d.open')
-            assert page.locator('#viewer-content img').evaluate('(i)=>i.complete && i.naturalWidth===1918')
+            assert page.locator('#viewer-content img').evaluate('(i)=>i.complete && i.naturalWidth>0')
             page.keyboard.press('Escape')
             assert not page.locator('#diagram-viewer').evaluate('(d)=>d.open')
+            if was_closed:figure.evaluate('(f)=>{f.closest("details").open=false;}')
         for width in [390,1440]:
             page.set_viewport_size({"width":width,"height":1000})
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth+1"),f"Page overflow at {width}px"
@@ -310,12 +323,14 @@ def render_pdf(browser_path):
         options=dict(print_background=True,prefer_css_page_size=True,display_header_footer=True,header_template='<span></span>',footer_template=footer)
         page.pdf(path=str(OUT/"MILSTRIP-current-and-phase2.pdf"),**options)
         page.evaluate("document.body.classList.add('sop-only');expandForPrint()")
+        # The standalone SOP must retain the dated access/activation limits.
+        page.add_style_tag(content="@media print{body.sop-only .intro{display:block!important;margin-bottom:14px}}")
         page.pdf(path=str(OUT/"MILSTRIP-quick-sop.pdf"),**options)
         page.evaluate("document.body.classList.remove('sop-only');restoreAfterPrint()")
         assert not errors,errors
         assert not network,network
         browser.close()
-    print("PASS: standalone offline HTML; six SOP steps; four real screens; seven charts; disclosure/dialog controls; print expansion; text bounds; anchors; mobile/desktop overflow.")
+    print("PASS: standalone offline HTML; six SOP steps; four app screens and one configuration screen; seven charts; disclosure/dialog controls; print expansion; text bounds; anchors; mobile/desktop overflow.")
 
 
 def main():

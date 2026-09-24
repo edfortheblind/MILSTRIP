@@ -1,0 +1,47 @@
+{
+  "status_date": "2026-09-24",
+  "api_version": "0.4.0",
+  "solution": "MILSTRIP",
+  "power_platform_environment": "Existing organization Default environment",
+  "connector": "MILSTRIP Local Dev API",
+  "data_source_identifier": "MILSTRIPLocalDevAPI",
+  "gateway": "MILSTRIP-DEV-LAPTOP",
+  "api_base_url": "http://127.0.0.1:8000/api/v1",
+  "start_screen": "scrIntake",
+  "screen_on_visible_source": "environment-check.fx",
+  "screen_controls": {
+    "scrIntake": "scrIntake.controls.yaml",
+    "scrResults": "scrResults.controls.yaml",
+    "scrReview": "scrReview.controls.yaml",
+    "scrHistory": "scrHistory.controls.yaml"
+  },
+  "apps": {
+    "stage": {
+      "name": "MILSTRIP Stage",
+      "app_id": "7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82",
+      "formulas_source": "app-environment.stage.fx",
+      "published": true,
+      "connection_status": "Verified in Studio Preview after API restart",
+      "solution_membership": "Confirmed",
+      "player_acceptance": "Not completed; current account licensing unresolved",
+      "runtime_profile": "stage",
+      "database_state": "Existing local PostgreSQL with Stage identity",
+      "connection_instance_id": "/providers/microsoft.powerapps/apis/shared_tab-5fmilstrip-20local-20dev-20api-5f9baef836fe8c097c/connections/7eae22ff486549fb943acfcc8c45c172"
+    },
+    "prod": {
+      "name": "MILSTRIP Prod",
+      "app_id": "0aa02d8b-c7fa-42cc-87e8-6d287bd4c897",
+      "formulas_source": "app-environment.prod.fx",
+      "published": true,
+      "connection_status": "Separate Prod binding verified in Studio Preview",
+      "solution_membership": "Confirmed",
+      "player_acceptance": "Blocked by Power Apps plan requirement; IT owns licensing",
+      "runtime_profile": "prod",
+      "database_state": "Disabled; independent target not selected",
+      "connection_instance_id": "/providers/microsoft.powerapps/apis/shared_tab-5fmilstrip-20local-20dev-20api-5f9baef836fe8c097c/connections/57c0ac0569f349939a4ec5aebb0671f1"
+    }
+  },
+  "shared_backend": true,
+  "production_delivery_connected": false,
+  "connector_api_id": "/providers/microsoft.powerapps/apis/shared_tab-5fmilstrip-20local-20dev-20api-5f9baef836fe8c097c"
+}

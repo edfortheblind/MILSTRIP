@@ -13,7 +13,7 @@
       Y: =16
       Width: =Parent.Width-128
       Height: =64
-      Text: ="Operator review"
+      Text: ="MILSTRIP " & If(AppEnvironment="stage","Stage","Prod") & " | " & "Operator review"
       Size: =24
 - ReviewMessage:
     Control: Label
@@ -67,7 +67,7 @@
       Height: =44
       Items: =["REJECTED","APPROVED"]
       Default: ="REJECTED"
-      DisplayMode: =If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id),DisplayMode.Disabled,DisplayMode.Edit)
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id),DisplayMode.Disabled,DisplayMode.Edit))
 - txtReason:
     Control: Classic/TextInput
     Properties:
@@ -79,7 +79,7 @@
       HintText: ="Reason required (1-1000 characters)"
       MaxLength: =1000
       Mode: =TextMode.MultiLine
-      DisplayMode: =If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id),DisplayMode.Disabled,DisplayMode.Edit)
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id),DisplayMode.Disabled,DisplayMode.Edit))
 - btnSaveReview:
     Control: Classic/Button
     Properties:
@@ -88,7 +88,7 @@
       Width: =210
       Height: =44
       Text: ="Save review"
-      OnSelect: '=Set(varPending,{decision:ddDecision.Selected.Value,reason:txtReason.Text,expected_version:varRecord.review_version,command_id:Text(GUID())});
+      OnSelect: '=If(Coalesce(varEnvironmentReady,false),Set(varPending,{decision:ddDecision.Selected.Value,reason:txtReason.Text,expected_version:varRecord.review_version,command_id:Text(GUID())});
         Set(varPendingRecord,varRecord.record_id); Set(varBusy,true);
 
         IfError(
@@ -101,8 +101,7 @@
         Set(varMessage,If(varConflict,"Conflict. Reload the record, inspect the new version, then submit a new decision.","Review
         outcome unknown. Retry the SAME command; reason and decision are retained.")); false,
 
-        Set(varRefreshPage,MILSTRIPLocalDevAPI.ListRecordResults(varRequestId,{limit:50,cursor:varRecordPageCursor}));
-        varRefreshPage,
+        Set(varRefreshPage,MILSTRIPLocalDevAPI.ListRecordResults(varRequestId,{limit:50,cursor:varRecordPageCursor})); varRefreshPage,
 
         Set(varConflict,FirstError.Details.HttpStatusCode=409);
 
@@ -112,9 +111,9 @@
         Set(varRecord,LookUp(varRefreshPage.items,record_id=varPendingRecord)); Set(varPending,Blank()); Set(varConflict,false);
         Set(varMessage,"Review saved. Approval does not authorize delivery."); true);
 
-        Set(varBusy,false)'
-      DisplayMode: =If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id) || IsBlank(Trim(txtReason.Text))
-        || (ddDecision.Selected.Value="APPROVED" && !(varRecord.status in ["VALID","REQUIRES_REVIEW"])),DisplayMode.Disabled,DisplayMode.Edit)
+        Set(varBusy,false),Notify("Environment unavailable. Return to Intake and check the connection.",NotificationType.Error))'
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || !IsBlank(varPending.command_id)
+        || IsBlank(Trim(txtReason.Text)) || (ddDecision.Selected.Value="APPROVED" && !(varRecord.status in ["VALID","REQUIRES_REVIEW"])),DisplayMode.Disabled,DisplayMode.Edit))
 - btnRetryReview:
     Control: Classic/Button
     Properties:
@@ -123,7 +122,7 @@
       Width: =210
       Height: =44
       Text: ="Retry same command"
-      OnSelect: '=Set(varBusy,true);
+      OnSelect: '=If(Coalesce(varEnvironmentReady,false),Set(varBusy,true);
 
         IfError(
 
@@ -135,8 +134,7 @@
         Set(varMessage,If(varConflict,"Conflict. Reload the record, inspect the new version, then submit a new decision.","Review
         outcome unknown. Retry the SAME command; reason and decision are retained.")); false,
 
-        Set(varRefreshPage,MILSTRIPLocalDevAPI.ListRecordResults(varRequestId,{limit:50,cursor:varRecordPageCursor}));
-        varRefreshPage,
+        Set(varRefreshPage,MILSTRIPLocalDevAPI.ListRecordResults(varRequestId,{limit:50,cursor:varRecordPageCursor})); varRefreshPage,
 
         Set(varConflict,FirstError.Details.HttpStatusCode=409);
 
@@ -146,8 +144,9 @@
         Set(varRecord,LookUp(varRefreshPage.items,record_id=varPendingRecord)); Set(varPending,Blank()); Set(varConflict,false);
         Set(varMessage,"Review saved. Approval does not authorize delivery."); true);
 
-        Set(varBusy,false)'
-      DisplayMode: =If(Coalesce(varBusy,false) || IsBlank(varPending.command_id) || Coalesce(varConflict,false),DisplayMode.Disabled,DisplayMode.Edit)
+        Set(varBusy,false),Notify("Environment unavailable. Return to Intake and check the connection.",NotificationType.Error))'
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || IsBlank(varPending.command_id)
+        || Coalesce(varConflict,false),DisplayMode.Disabled,DisplayMode.Edit))
 - btnReconcile:
     Control: Classic/Button
     Properties:
@@ -156,19 +155,19 @@
       Width: =210
       Height: =44
       Text: ="Reload after conflict"
-      OnSelect: '=Set(varBusy,true); IfError(
+      OnSelect: '=If(Coalesce(varEnvironmentReady,false),Set(varBusy,true); IfError(
 
-        Set(varReconcilePage,MILSTRIPLocalDevAPI.ListRecordResults(varRequestId,{limit:50,cursor:varRecordPageCursor}));
-        varReconcilePage,
+        Set(varReconcilePage,MILSTRIPLocalDevAPI.ListRecordResults(varRequestId,{limit:50,cursor:varRecordPageCursor})); varReconcilePage,
 
         Set(varMessage,"Reload failed. Pending command and reason retained."); false,
 
         Set(varReloaded,LookUp(varReconcilePage.items,record_id=varRecord.record_id)); If(IsBlank(varReloaded.record_id),Set(varMessage,"Record
         absent from this page. Pending command retained."),
 
-        Set(varRecord,varReloaded); Set(varPending,Blank()); Set(varConflict,false); Set(varMessage,"Current version
-        loaded. Inspect it and confirm the retained reason before saving a new decision.")); true); Set(varBusy,false)'
-      DisplayMode: =If(Coalesce(varBusy,false) || !Coalesce(varConflict,false),DisplayMode.Disabled,DisplayMode.Edit)
+        Set(varRecord,varReloaded); Set(varPending,Blank()); Set(varConflict,false); Set(varMessage,"Current version loaded.
+        Inspect it and confirm the retained reason before saving a new decision.")); true); Set(varBusy,false),Notify("Environment
+        unavailable. Return to Intake and check the connection.",NotificationType.Error))'
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || !Coalesce(varConflict,false),DisplayMode.Disabled,DisplayMode.Edit))
 - btnReviewBack:
     Control: Classic/Button
     Properties:

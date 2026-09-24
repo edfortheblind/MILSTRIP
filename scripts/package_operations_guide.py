@@ -20,7 +20,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "docs" / "operations-guide"
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 ARCHIVE_NAME = f"MILSTRIP-guide-v{VERSION}.zip"
 PDF_NAME = "MILSTRIP-current-and-phase2.pdf"
 OPTIONAL_PDF_NAME = "MILSTRIP-quick-sop.pdf"
@@ -53,14 +53,14 @@ PRIVATE_SOURCE_RE = re.compile(
 )
 FIXED_ZIP_TIME = (2026, 9, 23, 0, 0, 0)
 README = f"""MILSTRIP operating guide - documentation release {VERSION}
-Evidence date: September 23, 2026
+Evidence date: September 24, 2026
 
 START HERE
-Download index.html and open it in your browser. It works locally and offline.
-No login is needed to read the guide. External reference links need internet.
-If your browser previews the file as source, save it first and then open it.
+Open https://edfortheblind.github.io/milstrip-guide/
+No login or download is needed to read the guide.
+The optional archive also works locally and offline.
 
-The app remains unpublished DEV. This is a documentation release only.
+The guide records the verified Stage/Prod status and remaining deployment work.
 Reading or downloading these files does not publish or grant access to the app.
 Current behavior is distinguished from proposed production work in the guide.
 
@@ -165,12 +165,11 @@ def validate_html(payload: bytes) -> None:
     if parser.fragments - parser.ids:
         raise PackageError("index.html: contains an unresolved fragment link")
     visible = " ".join(parser.text).casefold()
-    if not re.search(r"\bunpublished\b|\bnot published\b", visible):
-        raise PackageError("index.html: must state that the app is unpublished")
-    if not re.search(r"\bdev\b|\bdevelopment\b", visible):
-        raise PackageError("index.html: must identify the current development status")
-    if not re.search(r"september\s+23,?\s+2026|2026-09-23", visible):
-        raise PackageError("index.html: must identify the September 23, 2026 evidence date")
+    for required in ("published", "stage", "prod", "disabled", "licens"):
+        if required not in visible:
+            raise PackageError("index.html: must state publication, environments, disabled Prod and licensing limits")
+    if not re.search(r"september\s+24,?\s+2026|2026-09-24", visible):
+        raise PackageError("index.html: must identify the September 24, 2026 evidence date")
 
 
 def validate_svg(payload: bytes, name: str) -> None:

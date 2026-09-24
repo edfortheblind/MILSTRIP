@@ -13,7 +13,7 @@
       Y: =16
       Width: =Parent.Width-128
       Height: =64
-      Text: ="Audit history"
+      Text: ="MILSTRIP " & If(AppEnvironment="stage","Stage","Prod") & " | " & "Audit history"
       Size: =24
 - HistoryMessage:
     Control: Label
@@ -39,16 +39,15 @@
       Width: =210
       Height: =44
       Text: ="Load / refresh history"
-      OnSelect: '=Set(varBusy,true); IfError(
+      OnSelect: '=If(Coalesce(varEnvironmentReady,false),Set(varBusy,true); IfError(
 
         Set(varEventsPage,MILSTRIPLocalDevAPI.ListAuditEvents(varRequestId,{limit:50})); varEventsPage,
 
-        Set(varMessage,"History unavailable. Reload to retrieve current events."); Set(varHistoryRequest,Blank());
-        false,
+        Set(varMessage,"History unavailable. Reload to retrieve current events."); Set(varHistoryRequest,Blank()); false,
 
         ClearCollect(colEvents,varEventsPage.items); Set(varEventsCursor,varEventsPage.next_cursor); Set(varHistoryRequest,varRequestId);
-        Set(varMessage,""); true); Set(varBusy,false)'
-      DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
+        Set(varMessage,""); true); Set(varBusy,false),Notify("Environment unavailable. Return to Intake and check the connection.",NotificationType.Error))'
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit))
 - btnMoreHistory:
     Control: Classic/Button
     Properties:
@@ -57,15 +56,16 @@
       Width: =210
       Height: =44
       Text: ="More history"
-      OnSelect: '=Set(varBusy,true); IfError(
+      OnSelect: '=If(Coalesce(varEnvironmentReady,false),Set(varBusy,true); IfError(
 
-        Set(varEventsPage,MILSTRIPLocalDevAPI.ListAuditEvents(varRequestId,{limit:50,cursor:varEventsCursor}));
-        varEventsPage,
+        Set(varEventsPage,MILSTRIPLocalDevAPI.ListAuditEvents(varRequestId,{limit:50,cursor:varEventsCursor})); varEventsPage,
 
         Set(varMessage,"Next history page failed. Retry retains the cursor."); false,
 
-        Collect(colEvents,varEventsPage.items); Set(varEventsCursor,varEventsPage.next_cursor); true); Set(varBusy,false)'
-      DisplayMode: =If(Coalesce(varBusy,false) || IsBlank(varEventsCursor) || varHistoryRequest<>varRequestId,DisplayMode.Disabled,DisplayMode.Edit)
+        Collect(colEvents,varEventsPage.items); Set(varEventsCursor,varEventsPage.next_cursor); true); Set(varBusy,false),Notify("Environment
+        unavailable. Return to Intake and check the connection.",NotificationType.Error))'
+      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || IsBlank(varEventsCursor)
+        || varHistoryRequest<>varRequestId,DisplayMode.Disabled,DisplayMode.Edit))
 - btnHistoryBack:
     Control: Classic/Button
     Properties:

@@ -144,3 +144,32 @@ from public commit `5d77a028ffba99a63e19f51e942d2201eec97566`. GitHub Pages repo
 that commit built. Anonymous HTTPS returned 200 and `text/html`; served HTML
 matched committed bytes exactly (SHA256
 `1613c7135aa4edb075ee650bfdc427a21575d0b7addb8ff42466999165222b6c`).
+
+## Edition 1.3.0 ? September 24, 2026
+
+This update supersedes earlier unpublished-app status. Both apps are published
+in the existing MILSTRIP solution. Stage passed Studio runtime checks against
+local PostgreSQL. Prod has a separate verified connection and remains disabled
+without a target. The actual player presented a licensing prompt; the owner
+assigned licensing to IT and declined trial enrollment. Publication does not
+establish licensed player acceptance.
+
+The guide contains six operator steps, five current screen captures (including
+the native administrator screen), seven diagrams and 970 prose words. The
+Results capture was taken after a completed read of the retained Stage request.
+An independent editorial pass checked controls, outcomes, current/planned claims
+and the licensing distinction. The full guide is 13 pages; the quick SOP is four.
+Both PDFs keep the licensing limit on the first page and passed public identifier
+and metadata checks.
+
+Isolated browser checks passed for image decoding, dialogs and Escape, internal
+anchors, disclosures, print expansion, SVG text bounds, 390/1440-pixel overflow,
+no browser errors and no external asset requests. Allowlisted packaging passed.
+The backend suite passed 242 tests with two dependency deprecation warnings.
+See [runtime delivery evidence](../delivery/RUNTIME_PROFILES_2026-09-24.md).
+
+The public webpage is served from commit
+`e9aa07039c2763a23b6ab430745dae82d7561103`. GitHub Pages reports that commit built.
+Anonymous HTTPS returned 200 and `text/html`; served bytes match the committed
+HTML exactly, and match the source after Git's CRLF-to-LF normalization.
+SHA256: `4e7505e60fa3ee82d0f9001c86bc4c596ee718f16c2583b0941efcb21af033cf`.

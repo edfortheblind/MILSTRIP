@@ -77,42 +77,63 @@
   },
   {
     "file": "02-current-architecture.svg",
-    "title": "Technical architecture: current development",
+    "title": "Stage and Prod architecture",
     "nodes": [
       {
-        "id": "app",
+        "id": "stage-app",
         "x": 50,
         "y": 205,
         "w": 370,
-        "h": 100
+        "h": 90
+      },
+      {
+        "id": "prod-app",
+        "x": 50,
+        "y": 320,
+        "w": 370,
+        "h": 90
       },
       {
         "id": "connector",
         "x": 570,
-        "y": 205,
+        "y": 250,
         "w": 370,
-        "h": 100
+        "h": 110
       },
       {
         "id": "gateway",
         "x": 40,
-        "y": 440,
+        "y": 535,
         "w": 280,
         "h": 105
       },
       {
         "id": "api",
         "x": 360,
-        "y": 440,
+        "y": 535,
         "w": 280,
         "h": 105
       },
       {
-        "id": "pg",
+        "id": "profiles",
         "x": 680,
-        "y": 440,
+        "y": 535,
         "w": 280,
         "h": 105
+      },
+      {
+        "id": "stage-db",
+        "x": 45,
+        "y": 755,
+        "w": 430,
+        "h": 90
+      },
+      {
+        "id": "prod-db",
+        "x": 525,
+        "y": 755,
+        "w": 430,
+        "h": 90
       }
     ]
   },

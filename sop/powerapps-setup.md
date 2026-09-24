@@ -1,304 +1,151 @@
-# PowerApps setup
+﻿# MILSTRIP app and database administration
 
-**Date:** 2026-09-23. **Scope:** successful development setup through a tested
-Power Apps custom connector calling the API on the owner's laptop.
+**September 24, 2026.** The Stage/Prod runtime and configuration screen are
+implemented. The tenant confirmed **Publish successful** for Stage at
+**1:01:57 PM** and Prod at **1:15:52 PM**; both are in the existing MILSTRIP
+solution. Published-player access is blocked by the current account's Power Apps
+license prompt. Stage has Studio runtime evidence against local PostgreSQL;
+Prod is disabled, and Azure SQL has no runtime acceptance yet. Use the
+[illustrated operator SOP](../docs/operations-guide/index.html) for intake and review.
 
-**Current continuation:** [Authenticated local API](local-api-development.md).
-Sections 1-12 record the original health-only milestone; the new authentication
-and seven-operation connector supersede that temporary process.
+## Existing resources
 
-This procedure records the working configuration only. It does not include
-failed attempts. Existing resources should be reused when resuming this project.
+| Resource | Configuration |
+|---|---|
+| Environment and solution | Existing Default environment; MILSTRIP solution, TAB publisher |
+| Stage app | Published `MILSTRIP Stage`, renamed from `MILSTRIP Intake Dev`; app ID `7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82` |
+| Prod app | Published `MILSTRIP Prod` in the same solution; separate Prod connection and fixed expected environment |
+| Connector | Existing `MILSTRIP Local Dev API`; seven operations |
+| Gateway | Existing `MILSTRIP-DEV-LAPTOP`; standard gateway, Central US |
+| API | `http://127.0.0.1:8000/api/v1`; runs beside the gateway |
+| Active database | Local PostgreSQL, `trav3pl-psqldb-stage`; application schema `milstrip_app` |
+| Runtime configuration | Protected, ignored `.cred/runtime.json`; loaded once at API startup |
+| Stage API verifier | `.cred/api-credential.json` |
+| Prod API verifier | `.cred/api-prod-credential.json`; separate username and password |
 
-## 1. Understand where each component runs
+The connector and gateway remain shared. Each app uses its own connection;
+authenticated API credentials select the fixed database profile. App names,
+headers and operator input cannot select a destination. Prod remains disabled
+until its independent target is configured and verified.
 
-| Component | Location / actual configuration |
-| --- | --- |
-| Power Apps canvas editor, solution and connector | Organization's existing Default environment |
-| Solution | MILSTRIP, unmanaged; existing TAB publisher |
-| Custom connector | MILSTRIP Local Dev API |
-| Standard gateway | MILSTRIP-DEV-LAPTOP, installed on the laptop |
-| Gateway region shown for Power Apps / Power Automate | Central US |
-| API endpoint | HTTP, `127.0.0.1:8000`, base `/api/v1` |
-| PostgreSQL | Laptop, `localhost:5432`, database `trav3pl-psqldb-stage` |
-| Application schema | `milstrip_app` |
-| Connector authentication declaration | Basic authentication |
-| Confirmed connector operation | GetHealth |
+Publishing the canvas app does not host the API or database. Laptop operation
+requires the laptop, gateway, API and database to remain available. A database
+move alone leaves the API on its current host.
 
-```mermaid
-flowchart LR
-    P[Power Apps / custom connector] --> R[Microsoft gateway relay]
-    R --> G[Standard gateway on laptop]
-    G --> H[HTTP 127.0.0.1:8000/api/v1/health]
-    H --> D[Local PostgreSQL]
-```
+## Resolve player access before rollout
 
-The work account signs in to Microsoft services and registers the gateway.
-Basic authentication represents a separate API credential. The successful
-health-only test did not validate that credential: API authentication enforcement
-is the next implementation step. Power Apps hosts the UI; deployment will also
-need an API host and a database host. The backend stays local during this phase.
+Opening the published player displayed **no current Power Apps plan** and an
+offer to start a free trial. The owner assigned licensing to IT; no trial was
+accepted. Have IT verify the intended
+users' Power Apps entitlement, app sharing and connector access before operator
+acceptance. Publication is verified; a successful published-player session is
+not yet verified. Studio test evidence does not establish player access.
 
-## 2. Open the canvas editor
+## Start the API
 
-1. Sign in to the organization's Microsoft 365 portal with the work account.
-2. Open Power Apps from the application launcher.
-3. Create an app using the blank canvas template.
-4. Keep the existing organization environment shown in the top bar.
-5. Save the draft using the toolbar Save icon. The instructed name was
-   `MILSTRIP Intake Dev`; verify the saved app name and ID when resuming.
-6. Return to the maker portal with Back.
-
-The blank canvas screen was observed in this session. Its final saved name,
-solution membership and publication status were not independently verified.
-
-## 3. Create the solution
-
-1. Select **Solutions** from the maker portal's left navigation.
-2. Select **New solution**.
-3. Enter the following values, then select Create or Save:
-
-| Field | Value instructed in the session |
-| --- | --- |
-| Display name | MILSTRIP |
-| Name | MILSTRIP |
-| Publisher | Existing TAB publisher |
-| Version | 0.1.0.0 |
-| Set as preferred solution | Leave unchecked |
-
-4. Open MILSTRIP. The owner confirmed creation and showed its empty object list.
-5. Select **New → Automation → Custom connector**. The connector editor opens
-   in Power Automate; this is the expected transition from the solution.
-
-This route follows [Microsoft's solution connector procedure](https://learn.microsoft.com/en-us/connectors/custom-connectors/customconnectorssolutions).
-
-## 4. Configure General
-
-Set the connector name at the top to **MILSTRIP Local Dev API**. On **1. General**:
-
-| Field | Successful setting |
-| --- | --- |
-| Description | MILSTRIP development API running on Ed's laptop. |
-| Connect via on-premises data gateway | Checked |
-| Scheme | HTTP |
-| Host | `127.0.0.1:8000` |
-| Base URL | `/api/v1` |
-| Connector icon / background | Default values were retained |
-
-The gateway and API must run on the same laptop for this loopback address.
-The Host field contains only the address and port. The scheme and path have
-their own fields. These values are confirmed by the exported Swagger file.
-
-## 5. Configure Security
-
-1. Select **2. Security**.
-2. Choose **Basic authentication**.
-3. Keep the parameter labels `username` and `password`.
-
-These are display labels, not credential values. The actual values are entered
-privately in the connection form later. No new Entra application registration
-was created in this session. No API username/password is recorded in this SOP.
-
-## 6. Define the GetHealth action
-
-1. Select **3. Definition → New action**.
-2. Set:
-
-| Field | Value |
-| --- | --- |
-| Summary | Check API health |
-| Description | Check whether the local API and database are available. |
-| Operation ID | GetHealth |
-
-3. Under Request, select **Import from sample**.
-4. Select **GET** and enter `http://127.0.0.1:8000/api/v1/health`.
-5. Leave the request body and headers empty, then select Import.
-6. Under Response, select **Add default response** and import this body:
-
-```json
-{
-  "status": "OK",
-  "database": "AVAILABLE"
-}
-```
-
-7. Keep both response properties as strings. No request parameters are needed.
-8. Leave triggers empty.
-9. On **4. Code**, leave **Code Disabled**.
-10. Select **Create connector**. For later edits, select **Update connector**.
-
-The resulting export defines `GET /health` relative to `/api/v1`. The operation
-is configured through the [Microsoft custom connector wizard](https://learn.microsoft.com/en-us/connectors/custom-connectors/define-blank).
-
-## 7. Install and register the laptop gateway
-
-1. On the laptop hosting the API and database, open Microsoft's
-   [standard gateway installation page](https://learn.microsoft.com/en-us/data-integration/gateway/service-gateway-install).
-2. Download and install the standard gateway using the default installation path.
-3. Sign in with the same organization work account used for Power Apps.
-4. Select **Register a new gateway on this computer**.
-5. Enter **MILSTRIP-DEV-LAPTOP** as the gateway name.
-6. Create a recovery key and retain it privately.
-7. Use the region corresponding to the Power Apps environment; the completed
-   registration in this session showed **Central US**.
-8. Complete registration. Verify Status shows the gateway online and
-   **Power Apps, Power Automate: Ready**.
-9. Close the configuration window. The gateway runs as a Windows service.
-
-The observed version was `3000.334.4 (September 2026)`. Keep the laptop awake
-and connected while developing. The Windows service name is `PBIEgwService`.
-
-## 8. Start the health-only development endpoint
-
-For this session's connectivity milestone, the agent ran a temporary FastAPI
-process exposing only health. It reused the existing database health function;
-it did not expose intake, review or history routes. To reproduce that milestone,
-run the following from the repository root in PowerShell:
+Use an authorized account on the API host. Keep passwords and connection
+strings out of Power Apps formulas, source files, screenshots and support messages.
 
 ```powershell
-# Use the existing local PostgreSQL authentication setup; do not paste passwords.
-if (-not $env:MILSTRIP_DATABASE_URL) {
-    $env:MILSTRIP_DATABASE_URL = 'postgresql://TabAdmin@localhost:5432/trav3pl-psqldb-stage'
-}
-@'
-from fastapi import FastAPI
-from api.app import health
-import uvicorn
-
-probe = FastAPI()
-probe.add_api_route('/api/v1/health', health, methods=['GET'])
-uvicorn.run(probe, host='127.0.0.1', port=8000, proxy_headers=False)
-'@ | .\.venv\Scripts\python.exe -
+.\scripts\Start-LocalApi.ps1
 ```
 
-This command assumes the repository virtual environment, local migrations and
-database access already established earlier in the project. Use the existing
-process if it is already listening on port 8000. Keep its terminal open.
+The launcher requires valid runtime configuration and both credential verifier
+files. It refuses an occupied port; stop the identified old API before restarting.
+The existing gateway continues to reach the API through loopback HTTP. Do not
+replace that host with the database server's address.
 
-In a second PowerShell terminal:
+## Change PostgreSQL or Azure SQL configuration
 
-```powershell
-Invoke-RestMethod 'http://127.0.0.1:8000/api/v1/health'
-```
+Full reference: [Database configuration](../docs/RUNTIME_CONFIGURATION.md),
+including TLS requirements, identity checks, provisioning and rollback.
 
-The session's local check returned `status: OK` and `database: AVAILABLE`.
-This process is temporary; verify it again after restarting a session or laptop.
+1. Obtain the destination, database name, database identity and trusted server
+   certificate from IT. Confirm whether this is **Stage** or **Prod** and whether
+   existing application history must move. Configuration does not migrate data.
+2. On the API host, open the configuration screen:
 
-## 9. Create the gateway connection and test
+   ```powershell
+   .\scripts\Configure-Runtime.ps1
+   ```
 
-1. Return to the connector's **5. Test** tab.
-2. Select **New connection**.
-3. Enter the dedicated development API credential privately, select authentication
-   type **basic**, and select gateway **MILSTRIP-DEV-LAPTOP**.
-4. Select **Create connection**.
-5. Return to Test, refresh the connection list and select the saved connection.
-6. Select **GetHealth → Test operation**.
-7. Confirm a green success indicator and response status **200**. The owner
-   supplied a screenshot confirming both.
+3. Select **App environment** (`stage` or `prod`) and **Database provider**
+   (`postgresql` or `sqlserver`). Set a non-sensitive **Display label**.
+4. Paste the connection string into **Replacement connection string**. It stays
+   masked. Leaving it blank retains the saved string; changing provider requires
+   a replacement. **Current saved target** shows only host and database.
+5. Select **Test connection**. It checks access, required application tables and
+   environment identity without modifying data. An empty destination needs
+   separately approved application-schema provisioning before it can pass.
+6. Select **Enable this environment**, then **Save pending configuration**.
+   A changed enabled destination requires a successful test. Stage and Prod
+   cannot point to the same database or share a credential verifier.
+7. Stop new submissions, record the change, and restart the shared API. Saving
+   alone does not activate a new destination. Verify **GetHealth** for each
+   connection: `environment`, `provider`, `target_label`,
+   `configuration_revision` and `ready` must match the approved configuration.
+8. Run a labeled synthetic intake and review in the intended environment. Read
+   back the receipt, review and audit event. Confirm the other environment stayed
+   unchanged. Retain or remove that test only according to its approved test plan.
 
-The credential values used for this connection are not known to the repository.
-The health-only endpoint accepts the request without validating them. This
-milestone establishes the network path, not authenticated access to application
-data. Once API authentication is implemented, update the saved connection with
-the matching credential and test accepted and rejected authentication paths.
+Remote PostgreSQL requires hostname-verified TLS. Azure SQL uses Microsoft ODBC
+Driver 17 or 18, encrypted transport and server certificate validation. The
+screen rejects unsupported options and unverified remote destinations.
 
-## 10. Export and preserve the configuration
+For a database move, reconcile requests, records, reviews, audit history and
+environment identity before activation. Stop writers during the switch. A
+rollback after new writes must preserve those writes; do not simply restore an
+old string. Existing Azure SQL operational processes and the recorded SQL freeze
+require approval before any new application writes.
 
-1. Close the editor to return to Custom connectors.
-2. Locate **MILSTRIP Local Dev API**.
-3. Select its download-arrow action and save the Swagger JSON.
-4. Store it at
-   [powerapps/connectors/MILSTRIP-Local-Dev-API.swagger.json](../powerapps/connectors/MILSTRIP-Local-Dev-API.swagger.json).
+## Maintain the two apps
 
-The supplied export was moved unchanged and checked by SHA-256. It is OpenAPI
-2.0 with Basic authentication and one operation, GetHealth. The runtime backend
-schema in `docs/operator-api.openapi.json` is a separate OpenAPI 3.1 reference.
-Gateway selection and saved credentials are not embedded in the Swagger export.
+1. Open **MILSTRIP Stage** in the existing MILSTRIP solution; retain its app ID.
+   Keep the separate **MILSTRIP Prod** app in this solution. Do not duplicate
+   the connector or gateway.
+2. Bind each app to its environment's connection. Match the connection identity
+   and actual app usage; identical display names are insufficient. Keep the
+   connector's HTTP host `127.0.0.1:8000`, base `/api/v1` and gateway selection.
+3. Refresh the connector definition from the current generated seven-operation
+   contract when API response fields change. Verify **GetHealth** before editing
+   formulas that use the new fields.
+4. Preserve each app's fixed expected environment. Stage credentials were
+   explicitly rejected by the Prod environment check; the selected Prod
+   connection reports its disabled profile. Verify this isolation after changes.
+5. Save and test the Stage draft. Verify successful intake, rejected-record handling,
+   review, receipt and history; cover the changed behavior and its failure path.
+6. Publish the verified Stage version. Promote the accepted canvas changes to
+   Prod while retaining Prod's expected environment and connection. Save, publish
+   and open the player version to verify the published result.
+7. Record the published versions and sharing permissions. App publication does
+   not automatically grant access to every user or configure their connections.
 
-## 11. App artwork and screenshot evidence
+Both apps share one API implementation. API changes, connector changes and API
+restarts can affect both environments. Separate canvas versions do not provide
+an isolated backend deployment; schedule backend changes accordingly.
 
-The owner supplied the following app icon. Its unchanged original is saved at
-[assets/milstrip-app.png](../assets/milstrip-app.png). Applying it to the canvas
-app remains part of app implementation.
+## Resolve connection failures
 
-![Owner-supplied MILSTRIP Intake App icon](../assets/milstrip-app.png)
+| Symptom | Action |
+|---|---|
+| Published app asks for a Power Apps plan | Have IT verify licensing, sharing and connection access. Do not treat publication or Studio access as evidence that the player is usable. |
+| Connector test works; app returns 401 | Inspect the connection the app actually uses. Update that connection's dedicated API credential and preserve its gateway. Do not assume matching display names identify the same connection. |
+| Configuration test fails | Check the destination, database identity, trusted certificate, provisioned schema and environment marker. Test does not create missing objects. |
+| Health reports disabled or unavailable | Check the selected profile and API startup configuration. Never redirect Prod to Stage to bypass the failure. |
+| Save reports a revision conflict | Reopen configuration, inspect the latest saved target, and reapply the intended change. |
+| Submission outcome is uncertain | Preserve the source ID and reconcile recent requests before allowing a new submission. See the operator recovery procedure. |
 
-Screenshots were supplied in chat for the blank canvas, solution, General,
-Security, Definition/Test, disabled Code, gateway Ready state and successful
-HTTP 200 test. Their original image files were not available in the repository
-or the inspected local download locations. They are not reproduced or fabricated
-here. The field tables above transcribe the successful screens; the icon is the
-available original image asset. Request-header captures containing authorization
-tokens are excluded from publication.
+## Changes and evidence
 
-## 12. Handoff and acceptance boundary
+Place the forthcoming central change document in [inbox](../inbox/README.md).
+Its contents remain local until reviewed. Record accepted requirements and test
+evidence before promoting a change; depositing a file does not activate it.
 
-Completed: existing environment selected, solution and connector created,
-standard gateway registered, GetHealth action configured, gateway HTTP 200
-observed, icon stored and connector exported.
-
-Next implementation: authenticate the API, derive the reviewer identity on the
-server, add application connector actions, then build the intake/results/review/
-history screens. Verify CLI access before promising unattended tenant changes.
-
-Use the [new-session prompt](../restart-prompt.md). No operational legacy writes,
-production deployment or SQL Server retirement is part of this setup.
-
-## 13. Locate the saved canvas app and record its identity
-
-On 2026-09-23, the owner supplied the saved canvas app ID:
-`7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`. Reuse this app. The expected name is
-`MILSTRIP Intake Dev`; its displayed name and solution membership still need
-confirmation. This owner-provided ID is not an automated tenant readback.
-
-1. Open [Power Apps](https://make.powerapps.com) and select the organization's
-   existing **Default** environment in the top bar.
-2. Select **Apps** and locate **MILSTRIP Intake Dev**.
-3. Select the app's **ellipsis (...) → Details** and copy **App ID**.
-4. Match it to `7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82` before editing.
-5. Select **Solutions → MILSTRIP → Objects** and check whether this canvas
-   app is listed. Record membership separately from whether the app is saved.
-6. If it is saved but absent from the solution, use **Add existing → App →
-   Canvas app**, select this same app, and add it. Do not create a second app.
-7. If Apps does not list it, keep any open Studio tab open and verify the
-   environment and save state before creating or replacing anything.
-
-No password, token, connection credential or gateway recovery key is needed
-to report the app ID. Apply the supplied icon when editing this existing app.
-
-## 14. Implemented canvas draft and connection correction (2026-09-23)
-
-The agent operated the existing Studio session directly using Windows desktop
-UI automation. The existing app ID and displayed name were verified, four
-screens were added, the original Screen1 was retained, and the same app was saved
-as an unpublished draft. See [execution evidence](../docs/delivery/CANVAS_IMPLEMENTATION_2026-09-23.md).
-
-When GetHealth works in the connector Test tab but the app returns 401:
-
-1. Open Connections in the same Default environment and inspect each existing
-   MILSTRIP connection's creation time, gateway and **Apps using this connection**.
-2. Do not assume identical display names identify the same connection. In this
-   session, Studio used the 10:56 AM connection while the successful connector
-   test used the separate 1:20 PM connection.
-3. Validate the private credential locally using `scripts/check_api_credentials.py`.
-   Never paste it into chat, source files or screenshots.
-4. Edit the existing connection actually used by the app and update its Basic
-   username/password to match the local API. Preserve MILSTRIP-DEV-LAPTOP.
-5. Save the existing app. In preview, exercise a synthetic intake, load results,
-   review the valid record, verify approval is disabled for the rejected record,
-   then load audit history and confirm the authenticated actor.
-6. Save without publishing. Use **Save menu ? Download a copy ? Download** and
-   complete the browser's native file dialog. Verify the resulting `.msapp`
-   archive exists; clicking Download alone is not evidence of a saved backup.
-
-The canvas result/review/history source files use the connector's Studio-generated
-parameter order and explicitly evaluate assigned connector results inside IfError.
-This prevents a stored error from being followed by an incorrect success message.
-
-The original image is now selected as the app icon. The agent saved and exited
-Studio to release its editing lock, then added this existing app to MILSTRIP using
-**Add existing ? App ? Canvas app ? Outside Dataverse**. Solution Objects readback
-confirmed both MILSTRIP Intake Dev and the original connector. The functional
-`.msapp` backup is verified under `%LOCALAPPDATA%\MILSTRIP\backups`; it predates
-icon selection and solution association. Synthetic acceptance rows were cleaned
-up with exact-ID/source/actor checks. The draft remains unpublished.
+The retained September 24 runtime test remains in PostgreSQL:
+`1d0c784d-c3bf-495c-928c-0b66687a58a4`. Use the
+[read-only result query](../db/queries/retained_runtime_2026-09-24.sql).
+The Stage publication check also remains saved as request
+`ff3f3cb5-04f5-4135-af74-f8db41962673`: two records, one APPROVED review and
+two audit events. The illustrated SOP uses this run's four canvas captures.
+App approval still records a review only; SQL handoff, CSV transport and downstream
+receipts remain separate implementation work.

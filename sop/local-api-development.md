@@ -1,4 +1,25 @@
-# Authenticated laptop API continuation
+# Authenticated local API: current setup and historical evidence
+
+**Current setup: API 0.4.0, September 24, 2026.** Use
+[runtime configuration](../docs/RUNTIME_CONFIGURATION.md) to prepare both fixed
+profiles, their separate credential verifiers and `.cred/runtime.json` before
+starting the API. The older single-credential startup sequence below is
+historical and is insufficient for the current runtime.
+
+**MILSTRIP Stage** and **MILSTRIP Prod** are published in the existing solution
+with separate connections. Stage uses the current local PostgreSQL database;
+Prod is disabled without a target. Player licensing is assigned to IT, and no
+trial was started. See [the canvas manifest](../powerapps/canvas/deployment-manifest.json)
+and [current tenant SOP](powerapps-setup.md).
+
+For current operation, configure privately with `Configure-Runtime.ps1`, use
+explicit schema provisioning only when preparing an approved new target, save,
+and restart with `Start-LocalApi.ps1`. The API and configuration launchers share
+the same `-ConfigFile` / `MILSTRIP_RUNTIME_CONFIG_FILE` selection. A restart
+affects both apps. An HTTP 200 health response verifies neither the selected
+environment nor readiness by itself: check `environment` and `ready`.
+
+## Historical setup record — September 23, 2026
 
 Use the existing Default environment, MILSTRIP solution, MILSTRIP Local Dev API
 connector, MILSTRIP-DEV-LAPTOP gateway and app ID
@@ -110,10 +131,11 @@ GetHealth success and HTTP 200 on the real authenticated API. Connector, gateway
 solution and environment were reused; only the saved connection was replaced.
 The old connection was not deleted as part of these instructions.
 
-The screenshot still shows **Operations (1)**. Update the existing connector
-with `powerapps/connectors/MILSTRIP-Local-Dev-API.swagger.json` next. The local
-artifact contains seven operations and its runtime projection check passed.
-Gateway tests of application routes and Studio validation remain pending.
+That historical screenshot showed **Operations (1)**. The existing connector was
+subsequently expanded to seven operations and updated to the API 0.4.0 health
+contract. Stage application operations and the disabled Prod health response
+were exercised through the existing gateway. Do not repeat the health-only
+connector setup from this earlier snapshot.
 
 ## Project credential folder
 
