@@ -201,6 +201,48 @@ def test_protected_owners_cannot_be_changed_by_admin_or_owner(control, name, act
     assert store.read()["users"][principal_key(manifest["tenant_id"], actor(manifest, name).object_id)]["role"] == "OWNER"
 
 
+@pytest.mark.parametrize("active,role,by_upn", [(True, "ADMIN", False), (True, "OPERATOR", False),
+                                               (False, "ADMIN", False), (False, "ADMIN", True)])
+def test_admin_cannot_change_own_access_or_create_pending_self_lockout(control, monkeypatch, active, role, by_upn):
+    store, manifest = control
+    caller = context(control)
+    person = actor(manifest)
+    command = access_command(control, person=None if by_upn else person, active=active, role=role,
+                             upn=person.upn.upper() if by_upn else None)
+    before = store.path.read_bytes()
+    def forbidden_write(*args, **kwargs):
+        pytest.fail("Rejected self-access must not write control state")
+    monkeypatch.setattr(store, "_write", forbidden_write)
+    with pytest.raises(AuthorizationError, match="ask another Admin or Owner") as error:
+        save_user_access(caller, command, store)
+    assert error.value.status_code == 403 and store.path.read_bytes() == before
+    assert authorize(caller, "users.manage", store).role == "ADMIN"
+
+
+@pytest.mark.parametrize("name", ["Claude Furry", "Mike Thompson"])
+def test_owner_self_change_preserves_protected_membership_and_control_state(control, monkeypatch, name):
+    store, manifest = control
+    caller = context(control, name)
+    command = access_command(control, person=actor(manifest, name), role="ADMIN")
+    before = store.path.read_bytes()
+    monkeypatch.setattr(store, "_write", lambda *args: pytest.fail("Protected-owner rejection must not write state"))
+    with pytest.raises(AuthorizationError, match="Protected owners") as error:
+        save_user_access(caller, command, store)
+    assert error.value.status_code == 403 and store.path.read_bytes() == before
+    assert authorize(caller, "users.manage", store).role == "OWNER"
+
+
+@pytest.mark.parametrize("name", ["Kristen Fleming", "Claude Furry"])
+def test_another_admin_or_owner_can_complete_access_change(control, name):
+    store, manifest = control
+    caller = context(control, name)
+    command = access_command(control, person=actor(manifest), role="ADMIN")
+    result = save_user_access(caller, command, store)
+    assert result["membership"]["access_state"] == "pending"
+    assert authorize(caller, "users.manage", store)
+    assert complete(control, result)["membership"]["access_state"] == "active"
+
+
 def test_control_store_invariant_prevents_generic_owner_demotion(control):
     store, _ = control
     before = store.path.read_bytes()

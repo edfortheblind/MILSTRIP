@@ -13,7 +13,7 @@ from api.authorization import (AuthorizationError, acquire_sharing_lease, admini
     current_user, list_users, record_sharing_result, save_user_access)
 from api.broker_models import (AcquireSharingLease, AdministrationOperationPayload, BrokerEnvelope, BrokerResult, ChildPagePayload,
     EmptyPayload, IntakePayload, IntakeWorkflowPayload, RecordManagementCall, RequestPagePayload, RequestPayload, ReserveManagementCall,
-    ReviewPayload, SaveUserAccess, SharingResult)
+    ReviewPayload, SaveUserAccess, SharingResult, ValidateAppPermissionRead)
 from api.control import ControlError, ControlStore
 from api.management_pacing import record_management_call, reserve_management_call
 
@@ -107,10 +107,14 @@ def invoke(envelope: BrokerEnvelope, request: Request):
     store = request.state.control_store
     try:
         try:
-            payload = json.loads(envelope.payload_json)
+            if envelope.operation == "ValidateAppPermissionRead":
+                from api.permission_read import strict_json_loads
+                payload = strict_json_loads(envelope.payload_json)
+            else:
+                payload = json.loads(envelope.payload_json)
             if not isinstance(payload, dict):
                 raise ValueError
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, RecursionError, OverflowError):
             raise HTTPException(422, "Operation payload must be a JSON object") from None
         if envelope.operation == "AcquireSharingLease":
             result = acquire_sharing_lease(binding, _parse(AcquireSharingLease, payload), store)
@@ -133,6 +137,9 @@ def invoke(envelope: BrokerEnvelope, request: Request):
                 result = list_users(context, store)
             elif envelope.operation == "SaveUserAccess":
                 result = save_user_access(context, _parse(SaveUserAccess, payload), store)
+            elif envelope.operation == "ValidateAppPermissionRead":
+                from api.permission_read import validate_app_permission_read
+                result = validate_app_permission_read(binding, context, _parse(ValidateAppPermissionRead, payload), store)
             elif envelope.operation == "GetAdministrationOperation":
                 parsed = _parse(AdministrationOperationPayload, payload)
                 result = administration_operation(context, parsed.command_id, store)

@@ -155,6 +155,10 @@ def save_user_access(context, command, store=None):
             target = {field: existing[field] for field in ("tenant_id", "object_id", "upn", "display_name")}
         if key in state["protected_owners"]:
             raise AuthorizationError(403, "Protected owners cannot be changed")
+        if key == principal_key(context.tenant_id, context.object_id):
+            # Reconciliation requires its original actor to remain active.
+            # Even saving the same role would otherwise put this actor pending.
+            raise AuthorizationError(403, "You cannot change your own access; ask another Admin or Owner to make this change")
         target.update(role=command.role, desired_active=command.active, access_state="pending" if command.active else "denied")
         # A changed membership is never active until its exact sharing plan has
         # been read back. Disables become denied before any platform action.

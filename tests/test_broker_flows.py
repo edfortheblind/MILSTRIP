@@ -15,7 +15,7 @@ from scripts.build_broker_flows import (
 from api.broker_models import BrokerEnvelope, Operation
 
 INTERNAL_OPERATIONS = {"RecordSharingResult", "AcquireSharingLease",
-                       "ReserveManagementCall", "RecordManagementCall"}
+                       "ReserveManagementCall", "RecordManagementCall", "ValidateAppPermissionRead"}
 
 def named_actions(value):
     if isinstance(value, dict):
@@ -224,29 +224,30 @@ def test_http_permission_reads_do_not_aggregate_and_keep_completeness_guards():
             params = item["inputs"]["parameters"]
             assert set(params) == {"request/method", "request/url"}
             assert params["request/method"] == "GET"
-            assert params["request/url"].startswith("https://api.powerapps.com/providers/Microsoft.PowerApps/apps/")
-            assert "?api-version=2017-06-01&%24filter=environment%20eq%20%27" in params["request/url"]
-            assert all(value not in params["request/url"] for value in ("$top", "$skip", "@", "triggerBody", "outputs("))
+            if name.endswith(("_P2", "_P3")):
+                number = int(name[-1])
+                base = name[:-3]
+                assert params["request/url"] == f"@body('Reply_{base}_P{number-1}')?['next_url']"
+                assert actions[f"Page{number}_{base}"]["expression"].count("CONTINUE") == 1
+            else:
+                assert params["request/url"].startswith("https://api.powerapps.com/providers/Microsoft.PowerApps/apps/")
+                assert "?api-version=2017-06-01&%24filter=environment%20eq%20%27" in params["request/url"]
+                assert all(value not in params["request/url"] for value in ("$top", "$skip", "@", "triggerBody", "outputs("))
         assert set(paginated) == {
-            f"{phase}_{mode}_{profile}_app" for phase in ("Before", "Readback")
-            for mode in ("add", "remove") for profile in ("stage", "prod")}
-        # A single page with a continuation or at the row limit is incomplete.
-        # Host diagnostics do not authorize this native mutation branch.
+            f"{phase}_{mode}_{profile}_app" + slot for phase in ("Before", "Readback")
+            for mode in ("add", "remove") for profile in ("stage", "prod") for slot in ("", "_P2", "_P3")}
         for mode in ("add", "remove"):
             for profile in ("stage", "prod"):
                 key = f"{mode}_{profile}_app"
-                for name, expression, read in (
-                    (f"Mutate_{key}", actions[f"Mutate_{key}"]["expression"], f"Parsed_Before_{key}"),
-                    (f"Observed_{key}", actions[f"Observed_{key}"]["inputs"]["verified"], f"Parsed_Readback_{key}"),
+                for expression, read in (
+                    (actions[f"Mutate_{key}"]["expression"], f"Before_{key}"),
+                    (actions[f"Observed_{key}"]["inputs"]["verified"], f"Readback_{key}"),
                 ):
-                    assert f"empty(body('{read}')?['nextLink'])" in expression, name
-                    assert f"empty(body('{read}')?['@odata.nextLink'])" in expression, name
-                    assert f"less(length(coalesce(body('{read}')?['value'], json('[]'))), 1000)" in expression, name
-                    assert f"equals(outputs('Validated_{read.removeprefix('Parsed_')}'), true)" in expression, name
+                    assert f"equals(outputs('Validated_{read}'), true)" in expression
+                    assert f"less(ticks(utcNow()), ticks(addSeconds(outputs('Started_{read}'), 90)))" in expression
                 verified = actions[f"Observed_{key}"]["inputs"]["verified"]
                 assert f"equals(actions('Readback_{key}')?['status'], 'Succeeded')" in verified
                 assert f"equals(actions('Found_{key}')?['status'], 'Succeeded')" in verified
-                assert f"equals(length(coalesce(body('Plan_{key}'), json('[]'))), 1)" in verified
 
 
 @pytest.mark.parametrize("profile", ["stage", "prod"])
@@ -272,19 +273,25 @@ def test_permission_validation_pipeline_is_protected_and_fail_closed(flow):
             key = f"{mode}_{profile}_app"
             for phase in ("Before", "Readback"):
                 read = f"{phase}_{key}"
-                parsed, validated = actions[f"Parsed_{read}"], actions[f"Validated_{read}"]
+                parsed, validated = actions[f"Effective_{read}"], actions[f"Validated_{read}"]
                 assert parsed["type"] == "ParseJson"
-                assert parsed["runAfter"] == {read: ["Succeeded"]}
                 assert parsed["inputs"]["schema"]["required"] == ["value"]
                 assert parsed["inputs"]["schema"]["properties"]["value"]["type"] == "array"
-                assert validated["runAfter"] == {f"Principals_{read}": ["Succeeded", "Failed", "Skipped", "TimedOut"]}
-                for step in (read, f"Parsed_{read}", f"Invalid_{read}", f"Ids_{read}", f"Principals_{read}"):
-                    assert f"equals(actions('{step}')?['status'], 'Succeeded')" in validated["inputs"]
-                assert f"empty(body('Invalid_{read}'))" in validated["inputs"]
-                assert validated["inputs"].count("length(union(") == 2
-                assert APP_IDS[profile] in actions[f"Invalid_{read}"]["inputs"]["where"]
+                assert validated["runAfter"] == {f"Effective_{read}": ["Succeeded", "Failed", "Skipped", "TimedOut"]}
+                for number in range(1, 4):
+                    request = read if number == 1 else f"{read}_P{number}"
+                    checked = actions[f"Checked_{read}_P{number}"]["inputs"]
+                    for step in (request, f"Payload_{read}_P{number}", f"Validate_{read}_P{number}", f"Reply_{read}_P{number}"):
+                        assert f"equals(actions('{step}')?['status'], 'Succeeded')" in checked
+                    assert "observation_started_at" in checked and "page_count" in checked
+                    invoke = actions[f"Validate_{read}_P{number}"]
+                    assert invoke["inputs"]["parameters"]["body/operation"] == "ValidateAppPermissionRead"
+                    assert len(actions[f"Payload_{read}_P{number}"]["inputs"]["pages"]) == number
+                    assert "1100000" in actions[f"Budget_{read}_P{number}"]["expression"]
+                    schema = actions[f"Reply_{read}_P{number}"]["inputs"]["schema"]
+                    assert "pattern" not in json.dumps(schema)
                 consumer = f"Matched_{key}" if phase == "Before" else f"Found_{key}"
-                assert actions[consumer]["runAfter"] == {f"Validated_{read}": ["Succeeded"]}
+                assert actions[consumer]["runAfter"] == {f"Status_{read}": ["Succeeded"]}
 
 
 def test_broker_body_uses_nine_native_designer_parameter_leaves(flow):
@@ -305,7 +312,7 @@ def test_broker_body_uses_nine_native_designer_parameter_leaves(flow):
         assert parameters["body/request_id"] == "@outputs('Request_id')"
         assert all(parameters["body/actor/" + field] == f"@outputs('Verified_actor')?['{field}']"
                    for field in actor["required"])
-    assert count == 39
+    assert count == 63
 
 
 def test_readback_does_not_treat_failure_or_pagination_as_verified_absence(flow):
@@ -313,10 +320,13 @@ def test_readback_does_not_treat_failure_or_pagination_as_verified_absence(flow)
     for name, item in named_actions(flow):
         if name.startswith("Observed_"):
             value = item["inputs"]["verified"]
-            assert "Succeeded" in value and "nextLink" in value and "@odata.nextLink" in value
-            assert "1000" in value and "length(coalesce" in value
-        if name.startswith("Readback_") and item["type"] == "OpenApiConnection":
-            prerequisite = actions["Permit_payload_" + name] if name.endswith("_flow") else item
+            assert "Succeeded" in value and "length(coalesce" in value
+            if name.endswith("_app"):
+                assert "Validated_Readback_" in value and "utcNow()" in value
+            else:
+                assert "nextLink" in value and "@odata.nextLink" in value and "1000" in value
+        if name.startswith("Readback_") and item["type"] == "OpenApiConnection" and not name.endswith(("_P2", "_P3")):
+            prerequisite = actions["Permit_payload_" + name] if name.endswith("_flow") else actions["Started_" + name]
             assert list(prerequisite["runAfter"].values()) == [["Succeeded", "Failed", "Skipped", "TimedOut"]]
 
 
@@ -346,7 +356,7 @@ def test_readback_diagnostics_distinguish_guard_failures_without_disclosing_cont
                 assert f"not(equals(length(coalesce(body('Plan_{key}'), json('[]'))), 1))" in expression
                 assert f"actions('Readback_{key}')?['status']" in expression
                 assert f"actions('Found_{key}')?['status']" in expression
-                page = f"Parsed_Readback_{key}" if kind == "app" else f"Readback_{key}"
+                page = f"Effective_Readback_{key}" if kind == "app" else f"Readback_{key}"
                 assert f"not(empty(body('{page}')?['nextLink']))" in expression
                 assert f"not(empty(body('{page}')?['@odata.nextLink']))" in expression
                 assert f"length(coalesce(body('{page}')?['value'], json('[]'))), 1000" in expression
@@ -418,6 +428,22 @@ def test_action_dependencies_are_in_scope_and_nesting_is_bounded(flow):
                 check_group(item["actions"], depth + 1)
                 check_group(item["else"]["actions"], depth + 1)
     check_group(flow["properties"]["definition"]["actions"])
+    actions = list(named_actions(flow))
+    assert len(actions) <= 500
+    assert max(len(name) for name, _ in actions) <= 80
+    def expressions(value):
+        if isinstance(value, str) and value.startswith("@"):
+            yield value
+        elif isinstance(value, dict):
+            for child in value.values():
+                yield from expressions(child)
+        elif isinstance(value, list):
+            for child in value:
+                yield from expressions(child)
+    assert max(map(len, expressions(flow))) <= 8192
+    for _, item in actions:
+        if item["type"] == "ParseJson":
+            assert "pattern" not in json.dumps(item["inputs"]["schema"])
 
 
 def bindings():

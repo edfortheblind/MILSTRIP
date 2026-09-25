@@ -1,4 +1,6 @@
 """Strict, bounded broker envelopes; no client-selected routes or identities."""
+from datetime import datetime, timedelta
+import re
 from typing import Literal
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -30,6 +32,7 @@ Operation = Literal[
     "ReserveManagementCall", "RecordManagementCall", "GetRuntimeProfiles",
     "SaveRuntimeDraft", "TestRuntimeDraft", "ApplyRuntimeDraft", "GetAdministrationOperation",
     "InitializeRuntimeDraft", "GetIntakeWorkflow",
+    "ValidateAppPermissionRead",
 ]
 
 
@@ -48,6 +51,32 @@ class BrokerResult(StrictModel):
 
 class EmptyPayload(StrictModel):
     pass
+
+
+class PermissionReadPage(StrictModel):
+    request_url: str = Field(strict=True, min_length=1, max_length=4096)
+    # UTF-8 acceptance limits are checked together, before parsing any page.
+    response_json: str = Field(strict=True, max_length=1_100_000)
+
+
+class ValidateAppPermissionRead(StrictModel):
+    plan_id: UUID
+    revision: UUID
+    resource_environment: Literal["stage", "prod"]
+    phase: Literal["before", "after"]
+    observation_started_at: str = Field(strict=True, min_length=20, max_length=40)
+    pages: list[PermissionReadPage] = Field(strict=True, min_length=1, max_length=3)
+
+    @field_validator("observation_started_at")
+    @classmethod
+    def utc_observation(cls, value):
+        if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,7})?(?:Z|\+00:00)", value):
+            raise ValueError("Observation timestamp must be UTC")
+        try:
+            datetime.fromisoformat(value.replace("Z", "+00:00")) + timedelta(seconds=90)
+        except (ValueError, OverflowError):
+            raise ValueError("Observation timestamp is outside the supported range") from None
+        return value
 
 
 class IntakeWorkflowPayload(StrictModel):

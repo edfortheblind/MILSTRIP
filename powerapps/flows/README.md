@@ -5,10 +5,14 @@ boundary. Stage and Prod use separate flows and private broker connections to th
 existing MILSTRIP custom connector and gateway. The generator does not deploy,
 share, start a flow, send mail, or change a database.
 
-**September 25 release cut:** do not import the current single-page candidate
-for sharing acceptance. Native Stage returns two rows plus a continuation;
-bounded traversal remains unimplemented. See the
-[paused checkpoint](../../docs/delivery/RELEASE_CUT_2026-09-25.md).
+**September 25 resumed implementation:** the source now follows at most three
+explicit permission pages. Its reader passed a protected read-only native trial
+for both apps: two pages and three cumulative rows each, in 14 seconds total.
+The reviewed brokers were imported and their native export matched both reviewed
+417-action graphs and triggers. Both were verified Off after import, explicitly
+activated, and verified On; the diagnostic remains Off. Broker workflow and
+sharing acceptance remain release gates. The earlier single-page checkpoint is preserved in
+the [release cut](../../docs/delivery/RELEASE_CUT_2026-09-25.md).
 
 ## Build and bind
 
@@ -55,7 +59,8 @@ connection references: five shared references and two private broker references.
 
 The app passes only `operation` and `payload_json`. The flow never trusts a passed
 actor, object ID, role assertion or trigger header. `AcquireSharingLease`,
-`RecordSharingResult`, `ReserveManagementCall` and `RecordManagementCall` are
+`RecordSharingResult`, `ReserveManagementCall`, `RecordManagementCall` and
+`ValidateAppPermissionRead` are
 internal operations. Only flow actions construct them
 from API-issued plans, execution IDs and management-connector readback.
 
@@ -106,23 +111,38 @@ existing verification gates. A native retry identified
 `READBACK_PAGINATED_STAGE_APP`. The earlier Makers read used its documented
 `2017-06-01` default; that version change did not resolve the native continuation
 marker. The September 24 native pagination trial stalled and was canceled.
-The candidate source now replaces each of the eight app reads per flow with a
-single fixed, environment-filtered `InvokeHttp` GET. Makers edits retain
+The source now replaces each of the eight app observations per flow with at
+most three explicit `InvokeHttp` GETs. The initial URL is fixed and filtered by
+environment; further URLs come only from the authenticated internal validator.
+Makers edits retain
 `2016-11-01` and the fixed deployment-environment filter.
 
-The protected parser requires a direct JSON object or JSON text containing a
-`value` array. An unexpected response wrapper, error envelope, failed parser,
-malformed assignment, cross-app ID, wrong tenant or duplicate assignment or
-principal makes the page unverified. A page must contain fewer than 1,000 rows
-and neither continuation marker. Target grants must belong to a User; CanEdit
+`ValidateAppPermissionRead` checks cumulative raw pages against the current
+pending plan and original command actor/profile. It validates the exact URL
+chain, cursor encoding, JSON shape, assignment identity and tenant, and rejects
+duplicate assignment or principal IDs across pages. It performs no network or
+state writes. Raw pages remain in protected flow inputs and API memory.
+
+Only a terminal response within three pages, fewer than 1,000 total rows, and
+90 seconds can qualify an observation. Each page is limited to 250,000 UTF-8
+bytes, the cumulative total to 750,000; the flow also checks the serialized
+broker envelope budget before sending it. Every required child action and
+returned plan/resource binding must match before completeness is accepted.
+The flow checks the deadline again before continuation and mutation admission.
+Native ParseJSON rejected regex schemas, so native parsers use supported
+primitive schemas and the API owns strict row/cursor validation.
+Target grants must belong to a User; CanEdit
 and unpinned Owner grants keep cleanup pending instead of becoming verified
-absence. No automatic pagination or retry is enabled. The native response shape
-and route still require acceptance before deployment; see the
+absence. No automatic pagination or retry is enabled. The direct native
+response shape and complete bounded traversal passed the read-only trial for
+both apps. The reviewed API, connector operation enum and brokers are deployed;
+both brokers are verified On. See the
 [finite-reader design](../../docs/delivery/FINITE_PERMISSION_READ_DESIGN_2026-09-25.md).
 The historical canceled execution
 has been reconciled and its matching lease released, without adding permissions.
-Do not retry sharing until a finite, complete interactive permission-read path
-is accepted. See the [historical pagination evidence](../../docs/delivery/MAKERS_PERMISSION_PAGINATION_2026-09-24.md)
+Sharing acceptance still requires the imported broker graph and its mutation
+gates to be verified. See the [historical pagination evidence](../../docs/delivery/MAKERS_PERMISSION_PAGINATION_2026-09-24.md),
+[native reader acceptance](../../docs/delivery/NATIVE_PERMISSION_VALIDATION_2026-09-25.md),
 and [current validation and recovery](../../docs/delivery/PREHOSTNAME_VALIDATION_2026-09-25.md).
 
 ## Evidence and remaining acceptance

@@ -2,14 +2,27 @@
 
 **Version:** 1.3 **Date:** 2026-09-25 **Status:** PLAYERS_VERIFIED_ADMINISTRATION_BLOCKED_PROD_DISABLED
 
-**Owner-requested cut, September 25 at 17:02 UTC:** Work is paused. Guide 1.5.0
-is published; core and guide commits are pushed. Updated Canvas drafts remain
-unpublished. The final local suite passed **747 tests, none skipped**, with two
-upstream warnings in 150.62 seconds. Native HTTP permission reading succeeded
-but returned two Stage rows plus continuation; the tested single-page source
-cannot satisfy sharing acceptance. Three-page traversal is proposed and
-unimplemented. Read the [checkpoint](delivery/RELEASE_CUT_2026-09-25.md) and
-[restart prompt](NEXT_SESSION_PROMPT.md). Earlier counts below are historical.
+**Resumed September 25 after the owner requested Continue:** Guide 1.5.0 and
+its prior commits remain published/pushed. Updated Canvas drafts remain
+unpublished. Bounded three-page permission traversal is now implemented and
+independently reviewed; 322 reader/flow/package tests passed. Review fixes reject
+malformed compact evidence and self-access edits before state changes. The
+existing connector enum update imported successfully, and the local API restarted
+with the reviewed validator. The protected read-only native trial passed for both
+apps: two pages and three cumulative rows each, in 14 seconds total, with secure
+history and unchanged control state. The diagnostic is verified Off. The reviewed
+two-flow import completed using existing connection references. Independent native
+export comparison matched each broker's trigger and all 417 actions, with only
+expected connection serialization differences. Both brokers were verified Off
+after import, then explicitly activated and verified On. Broker workflow
+acceptance, membership reconciliation, second-user identity, host enforcement,
+configuration activation, intake workflow acceptance and Canvas publication
+remain pending. The full local suite
+passed **1,003 tests, none skipped**, with two upstream warnings.
+Read the [native evidence](delivery/NATIVE_PERMISSION_VALIDATION_2026-09-25.md)
+and [design](delivery/FINITE_PERMISSION_READ_DESIGN_2026-09-25.md).
+The [release cut](delivery/RELEASE_CUT_2026-09-25.md) and counts below describe
+historical checkpoints; the explicit pause has been resumed.
 
 **Published apps:** Licensing is resolved for the verified player sessions.
 MILSTRIP Stage (`7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`) passed health and retained

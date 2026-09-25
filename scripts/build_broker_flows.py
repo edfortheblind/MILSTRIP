@@ -98,24 +98,29 @@ def query(source, predicate, previous=None):
     return action("Query", {"from": source, "where": predicate}, previous)
 
 
-def permission_page_schema(app_id):
-    """Validate the response shape before any missing value can become absence."""
-    guid = {"type": "string", "minLength": 36, "maxLength": 36,
-            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"}
-    token = "[A-Za-z0-9_.-]{1,128}"
+def permission_validation_schema():
+    """Native-supported primitive response schema; the API validates raw pages."""
     principal = {"type": "object", "required": ["id", "type", "tenantId"], "properties": {
-        "id": guid, "tenantId": guid, "type": {"type": "string", "enum": ["User", "Group", "Tenant"]}}}
-    row = {"type": "object", "required": ["id", "name", "properties"], "properties": {
-        "id": {"type": "string", "maxLength": 512,
-               "pattern": "^" + re.escape("/providers/Microsoft.PowerApps/apps/" + app_id + "/permissions/") + token + "$",
-               "not": {"pattern": "[^A-Za-z0-9_./-]|\\.\\."}},
-        "name": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^" + token + "$",
-                 "not": {"anyOf": [{"enum": ["."]}, {"pattern": "[^A-Za-z0-9_.-]|\\.\\."}]}},
+        "id": {"type": "string", "minLength": 36, "maxLength": 36},
+        "type": {"type": "string", "enum": ["User", "Group", "Tenant"]},
+        "tenantId": {"type": "string", "minLength": 36, "maxLength": 36}}}
+    assignment = {"type": "object", "required": ["id", "name", "properties"], "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 512},
+        "name": {"type": "string", "minLength": 1, "maxLength": 128},
         "properties": {"type": "object", "required": ["roleName", "principal"], "properties": {
             "roleName": {"type": "string", "enum": ["CanView", "CanEdit", "Owner"]}, "principal": principal}}}}
-    return {"type": "object", "required": ["value"], "not": {"required": ["error"]}, "properties": {
-        "value": {"type": "array", "items": row},
-        "nextLink": {"type": ["string", "null"]}, "@odata.nextLink": {"type": ["string", "null"]}}}
+    fields = {key: {"type": "string"} for key in (
+        "plan_id", "revision", "resource_environment", "app_id", "tenant_id", "target_object_id",
+        "phase", "observation_started_at", "expires_at")}
+    fields.update(schema_version={"type": "integer", "enum": [1]},
+        disposition={"type": "string", "enum": ["CONTINUE", "COMPLETE", "INCOMPLETE"]},
+        reason={"type": ["string", "null"], "enum": [None, "INVALID_PAGE", "INVALID_CURSOR",
+            "DUPLICATE_ASSIGNMENT", "ROW_LIMIT", "PAGE_LIMIT", "DEADLINE_EXPIRED"]},
+        page_count={"type": "integer", "minimum": 1, "maximum": 3},
+        row_count={"type": "integer", "minimum": 0},
+        next_url={"type": ["string", "null"], "maxLength": 4096},
+        matching_assignments={"type": "array", "maxItems": 1, "items": assignment})
+    return {"type": "object", "properties": fields, "required": list(fields)}
 
 
 def permission_read_url(app_id, environment):
@@ -124,25 +129,32 @@ def permission_read_url(app_id, environment):
             + quote("environment eq '" + environment + "'", safe=""))
 
 
+def permission_deadline(started):
+    return f"less(ticks(utcNow()), ticks(addSeconds(outputs('{started}'), 90)))"
+
+
 def permission_page_complete(page, validated):
-    return (f"equals(outputs('{validated}'), true), empty(body('{page}')?['nextLink']), "
-            f"empty(body('{page}')?['@odata.nextLink']), "
-            f"less(length(coalesce(body('{page}')?['value'], json('[]'))), 1000)")
+    return f"equals(outputs('{validated}'), true), {permission_deadline('Started_' + page.removeprefix('Effective_'))}"
 
 
-def readback_reason(key, plan, readback, found, observation, page=None, validated=None):
+def readback_reason(key, plan, readback, found, observation, page=None, validated=None, read_status=None):
     """Return only a fixed reason code; never return rows or continuation URLs."""
     resource = key.split("_", 1)[1].upper()
     page = page or readback
     filter_failed = f"not(equals(actions('{found}')?['status'], 'Succeeded'))"
     if validated:
-        filter_failed = f"or({filter_failed}, not(equals(outputs('{validated}'), true)))"
+        incomplete = f"not(equals(outputs('{validated}'), true))"
+        if read_status:
+            incomplete = f"and({incomplete}, not(contains(createArray('PAGINATED','ROW_LIMIT'), outputs('{read_status}'))))"
+        filter_failed = f"or({filter_failed}, {incomplete})"
+    def status_or(predicate, code):
+        return f"or({predicate}, equals(outputs('{read_status}'), '{code}'))" if read_status else predicate
     checks = (
         (f"not(equals(length(coalesce(body('{plan}'), json('[]'))), 1))", "PLAN_MISMATCH"),
-        (f"not(equals(actions('{readback}')?['status'], 'Succeeded'))", "CALL_FAILED"),
+        (status_or(f"not(equals(actions('{readback}')?['status'], 'Succeeded'))", "CALL_FAILED"), "CALL_FAILED"),
         (filter_failed, "FILTER_FAILED"),
-        (f"or(not(empty(body('{page}')?['nextLink'])), not(empty(body('{page}')?['@odata.nextLink'])))", "PAGINATED"),
-        (f"not(less(length(coalesce(body('{page}')?['value'], json('[]'))), 1000))", "ROW_LIMIT"),
+        (status_or(f"or(not(empty(body('{page}')?['nextLink'])), not(empty(body('{page}')?['@odata.nextLink'])))", "PAGINATED"), "PAGINATED"),
+        (status_or(f"not(less(length(coalesce(body('{page}')?['value'], json('[]'))), 1000))", "ROW_LIMIT"), "ROW_LIMIT"),
         (f"or(not(equals(outputs('{observation}')?['present'], first(union(coalesce(body('{plan}'), json('[]')), createArray(json('{{}}'))))?['present'])), not(equals(outputs('{observation}')?['verified'], true)))", "PERMISSION_MISMATCH"),
     )
     result = "null"
@@ -163,35 +175,108 @@ class Builder:
             "parameters": params, "authentication": "@parameters('$authentication')",
             "retryPolicy": {"type": "none"},
         }, previous)
-        # Do not turn on connector-side aggregation: the native trial stalled
-        # indefinitely. A continuation on a single page remains unverified;
-        # host diagnostics are not an alternative authorization path.
+        # Bounded explicit slots own traversal. Connector-side aggregation
+        # stalled natively and is never enabled, including on read actions.
         return result
 
-    def permission_page(self, read, app_id, content):
-        """Protect one response using the caller's explicit content expression."""
-        parsed, invalid, ids, principals, validated = (
-            f"{prefix}_{read}" for prefix in ("Parsed", "Invalid", "Ids", "Principals", "Validated"))
-        rows = f"@body('{parsed}')?['value']"
-        prefix = "/providers/Microsoft.PowerApps/apps/" + app_id + "/permissions/"
-        actions = {parsed: action("ParseJson", {"content": content,
-            "schema": permission_page_schema(app_id)}, read)}
-        actions[invalid] = query(rows,
-            f"@or(not(equals(item()?['id'], concat('{prefix}', item()?['name']))), not(equals(toLower(item()?['properties']?['principal']?['tenantId']), '{self.bindings['tenant_id'].lower()}')))", parsed)
-        actions[ids] = action("Select", {"from": rows,
-            "select": {"id": "@toLower(item()?['id'])"}}, invalid)
-        actions[principals] = action("Select", {"from": rows,
-            "select": {"id": "@toLower(item()?['properties']?['principal']?['id'])"}}, ids)
-        # Projection equality rejects duplicate IDs even when the other row
-        # fields differ, and multiple assignments for one principal. Never
-        # infer a valid empty page from any failed or skipped parser/projection.
-        succeeded = ", ".join(f"equals(actions('{name}')?['status'], 'Succeeded')"
-                              for name in (read, parsed, invalid, ids, principals))
-        unique = ", ".join(f"equals(length(coalesce(body('{name}'), json('[]'))), length(union(coalesce(body('{name}'), json('[]')), coalesce(body('{name}'), json('[]')))))"
-                           for name in (ids, principals))
-        actions[validated] = compose(f"@and({succeeded}, empty(body('{invalid}')), {unique})")
-        actions[validated]["runAfter"] = after(principals, TERMINAL)
-        return actions, parsed, validated
+    def permission_read(self, read, environment, suffix, phase, previous, statuses=None, *, plan_expression=None):
+        """Three protected slots; only the authenticated API qualifies raw pages."""
+        app_id = self.bindings["profiles"][environment]["app_id"]
+        saved = plan_expression or f"outputs('Leased_{suffix}')?['sharing_plan']"
+        started = "Started_" + read
+        actions = {started: compose("@utcNow()", previous)}
+        actions[started]["runAfter"] = after(previous, statuses)
+        pages, replies, checks, requests, validations = [], [], [], [], []
+        deadline = permission_deadline(started)
+        for number in range(1, 4):
+            request = read if number == 1 else f"{read}_P{number}"
+            payload, gate, validate, reply, checked = (
+                f"{prefix}_{read}_P{number}" for prefix in ("Payload", "Budget", "Validate", "Reply", "Checked"))
+            route = permission_read_url(app_id, self.bindings["environment_name"]) if number == 1 else (
+                f"@body('{replies[-1]}')?['next_url']")
+            pages.append({"request_url": route, "response_json": f"@string(body('{request}'))"})
+            group = {request: self.connection("permissions", "InvokeHttp", {
+                "request/method": "GET", "request/url": route}, started if number == 1 else None)}
+            group[payload] = compose({"plan_id": "@" + saved + "?['plan_id']",
+                "revision": "@" + saved + "?['revision']", "resource_environment": environment,
+                "phase": phase, "observation_started_at": "@outputs('" + started + "')",
+                "pages": deepcopy(pages)}, request)
+            validation = self.invoke("ValidateAppPermissionRead", f"@string(outputs('{payload}'))")
+            parsing = action("ParseJson", {"content": f"@json(body('{validate}')?['result_json'])",
+                "schema": permission_validation_schema()}, validate)
+            group[gate] = condition(
+                f"@and(equals(actions('{request}')?['status'], 'Succeeded'), equals(actions('{payload}')?['status'], 'Succeeded'), lessOrEquals(length(string(outputs('{payload}'))), 1100000), {deadline})",
+                {validate: validation, reply: parsing})
+            group[gate]["runAfter"] = after(payload, TERMINAL)
+            if number == 1:
+                actions.update(group)
+                completed = gate
+            else:
+                optional = f"Page{number}_" + read
+                actions[optional] = condition(
+                    f"@and(equals(outputs('{checks[-1]}'), true), equals(body('{replies[-1]}')?['disposition'], 'CONTINUE'), {deadline})",
+                    group)
+                actions[optional]["runAfter"] = after(checks[-1], TERMINAL)
+                completed = optional
+            body = f"body('{reply}')"
+            bindings = [f"equals({body}?['schema_version'], 1)"]
+            for field, expected in {"plan_id": saved + "?['plan_id']", "revision": saved + "?['revision']",
+                    "app_id": "'" + app_id + "'", "tenant_id": "'" + self.bindings["tenant_id"] + "'",
+                    "target_object_id": saved + "?['target']?['object_id']"}.items():
+                bindings.append(f"equals(toLower(coalesce({body}?['{field}'], '')), toLower({expected}))")
+            bindings.extend((f"equals({body}?['resource_environment'], '{environment}')",
+                f"equals({body}?['phase'], '{phase}')", f"equals({body}?['observation_started_at'], outputs('{started}'))",
+                f"equals({body}?['page_count'], {number})"))
+            matches = f"coalesce({body}?['matching_assignments'], json('[]'))"
+            match = f"first(union({matches}, createArray(json('{{}}'))))"
+            bindings.append(f"not(less(coalesce({body}?['row_count'], 0), length({matches})))")
+            bindings.append(f"or(empty({matches}), and(equals(length({matches}), 1), "
+                f"equals(toLower(coalesce({match}?['properties']?['principal']?['id'], '')), toLower({saved}?['target']?['object_id'])), "
+                f"equals(toLower(coalesce({match}?['properties']?['principal']?['tenantId'], '')), toLower('{self.bindings['tenant_id']}')), "
+                f"equals({match}?['id'], concat('/providers/Microsoft.PowerApps/apps/{app_id}/permissions/', coalesce({match}?['name'], '')))))")
+            disposition = body + "?['disposition']"
+            coherent = (
+                f"or(and(equals({disposition}, 'CONTINUE'), less({number}, 3), not(empty({body}?['next_url'])), empty({body}?['matching_assignments']), equals({body}?['reason'], null), less(coalesce({body}?['row_count'], 1000), 1000)), "
+                f"and(equals({disposition}, 'COMPLETE'), empty({body}?['next_url']), equals({body}?['reason'], null), less(coalesce({body}?['row_count'], 1000), 1000)), "
+                f"and(equals({disposition}, 'INCOMPLETE'), empty({body}?['next_url']), empty({body}?['matching_assignments']), not(empty({body}?['reason']))))")
+            succeeded = ", ".join(f"equals(actions('{name}')?['status'], 'Succeeded')"
+                                  for name in (request, payload, validate, reply))
+            actions[checked] = compose(f"@and({succeeded}, {', '.join(bindings)}, {coherent})")
+            actions[checked]["runAfter"] = after(completed, TERMINAL)
+            requests.append(request)
+            validations.append(validate)
+            replies.append(reply)
+            checks.append(checked)
+        terminal, effective, validated, read_status = (
+            prefix + read for prefix in ("Terminal_", "Effective_", "Validated_", "Status_"))
+        selected = "json('null')"
+        for index in reversed(range(3)):
+            prefix = [f"equals(outputs('{checks[item]}'), true)" for item in range(index + 1)]
+            prefix.extend(f"equals(body('{replies[item]}')?['disposition'], 'CONTINUE')" for item in range(index))
+            prefix.extend((f"equals(body('{replies[index]}')?['disposition'], 'COMPLETE')", deadline,
+                f"less(ticks(utcNow()), ticks(coalesce(body('{replies[index]}')?['expires_at'], outputs('{started}'))))",
+                f"lessOrEquals(ticks(coalesce(body('{replies[index]}')?['expires_at'], outputs('{started}'))), ticks(addSeconds(outputs('{started}'), 90)))"))
+            selected = f"if(and({', '.join(prefix)}), body('{replies[index]}'), {selected})"
+        actions[terminal] = compose("@" + selected, checks[-1])
+        # Null on an incomplete prefix fails this required-array parser. There
+        # is no synthetic empty successful page for missing or failed evidence.
+        actions[effective] = action("ParseJson", {"content": {
+            "value": f"@outputs('{terminal}')?['matching_assignments']"}, "schema": {
+            "type": "object", "required": ["value"], "properties": {
+                "value": {"type": "array", "maxItems": 1, "items": {"type": "object"}}}}}, terminal)
+        actions[validated] = compose(f"@and(equals(actions('{terminal}')?['status'], 'Succeeded'), equals(actions('{effective}')?['status'], 'Succeeded'), equals(outputs('{terminal}')?['disposition'], 'COMPLETE'), {deadline})")
+        actions[validated]["runAfter"] = after(effective, TERMINAL)
+        call_failed = "or(" + ", ".join(
+            f"contains(createArray('Failed','TimedOut'), actions('{name}')?['status'])"
+            for name in (*requests, *validations)) + ")"
+        reason = f"if(equals(outputs('{validated}'), true), null, 'FILTER_FAILED')"
+        for code, result in (("PAGE_LIMIT", "PAGINATED"), ("ROW_LIMIT", "ROW_LIMIT")):
+            recognized = "or(" + ", ".join(
+                f"and(equals(outputs('{check}'), true), equals(body('{reply}')?['disposition'], 'INCOMPLETE'), equals(body('{reply}')?['reason'], '{code}'))"
+                for check, reply in zip(checks, replies)) + ")"
+            reason = f"if({recognized}, '{result}', {reason})"
+        actions[read_status] = compose(f"@if({call_failed}, 'CALL_FAILED', {reason})", validated)
+        return actions, effective, validated, read_status
 
     def invoke(self, operation, payload, previous=None):
         # Native designer serializes the required body leaves as parameter paths.
@@ -343,19 +428,18 @@ class Builder:
                     "environmentName": self.bindings["environment_name"], "flowName": resource_id}
                 read_connector, get_op = ("permissions", "InvokeHttp") if kind == "app" else ("management", "ListFlowUsers")
                 connector = "makers" if kind == "app" else "management"
-                actions[before] = self.connection(read_connector, get_op, params, plan)
-                before_page, before_ready = before, before
+                before_page, before_ready, before_validated = before, before, None
                 if kind == "app":
-                    # Candidate direct response contract: an unexpected wrapper
-                    # fails the schema. Native acceptance remains a release gate.
-                    page_actions, before_page, before_ready = self.permission_page(
-                        before, resource_id, f"@json(string(body('{before}')))")
+                    page_actions, before_page, before_validated, before_ready = self.permission_read(
+                        before, environment, suffix, "before", plan)
                     actions.update(page_actions)
+                else:
+                    actions[before] = self.connection(read_connector, get_op, params, plan)
                 predicate = f"@equals(toLower(coalesce(item()?['properties']?['principal']?['id'], '')), toLower({target}))"
                 actions[matched] = query(f"@coalesce(body('{before_page}')?['value'], json('[]'))", predicate, before_ready)
                 # Fixed IDs and exact API-issued plan are checked before any mutation.
                 plan_valid = f"equals(length(coalesce(body('{plan}'), json('[]'))), 1), equals({saved}?['sharing_plan']?['target']?['tenant_id'], '{self.bindings['tenant_id']}'), not(empty({target}))"
-                before_complete = permission_page_complete(before_page, before_ready) if kind == "app" else (
+                before_complete = permission_page_complete(before_page, before_validated) if kind == "app" else (
                     f"empty(body('{before}')?['nextLink']), empty(body('{before}')?['@odata.nextLink']), less(length(coalesce(body('{before}')?['value'], json('[]'))), 1000)")
                 valid = f"@and({plan_valid}, {before_complete})"
                 principal = {"id": "@" + target, "type": "User"}
@@ -387,15 +471,16 @@ class Builder:
                 needs_write = f"or(and(equals({desired}, true), empty(body('{matched}'))), and(equals({desired}, false), not(empty(body('{matched}')))))"
                 actions[mutate] = condition(f"@and({valid[1:]}, {may_edit[1:]}, {needs_write})",
                     {f"Desired_{key}": mutation}, previous=matched)
-                actions[readback] = self.connection(read_connector, get_op, params)
-                actions[readback]["runAfter"] = after(mutate, TERMINAL)
-                readback_page, readback_ready = readback, readback
+                readback_page, readback_ready, readback_validated = readback, readback, None
                 if kind == "app":
-                    page_actions, readback_page, readback_ready = self.permission_page(
-                        readback, resource_id, f"@json(string(body('{readback}')))")
+                    page_actions, readback_page, readback_validated, readback_ready = self.permission_read(
+                        readback, environment, suffix, "after", mutate, TERMINAL)
                     actions.update(page_actions)
+                else:
+                    actions[readback] = self.connection(read_connector, get_op, params)
+                    actions[readback]["runAfter"] = after(mutate, TERMINAL)
                 actions[found] = query(f"@coalesce(body('{readback_page}')?['value'], json('[]'))", predicate, readback_ready)
-                readback_complete = permission_page_complete(readback_page, readback_ready) if kind == "app" else (
+                readback_complete = permission_page_complete(readback_page, readback_validated) if kind == "app" else (
                     f"empty(body('{readback}')?['nextLink']), empty(body('{readback}')?['@odata.nextLink']), less(length(coalesce(body('{readback}')?['value'], json('[]'))), 1000)")
                 verified = f"@and(equals(actions('{readback}')?['status'], 'Succeeded'), equals(actions('{found}')?['status'], 'Succeeded'), {plan_valid}, {readback_complete})"
                 present = f"@greater(length(coalesce(body('{found}'), json('[]'))), 0)"
@@ -415,7 +500,8 @@ class Builder:
                 observations.append("@outputs('" + observation + "')")
                 diagnostic = f"Readback_reason_{key}"
                 actions[diagnostic] = compose(readback_reason(key, plan, readback, found, observation,
-                    page=readback_page, validated=readback_ready if kind == "app" else None), observation)
+                    page=readback_page, validated=readback_validated,
+                    read_status=readback_ready if kind == "app" else None), observation)
                 diagnostics.append(f"outputs('{diagnostic}')")
                 previous = diagnostic
         payload = {"plan_id": "@" + saved + "?['sharing_plan']?['plan_id']",

@@ -1,6 +1,6 @@
 # Finite native app-permission read
 
-**Status: paused by owner September 25. Single-page source is tested but fails native completeness acceptance. Three-page extension is an unfinished proposal. Do not import the candidate or retry sharing.**
+**Status: resumed September 25. Native evidence requires explicit pagination and rejects Parse JSON regex schemas. The revised design below uses the existing broker for read-only validation. Implementation and native acceptance remain open; do not import the earlier candidate or retry sharing.**
 
 The Makers connector's app-role GET returned continuation markers in earlier
 sharing runs. Enabling automatic pagination then stalled the first read for more
@@ -9,7 +9,7 @@ membership is not permission evidence. See the
 [historical trial](MAKERS_PERMISSION_PAGINATION_2026-09-24.md) and
 [recovery implementation](SHARING_RECOVERY_IMPLEMENTATION_2026-09-25.md).
 
-## Initial single-page decision
+## Initial single-page decision (historical)
 
 Replace only the eight app-permission read actions in each broker flow with a
 single explicit HTTP GET through **HTTP with Microsoft Entra ID (preauthorized)**.
@@ -77,7 +77,7 @@ uses the same `service.powerapps.com` audience with this connector for a differe
 Power Platform API host. The exact app-permission route still requires a native
 connector trial.
 
-## Required result contract
+## Initial result contract (superseded by the addendum)
 
 Each observation makes exactly one request. Disable retries and automatic
 pagination. Protect HTTP inputs/outputs and all parsing/filtering actions in run
@@ -161,203 +161,262 @@ Publication approval does not turn the read-only diagnostic into a completed
 sharing trial. Source checks, connector acceptance, user sharing and final
 publication are separate evidence gates.
 
-## Addendum: three explicitly generated pages
+## Addendum: three pages with internal broker validation
 
-### Evidence and scope
+### Native evidence and decision
 
-The native Stage HTTP request and `json(string(body(...)))` parsing succeeded
-with protected history. Separate scalar diagnostics established:
+Protected Stage trials established two first-page rows, a nonempty `nextLink`,
+no nonempty `@odata.nextLink` and no error member. The host reader collected
+three rows across its traversal. Absence cannot be inferred from the first page.
 
-| Native first-page fact | Result |
+A native scalar diagnostic confirmed HTTPS, the exact app path, no fragment and
+query keys in order: `api-version`, `%24filter`, `%24skiptoken`. The filter uses
+`+` for spaces and `%27` for quotes. Encoding the decoded opaque cursor
+reproduced the original; its encoded length was 304. No cursor value or row was
+exposed.
+
+A separate native Save rejected a constant Parse JSON schema with
+`ActionSchemaNotSupported`: `pattern` and `patternProperties` are unsupported.
+A constant schema using types, required members, enum and length bounds saved
+and ran. Offline JSON-schema tests did not establish native support. Remove all
+regex-dependent permission schemas, including assignment names and GUIDs.
+
+**Decision:** add stateless, read-only `ValidateAppPermissionRead` to the existing
+broker. Python validates bounded cumulative page content, identities and cursors.
+The flow keeps three explicit HTTP slots, Makers writes, Management pacing,
+durable sharing leases and reconciliation. This uses the existing API, connector,
+gateway and authentication; it adds no service, network client or credential.
+
+This keeps deterministic validation in directly testable Python instead of large
+generated WDL character programs. It adds one internal operation and at most three
+broker calls per observation; measure gateway latency during native acceptance.
+Exclude this operation from the ordinary Power Apps operation allowlist.
+
+### Read-only authorization and payload
+
+Authenticate transport normally, run `authorize_person`, require current active
+`users.manage`, then read one control-state snapshot. Require the exact stored
+pending plan/revision and current target access revision. Its original users
+command must belong to the authenticated actor and broker profile; configured
+broker identity/tenant must still match. Select exactly one app resource in that
+plan and derive app ID, tenant, environment and target principal from server state.
+
+Use the existing `InvokeBroker` envelope and a strict payload:
+
+| Field | Contract |
 |---|---|
-| `value` count | 2 |
-| Nonempty `nextLink` | true |
-| Nonempty `@odata.nextLink` | false |
-| Top-level `error` key | false |
+| `plan_id`, `revision` | Current stored plan UUIDs |
+| `resource_environment` | `stage` or `prod`; selects that plan's app |
+| `phase` | `before` or `after`; label, not authority |
+| `observation_started_at` | UTC timestamp created immediately before page one |
+| `pages` | Ordered list of one to three objects |
+| `pages[].request_url` | Actual requested URL, at most 4,096 characters |
+| `pages[].response_json` | Protected `string(body(HTTP_action))`; at most 250,000 UTF-8 bytes per page |
 
-The earlier finite host diagnostic collected three assignments. That aggregate
-never established a single-page response. The native first page is incomplete;
-two rows cannot prove that the requested user is absent. No permission write is
-authorized by this trial. A later protected native diagnostic confirmed the
-exact `api.powerapps.com` host, selected Stage permissions path, and three query
-keys in order: `api-version`, `%24filter`, `%24skiptoken`. Cursor value grammar
-and exact fixed-value serialization remain unverified. No cursor value or
-permission record was exposed. Finalize and independently review the validator
-before implementation.
+Cap combined page bodies at 750,000 UTF-8 bytes. Preserve the existing
+1,100,000-character envelope limit, including serialized escaping and metadata.
+Check actual serialized payload length in a protected flow action before invoking
+the broker. Oversized content is incomplete. These are acceptance bounds, not
+upstream HTTP response-size guarantees.
 
-The next candidate will generate three page slots for each app-permission
-observation: one fixed initial GET and at most two continuation GETs. It keeps
-the existing HTTP Entra connection and the existing before-read, mutation and
-fresh after-read sequence. Do not add an Until/For each loop, automatic
-pagination, retry policy, dynamic variable, caller URL parameter, authentication
-service or token export. Each continuation slot is conditional; completing page
-one or two skips the remaining requests.
+The operation requires **no lease or native-run fields**: it does not change state
+or create durable permission evidence. A read-only native trial can call it through
+the existing broker connection without impersonating the real broker flow. It must
+not create/release a lease, reserve a permit, append audit events, persist raw pages,
+issue HTTP, change membership or call `RecordSharingResult`.
 
-### Protected continuation validator
+The actual reconciliation flow still acquires its genuine native-bound lease
+before reads. Only that generated branch may use fresh complete output with its
+exact issued plan to reach writes or final recording. Submitted JSON or a validator
+result alone is not proof of a native read. This preserves the trusted-flow
+boundary; it does not attest to the origin of arbitrary supplied page content.
 
-First obtain safe native shape evidence: whether the URI is absolute; exact
-host/path agreement; query-key names and order; duplicate-key presence; cursor
-encoded length/character classes; and whether the fixed API version and
-environment filter remain present. Inspect none of the cursor values, assignment
-rows or signed content links in visible history. Keep the diagnostic inputs
-protected and expose only fixed scalar classifications. Prove the same permitted
-shape for both apps before release.
+### Result contract and existing role rules
 
-Use a protected Parse JSON action on a small object containing the selected
-continuation string. Its generated schema must require that string, cap its
-length at 16,384 characters, and match the **whole serialized URI**. The design
-is a finite allowlist of one canonical serialization form, or two if the native
-evidence requires both; it is not a permissive URL parser. Schematically:
+Return exactly `schema_version=1`, `plan_id`, `revision`, `resource_environment`,
+`app_id`, `tenant_id`, `target_object_id`, `phase`, `observation_started_at`,
+`expires_at`, `disposition`, `reason`, `page_count`, `row_count`, `next_url` and
+`matching_assignments`. Server-derived UUID fields use canonical lowercase.
+Validate the observation timestamp but echo its original string unchanged:
+native `utcNow()` can contain seven fractional digits that Python would otherwise
+truncate. `expires_at` may use normalized UTC format. The flow checks every binding
+against its request and issued plan, normalizing UUID case for comparison.
+
+| Disposition | Permitted output |
+|---|---|
+| `CONTINUE` | One validated canonical next URL; no target assignments |
+| `COMPLETE` | Null next URL; zero or one sanitized target assignment |
+| `INCOMPLETE` | Null next URL; no assignments; fixed reason only |
+
+Authorization/binding failures use existing sanitized broker errors. Content
+failures use fixed reasons such as `INVALID_PAGE`, `INVALID_CURSOR`,
+`DUPLICATE_ASSIGNMENT`, `ROW_LIMIT`, `PAGE_LIMIT` and `DEADLINE_EXPIRED`.
+These six reason literals are the complete validator reason enum; reason is null
+for CONTINUE/COMPLETE. Payload/schema/authorization errors retain sanitized HTTP
+errors. Failed broker/result parsing is also incomplete; never echo rejected
+values. Map reasons to existing callback diagnostics: ROW_LIMIT to ROW_LIMIT,
+PAGE_LIMIT to PAGINATED, and other content failures to FILTER_FAILED; transport
+failure remains CALL_FAILED. Keep the existing resource-specific prefixes/suffixes
+and do not expand SharingErrorCode merely to duplicate internal reasons.
+
+The compact target projection retains only assignment ID/name, role name and
+principal ID/type/tenant ID. Preserve current flow User/CanView rules, the pinned
+deployment-Owner exception, edit eligibility and removal-ID selection. The Owner
+pin is in reviewed flow bindings; do not invent a second backend owner setting.
+Elevated or non-User targets remain unverified and cannot become verified absence.
+
+### Exact one-form cursor grammar
+
+The initial request keeps its documented `%20` filter spaces. Continuations use
+this different, observed literal prefix, with the fixed generated app ID:
 
 ```text
-FORM_1 := LITERAL_FIXED_ORIGIN_AND_APP_PATH + '?' + OBSERVED_FIXED_QUERY_ORDER_1
-FORM_2 := LITERAL_FIXED_ORIGIN_AND_APP_PATH + '?' + OBSERVED_FIXED_QUERY_ORDER_2
+https://api.powerapps.com/providers/Microsoft.PowerApps/apps/{fixed_app_id}/permissions?api-version=2017-06-01&%24filter=environment+eq+%27Default-9f5c0ace-0780-4b48-8c24-b08bb5149210%27&%24skiptoken=
 ```
 
-These are design placeholders, not executable patterns. Generate the actual
-anchored patterns only after observing the cursor shape. Escape every literal
-segment, including query separators. Each admitted form must contain:
+Accept exactly this serialization. Perform a case-sensitive Python prefix check,
+then validate only the remaining opaque suffix:
 
-- Exactly `https://api.powerapps.com` and the selected fixed app's
-  `/providers/Microsoft.PowerApps/apps/{app}/permissions` path. No alternate
-  host, port, user information, fragment, path encoding or dot-segment form.
-- Exactly API version `2017-06-01` and the exact existing environment filter,
-  encoded in the observed canonical form. Neither may be omitted or repeated.
-- Only the observed cursor key or keys, each exactly once, with bounded,
-  observed value syntax. No optional arbitrary query suffix or wildcard `.*`.
-  Cursor character classes must exclude raw separators that could add a query
-  key. Admit percent escapes only as complete hexadecimal triplets where the
-  native serialization uses them; admit numeric cursor components only with
-  their separately bounded numeric syntax.
+- Encoded length 1–2,048; full URI at most 4,096.
+- Python `re.fullmatch` with `(?:[A-Za-z0-9._~-]|%[0-9A-F]{2})+`, plus the
+  separate length bound. This regex never runs in native Parse JSON.
+- `quote_from_bytes(unquote_to_bytes(suffix), safe="-._~") == suffix` using
+  `urllib.parse`. Reject decoded control bytes and DEL; keep token bytes opaque.
+- Reconstruct the URL from the fixed prefix and validated suffix. Never return
+  an unvalidated upstream URL or decode/re-encode the whole URI.
 
-Reject raw controls, whitespace and backslashes separately, including a final
-newline: a regular-expression `$` anchor alone may match before that newline.
-The fixed literal prefix excludes encoded-path normalization and user-info
-tricks before query parsing. Fixed, uniquely placed query delimiters exclude
-duplicate API-version, filter or cursor keys. Unexpected ordering, extra keys,
-missing scope or a changed cursor format must fail closed, even if the service
-might otherwise accept them.
+The native canonicalization result supports this treatment. The conservative
+ASCII/escape grammar must pass real traversal before release; a rejection requires
+safe character-class evidence and narrow review, never exposure of the token.
 
-After schema success, protected Compose actions may extract cursor components
-using only the validated literal delimiters and reconstruct one canonical URL
-from the fixed origin/path/version/filter plus those components. When two
-serialization forms are allowed, normalize them to the same representation so
-equivalent continuations cannot defeat repeated-cursor detection. The encoding
-rules must preserve the opaque cursor's value; do not guess how plus signs or
-percent decoding behave. If that cannot be proved from the observed format,
-retain one strict form or stop for a revised design.
+The prefix fixes host, scheme, port absence, path, version, filter, key order and
+uniqueness. Suffix validation excludes raw separators, fragments, whitespace and
+backslashes; encoded delimiters remain inside the opaque query value. Canonical
+round-trip rejects percent-encoded unreserved aliases and alternate escape case.
 
-Select `nextLink` or `@odata.nextLink` only after checking their types. A present
-value must be a string or null. Two nonempty values must be exactly identical;
-otherwise reject the page. Compare each canonical next request against the
-initial route and all preceding requested routes. Repeated routes/cursors are
-incomplete, never evidence of exhaustion. The validated cursor has authority
-only within this app observation, not another app, plan or run.
+A present continuation field must be string or null. Absent/null/empty means none.
+If both cursor fields are nonempty they must be identical. Require the first
+request URL to equal the fixed initial route and each subsequent request URL to
+equal its predecessor's validated continuation. Reject repeated cursors/routes,
+a page following a terminal page, and any chain mismatch. A third page with
+continuation is incomplete; never fetch a fourth.
 
-Both raw and canonical continuation URLs remain protected. HTTP Entra's base
-URL restriction supplements these checks. Do not rely on DLP to validate a
-dynamic continuation expression: Microsoft documents that
-[endpoint filtering does not evaluate dynamic endpoints](https://learn.microsoft.com/en-us/power-platform/admin/connector-endpoint-filtering).
-If TAB's actual policy prohibits the candidate, report that result without
-relaxing the policy.
+The connection's base URL is supplementary enforcement. Microsoft states that
+[endpoint filtering does not evaluate dynamic endpoints](https://learn.microsoft.com/en-us/power-platform/admin/connector-endpoint-filtering);
+this design does not relax TAB policy if continuation expressions are prohibited.
 
-### Page chain, aggregate proof and terminal selection
+### Page content and cumulative proof
 
-Create page-two and page-three guards as **siblings** of page one, not recursively
-nested guards. A guard consumes only a protected validation result reduced to a
-boolean. Page two requires valid page one, a valid new continuation and an
-unexpired deadline. Page three additionally requires valid page two and its new
-continuation. Each later HTTP action uses only the preceding validator's
-canonical URL. No connection, request or validation error starts a later page.
+Revalidate the whole supplied prefix on every call. Use Python JSON parsing with
+duplicate-key rejection for supplied JSON text, bounded typed models and standard
+UUID/regex validation. Do not coerce malformed values into an empty permission list.
 
-Every fetched page must pass the existing required-array/error-envelope schema,
-fixed-app ID/name binding, safe token/path rules, GUID tenant/principal checks,
-accepted roles/types and per-page duplicate checks. Reject an oversized page
-before starting another request. A valid empty page with a new continuation is
-not terminal and still consumes a page slot.
+Require every page to be an object with a value array and no error member,
+including `error:null`. Validate all rows before returning a continuation:
 
-Maintain the following cumulative proof in protected Compose/Select outputs:
+- Required assignment ID/name and properties/principal objects. Roles are
+  CanView/CanEdit/Owner; principal types are User/Group/Tenant.
+- Name contains 1–128 ASCII letters/digits/underscore/dot/hyphen; reject exact
+  dot and every double-dot sequence. ID equals the fixed app permission prefix
+  plus name, with the existing 512-character cap.
+- Principal ID and tenant have canonical 36-character hexadecimal UUID shape;
+  normalize case for comparison and require the configured tenant. `UUID()`
+  alone is insufficient because it accepts other spellings.
+- Fewer than 1,000 cumulative rows. Reject duplicate normalized assignment IDs
+  and principal IDs across all pages, even when other fields differ. Never
+  deduplicate before counting.
 
-- All fetched pages belong to the same fixed app, tenant, sharing plan and
-  observation phase, and every required HTTP/parser/projection action succeeded.
-- The **sum** of page row counts is less than 1,000. This remains an acceptance
-  bound, not a guaranteed HTTP response-size limit.
-- The summed ID-projection count equals the length of the union of all normalized
-  assignment-ID projections; apply the same check to principal-ID projections.
-  This rejects an identical repeated row and a repeated ID with different role
-  or payload fields. Never use `union()` first and then count the deduplicated
-  rows as if the original responses were unique.
-- There is at most one target-principal assignment across all pages. Preserve
-  the existing User/CanView rule and the pinned deployment-Owner exception.
-  Elevated or unexpected target grants do not become verified absence.
+Ignore bounded additional native fields without copying them into output. Do not
+invent an optional row-type constraint: its native value was not established.
+An empty intermediate page with a new cursor consumes a slot and is not terminal.
+Only a valid prefix ending without continuation can return COMPLETE and no target.
 
-A protected terminal-selection Compose identifies page one, two or three only
-when that page and its complete required prefix are valid and its selected
-continuation is empty. A page-two/three action skipped because an earlier page
-already completed is optional; a required page skipped, failed or timed out is
-incomplete. Do not manufacture an empty page for any failure. If page three
-still has a cursor, return a fixed page-limit diagnostic and leave pending.
+### Minimum protected graph
 
-Build the effective permission array only from the validated terminal prefix,
-after cumulative uniqueness passes. The before-read mutation gate requires
-this complete proof and the still-matching issued sharing plan. Run a wholly
-new page chain after any mutation; before-read rows/cursors are never reused as
-after-read evidence. A failed or incomplete after-read leaves membership pending
-and retains existing unknown-outcome/lease handling. Read completion never
-proves that a permission write succeeded by itself.
+For each of eight app-observation sites generate:
 
-### Privacy, deadlines and generated limits
+1. Protected start Compose, then fixed page-one HTTP.
+2. Protected payload Compose, internal broker call and primitive-only result
+   Parse JSON. Include the actual first URL and page body.
+3. A sibling Page2 If gated on successful prerequisite actions, matching bindings,
+   CONTINUE and an unexpired deadline. Fetch only the returned next URL, then
+   validate cumulative pages one and two.
+4. A sibling Page3 If applying the same checks to page two, then validating all
+   three pages. No failure or incomplete predecessor can start it.
+5. Protected terminal selection/result guard accepting only a COMPLETE slot with
+   all required preceding HTTP/payload/broker/parser actions successful, correct
+   bindings and time remaining. Then expose compact target rows to existing logic.
 
-Protect every HTTP, Parse JSON, Query, Select and Compose that handles URLs,
-rows or identity projections, including downstream aggregates. Use the existing
-inputs-only protection for Compose/Parse JSON, which also hides their outputs.
-Do not rely on automatic propagation to later actions. Microsoft lists variable
-actions as unsupported for secure inputs/outputs; opaque cursors and assignment
-IDs are not approved substitutes for protected state. This candidate uses no
-dynamic variables, even for counters. Its page count is fixed by the generated
-graph. [Run-history protection](https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-securing-a-logic-app)
+If expressions contain only necessary booleans, not raw rows or URLs. A successful
+outer If does not prove its branch ran. Slots skipped after an earlier complete
+page are optional; any required skipped/failed/timed-out action is incomplete.
+Never fabricate an empty page on failure. Diagnostics may run after terminal
+failure statuses but cannot enable writes.
 
-Use a protected start timestamp and a proposed **90-second observation budget**.
-Recheck elapsed time before each continuation request, when selecting a complete
-result, and immediately before a permission write. Exhaustion means pending;
-it does not authorize cleanup or release a possibly active/uncertain lease.
-This budget prevents starting later work after expiry. It cannot interrupt an
-in-flight managed-connector call or promise a response inside Power Apps'
-synchronous limit. The three-page maximum is a hard request-count bound for one
-observation; a run must never continue automatically into a fourth page. The
-existing cancellation and evidence-based recovery rules remain necessary.
-Microsoft explicitly documents that an
-[Until timeout does not interrupt its current iteration](https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-control-flow-loops).
+Page3's outer If runs after the outer Page2 If, not a child in another container.
+The first child uses an empty runAfter; its successors depend on siblings. Final
+selection runs after outer Page3's terminal state and inspects required child
+statuses explicitly. Microsoft permits nested-output references but restricts
+[runAfter to the same control structure](https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-workflow-actions-triggers).
 
-The source baseline has 265 actions per flow, including eight app-permission
-observation sites across add/remove branches. Expanding each site to three slots
-permits at most 24 statically defined app GET actions; only the selected branch
-executes. Before any import, count the **entire** generated graph and enforce
-500 actions, at most eight enclosing action containers, action names of at most
-80 characters and expressions of at most 8,192 characters. The baseline already
-has deeply nested write branches; sibling page guards must not deepen them.
-Do not assert that the extension fits merely from the number of GETs. If the
-full expansion exceeds a limit, stop and revise the design rather than raise a
-limit or drop a guard. [Flow definition limits](https://learn.microsoft.com/en-us/power-automate/limits-and-config)
+Retain exact issued-plan/held-lease branch checks and role safeguards before writes.
+A new after-read starts with a new timestamp and page one; never reuse before-read
+pages or results. Only complete fresh readback can verify presence/absence.
+Incomplete readback remains pending and retains current unknown-outcome handling.
 
-### Extension acceptance gates
+### Privacy, 90-second budget and limits
 
-1. Record the safe native continuation shape, then review the exact one/two-form
-   URI patterns and opaque-value normalization. A first page's continuation
-   flag alone is not sufficient to write this validator.
-2. Test the generated chain offline for one/two/three-page completion, conflicting
-   or malformed cursors, cross-host/app/environment/version routes, duplicate
-   keys, encoded path tricks, repeated routes, duplicate identities across pages,
-   999/1,000 aggregate rows, empty intermediate pages, final-page continuation,
-   all parser/transport failures and deadline exhaustion. Confirm that no failed
-   prefix can enable a write or verify absence.
-3. Run a protected read-only native traversal for each app, including terminal
-   selection and row/identity proof. Test representative valid and invalid URI
-   schemas natively so offline JSON-schema support is not assumed to match the
-   platform. Expose only status, counts, page count and fixed reason codes.
-4. Independently review generated code, limits, connection binding and masked
-   history before any broker import or sharing retry. Then retain the original
-   sharing, second-user, enforcement and publication gates above.
+Protect each HTTP, payload, broker action, parser and downstream projection
+explicitly. Microsoft supports secure connector settings, excludes variables/If,
+and uses Secure Inputs for Compose/Parse JSON to hide outputs. Do not rely on
+automatic downstream propagation. No cursor/row/ID variables or tracked properties;
+raw pages stay in broker request memory and out of logs, errors and stored state.
+[Run-history protection](https://learn.microsoft.com/en-us/azure/logic-apps/set-up-security-permissions)
 
-This addendum authorizes no tenant operation. Implementation awaits native cursor
-shape evidence and review of the resulting exact validator.
+Adopt **90 seconds per observation**, starting immediately before page one.
+Backend validation rejects starts over five seconds in the future or older than
+90 seconds, and returns start plus 90 seconds as expires_at. The flow rechecks
+before continuations, terminal acceptance and immediately before any write.
+A delayed response cannot revive an expired observation.
+
+This bounds admission/freshness, not in-flight connector duration or the entire
+multi-resource sharing flow. An active call may outlast expiry; later continuation
+and mutation must then stop. Measure native latency rather than silently extending
+the budget. Timeout never releases a durable lease or uncertain permit.
+
+One observation has at most three HTTP GETs and three internal validation calls.
+No loops, automatic pagination, retries or fourth-page fallback. The validator
+itself issues no network requests.
+
+The earlier source baseline has 265 actions and eight observation sites. Replace
+its old five-action row validators. A nominal new site has a start, three
+HTTP/payload/broker/parser groups, two sibling guards and terminal validation;
+the actual generated count is mandatory. Enforce 500 actions, eight enclosing
+containers, 80-character names and 8,192-character expressions. Preserve write
+branch depth. Microsoft also documents 120-second synchronous request limits;
+none of these guards cancels an active connector call.
+[Platform limits](https://learn.microsoft.com/en-us/power-automate/limits-and-config)
+
+### Implementation and release gates
+
+1. Implement the pure validator and scoped broker operation; keep it out of the
+   Canvas allowlist. Prove no control-state/audit/lease mutation or network access.
+   Test wrong actor/profile/plan/revision/resource and superseded target state.
+2. Cover one/two/three-page completion, malformed JSON/duplicate keys, all row and
+   cross-page identity cases, 999/1,000 rows, body/envelope bounds, empty middle
+   pages, both cursor fields, exact grammar, changed scope/host/path/query keys,
+   repeated routes, final continuation, future starts and expired deadlines.
+3. Regenerate without permission pattern/patternProperties. Test actual generated
+   dependencies so failed GET/broker/parser, required skipped branches and expiry
+   cannot reach Makers writes or verified readback. Count the whole graph and
+   independently inspect secure settings.
+4. Use the existing read-only native trial with normal TAB identity and a genuine
+   current plan for Stage and Prod. Record only disposition, counts, elapsed time
+   and fixed reasons. Verify masked history, terminal completion and cursor grammar;
+   never forge a lease or broker-flow identity to run the diagnostic.
+5. Independently review implementation and native evidence before broker import,
+   then retain sharing, second-user, enforcement and both-app publication gates.
+   Read-only acceptance alone is not successful sharing.
+
+This local design does not claim revised broker/flows or unpublished Canvas
+drafts have been deployed or accepted.

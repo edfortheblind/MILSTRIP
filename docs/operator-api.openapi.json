@@ -93,7 +93,8 @@
               "ApplyRuntimeDraft",
               "GetAdministrationOperation",
               "InitializeRuntimeDraft",
-              "GetIntakeWorkflow"
+              "GetIntakeWorkflow",
+              "ValidateAppPermissionRead"
             ],
             "title": "Operation",
             "type": "string"
