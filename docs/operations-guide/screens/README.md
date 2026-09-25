@@ -1,3 +1,19 @@
+# Screen provenance for edition 1.6.0
+
+All five images are unchanged September 24 reference captures. No new native
+screenshots were copied into the guide. The main procedure now follows reviewed
+broker controls across Intake, Results, Review, History, Configuration and Users.
+Stage 16 and Prod 6 are published for limited acceptance. These older images do
+not document the newly published players or current administration screens.
+
+The historical Intake image predates Resume / new intake and duplicate override;
+the History image contains the former service actor. Current instructions require
+the authenticated human actor. The host-editor image appears only in a historical
+disclosure because broker-only activation has closed that editor. No current
+Configuration/Users screenshot is claimed. Full capture evidence follows.
+
+---
+
 # App screen evidence — edition 1.4.0
 
 **September 24, 2026.** Four PNGs were captured directly from the renamed
@@ -33,7 +49,8 @@ Publication was verified by the tenant's **Publish successful** messages on
 September 24: Stage at **1:01:57 PM**, Prod at **1:15:52 PM**. Both apps were
 verified in the existing MILSTRIP solution; Stage retained its original ID.
 The unchanged images show Studio Preview, not the published player or the new
-administration screens. After these captures, licensing was resolved and Stage
+administration screens. After these captures, licensing was verified for the
+current administrator and Stage
 passed connection and saved-results checks in the published player. Prod opens
 with a separate connection, fixed environment and disabled database profile; it
 cannot accept intake yet. New individual-user enforcement and in-app

@@ -55,7 +55,8 @@ embedded connections and cannot prove a different caller's invoker connection.
    unavailable during the controlled cutover window; do not reopen that bypass.
 5. Complete Ed's native draft acceptance: Configuration Save/Test/Apply and
    uncertain-command handling; intake receipts, final-review completion,
-   duplicate blocking/override and recovery. Apply requires the preceding
+   duplicate blocking/override and recovery, with the exact native scope recorded
+   in [observed recovery evidence](#observed-recovery-evidence-for-this-limited-pilot). Apply requires the preceding
    activation and restart. Keep the current local Stage target and Prod database
    disabled; no hostname, Azure SQL activation or migration is part of this step.
 
@@ -79,6 +80,22 @@ embedded connections and cannot prove a different caller's invoker connection.
    second-user verification and full release acceptance pending**. Preserve the
    outstanding gate and do not claim verified multi-user operation or complete
    release acceptance. Publication itself does not satisfy the gate.
+
+## Observed recovery evidence for this limited pilot
+
+The resumed native checks encountered genuine uncertain responses during user
+sharing, Configuration Apply and review Save. Status reconciliation and exact
+retained-command retries were verified for those paths. Intake submission itself
+returned definite results, so its separate source-receipt recovery path has not
+been observed natively. Source tests cover that path; they are not native evidence.
+
+The prepublication recovery evidence must name the paths actually exercised.
+Limited publication under the sequence above retains the intake-submission case,
+second-user identity and the remaining multi-user matrix as explicit full-release
+acceptance gaps. Do not manufacture an outage, discard an unknown source ID,
+resubmit with a new identity, or describe these gaps as passed. Duplicate rejection,
+audited override and completion of every test-intake record must pass before
+publication. See [native acceptance](NATIVE_PILOT_ACCEPTANCE_2026-09-25.md).
 
 ## Guide and evidence
 

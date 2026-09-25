@@ -1,3 +1,62 @@
+# Edition 1.6.0 — September 25, 2026
+
+**Independent final editorial review and guide publication verification passed.** Stage 16 and Prod 6 are Live for limited acceptance.
+Native acceptance for bindings, memberships, broker-only host authority,
+existing-target Configuration, intake completion, duplicate blocking and override
+is recorded in the separate
+[pilot acceptance note](../delivery/NATIVE_PILOT_ACCEPTANCE_2026-09-25.md).
+
+The isolated browser build passed standalone offline loading, six operator steps,
+four app reference captures plus one historical host-editor capture, seven charts,
+image decoding, anchors, disclosures, enlargement, Escape dismissal, print
+expansion, SVG text bounds and 390/1440-pixel overflow checks. It made no HTTP
+requests and reported no browser errors. The signed-in browser was not used.
+
+Author measurements from rendered `main` text, excluding SVG text and figure
+controls, are **943 reading words** and **455 visible words** with disclosures
+closed. The operator and overview sections contain **294 visible words**.
+Headings, table cells, captions and disclosure summaries are included. The
+counting expression is `\b[\w]+(?:[-’'][\w]+)*\b`.
+
+The full PDF has **13 pages**; the quick SOP has **four**. Both passed extracted
+text and metadata privacy checks and retain version 1.6.0, limited-acceptance
+status, source-ID intake recovery and same-command review retry. Public Markdown
+passed the private-identifier guard. The allowlisted package contains five
+release assets plus SHA256SUMS.txt, with seven standalone SVGs in its deterministic
+ZIP. No screenshots were added or modified. The seven chart word counts, in
+filename order, are 133, 167, 195, 163, 158, 164 and 181.
+
+These checks verify documentation artifacts. They do not establish second-user,
+role or intake-submission recovery acceptance, Azure SQL readiness or delivery.
+The separate final reviewer confirmed exact artifact hashes, word/image/chart
+counts, rendered preview and architecture layout, public privacy/offline guards,
+the exact 11-member ZIP allowlist, checksums, source-byte equality and unchanged
+embedded reference images. No must-fix editorial finding remained. The deployed HTML comparison is recorded below.
+
+Public commit `17173e137e1270361b037327a06bf2b3d79055ac` was pushed to the
+existing guide repository. Pages reported **built** at **20:35:16 UTC**.
+Anonymous HTTP at the canonical guide URL returned HTTP200 and **2,158,022 bytes**
+at **20:36:19 UTC**, exactly equal to `HEAD:index.html` from that public commit:
+SHA-256 `a44e71fe5c7344c38b59fd714cdfc563fd09bd8199d78e89c388e3faddb7fa39`.
+Git normalized exactly 279 CRLF line endings to LF when staging HTML. A byte
+comparison proved this was the only difference from the reviewed frozen local
+HTML below; the source and offline package retain their original frozen bytes.
+The initial HTTP read during Pages building still returned edition 1.5 and was
+not treated as successful verification. A separate reviewer repeated the anonymous
+HTTP, Git blob, newline-equivalence, remote-head and Pages-build checks and
+independently confirmed publication.
+
+Frozen at **20:32:32 UTC**, SHA-256:
+
+- HTML: `18be78c7bef3a4b6cff3db53c85301dd69620424f915360316437d1cd5bae1d1`
+- Full PDF: `2425efab6d49db517b8b331d3f9883567e2910547efad851d4a49db3ef199745`
+- Quick SOP: `08589c48ded397225876598ec1e7615c05e8ef5bd9634fa881a5b485cb6a5a84`
+- ZIP: `3d1dbeb1028eaa5b39e62418af6888c07ef9cdc0b86354afceb5ae7ebdddc9cf`
+
+Earlier records below apply to their named editions.
+
+---
+
 # Web edition 1.5.0 — September 25, 2026
 
 Published at [the existing guide URL](https://edfortheblind.github.io/milstrip-guide/)
@@ -216,7 +275,7 @@ SHA256: `4e7505e60fa3ee82d0f9001c86bc4c596ee718f16c2583b0941efcb21af033cf`.
 
 ## Edition 1.4.0 — local verification, publication pending
 
-Licensing is resolved. Stage passed connection and saved-results checks in the
+Licensing was verified for the current administrator. Stage passed connection and saved-results checks in the
 published player; Prod opens with its database disabled. The existing Studio
 captures are unchanged. Corporate SSO connections are configured, but
 individual-user enforcement and the implemented administration screens await

@@ -1,57 +1,65 @@
-# Restart prompt ? September 25, 2026
+# Restart prompt - September 25, 2026
 
 Copy this into the next session in this repository:
 
 ```text
-Resume MILSTRIP from the owner-requested September 25 release cut.
+Continue MILSTRIP from the published limited-pilot checkpoint.
 Read AGENTS.md, OWNER_PROFILE.md, docs/master.md,
-docs/delivery/RELEASE_CUT_2026-09-25.md and
-docs/delivery/FINITE_PERMISSION_READ_DESIGN_2026-09-25.md first.
-Verify current Git/runtime/tenant state before relying on the checkpoint.
+docs/delivery/NATIVE_PILOT_ACCEPTANCE_2026-09-25.md,
+docs/delivery/PILOT_PUBLISH_ORDER_2026-09-25.md and the actual
+powerapps/canvas/deployment-manifest.json first. Verify current Git, local API,
+native app versions and authority state before relying on the checkpoint.
+The prior pause was resumed. Implementation, native UI, normal TAB sign-in,
+publishing both apps/guide and commit/push were explicitly authorized.
 
-The objective remains: finish, verify and publish both Stage/Prod Power Apps
-and the public guide; commit and push. This prompt resumes the explicit pause.
-Prior implementation, browser/mouse/keyboard, normal TAB sign-in and publication
-approvals persist. Keep progress brief and preserve independent design/review.
+Stage version 16 and Prod version 6 are Live, with six screens and their matching
+updated Power Apps V2 broker. Both brokers are On; all six current memberships
+are ACTIVE with completed current four-resource plans. No sharing lease or
+Management permit remains. Broker-only security and runtime authority are active.
+Do not restore legacy direct Basic access, rerun historical recovery, delete
+retained audit/test rows, or treat old noncurrent pending plans as current failures.
+The protected read-only permission diagnostic is Off. Existing IDs/resources,
+ownership and six-person audience were preserved.
 
-Core and guide commits are pushed. Guide 1.5.0 is live:
-https://edfortheblind.github.io/milstrip-guide/
-Both new Canvas drafts are saved/exported but UNPUBLISHED. Broker flows still
-run older definitions. Latest full local suite: 747 passed, 0 skipped. This is
-source evidence, not native release acceptance.
+The source checkpoint 925478e passed 1,003 tests with 0 skips and 2 upstream warnings.
+Native unchanged-Stage Configuration Save/Test/Apply, missing-test rejection,
+Initialize guard and actual uncertain-command recovery passed. Two synthetic
+intakes (four records total) have final decisions, one decision/audit per record,
+no active workflow. Final-review lock, normalized two-hour duplicate rejection,
+blank override reason guard and one explicit audited duplicate override passed.
+A genuine uncertain review recovered with the exact retained command and no
+extra decision/version change. Old published shared-Basic access was denied.
+Read the acceptance record for final standalone-player and guide-publication evidence.
 
-Immediate blocker: native Stage permissions page 1 returns 2 rows plus nextLink;
-the earlier host result 3 was an aggregate. Native nextLink matches the fixed
-host/path and has ordered keys api-version,%24filter,%24skiptoken. The current
-single-page source fails closed but is insufficient. DO NOT import the private
-single-page package or retry sharing with it.
+Full release acceptance remains pending: another approved TAB user must sign in
+with their own Office 365 Users invoker connection; actual role/denied-user,
+revocation/concurrent-session tests and intake-specific unknown-submission
+reconciliation remain open. Existing native accessibility/parser diagnostics are
+not declared resolved. Configuration/review recovery does not prove intake
+submission recovery. Never fabricate another user's identity or discard an
+unknown submission/source ID. Current licensing evidence covers only the verified
+administrator. Do not expand sharing or grant co-owner rights for testing.
 
-Finalize/review the unfinished three-page design and strict cursor validator, then
-implement bounded protected traversal with cumulative uniqueness, terminal
-completeness, deadlines and write suppression. No cursor/row variables or
-automatic pagination. Test limits and failure paths; independently review.
-Prove protected native traversal for BOTH apps before updating broker flows.
-Then finish pending memberships, actual second-user identity checks,
-security/runtime activation, Studio Formula-error diagnosis and native workflow
-acceptance. Publish accepted drafts and update/verify the guide accurately.
-The historical canceled run was already recovered: do not repeat recovery or
-clear leases. Last control state: 3 active, 3 pending, zero leases, security/runtime
-inactive. Do not disable pending users to bypass activation.
+Guide URL: https://edfortheblind.github.io/milstrip-guide/
+Guide 1.6.0 is live (public commit 17173e1); Pages and exact committed-HTML
+HTTP verification passed. The verification record distinguishes Git line-ending
+normalization from the frozen local package. Do not rely on the old guide 1.5 cut.
+Public documentation must exclude private identity/resource data and screenshots.
 
-Requirements remain: TAB SSO plus app-configured membership; Admin/Owner-only
-Configuration and in-app DB Test/Apply/Initialize; every record needs a final
-review decision before another intake; normalized duplicates blocked for 2 hours,
-with explicit audited Admin/Owner override but no unfinished-review override.
-Initial DB targets will be Azure SQL Stage/Prod, later PostgreSQL via connection
-string/provider detection after schema/data readiness. API/gateway eventually
-move to always-on TAB network hosts; Power Apps/Automate remain Microsoft-hosted.
-Current work stays local: Stage PostgreSQL, Prod DB disabled, hostnames pending.
-No operational SQL Server writes, DNS change or production DB cutover here.
+Requirements remain: TAB SSO plus app-configured access; Admin/Owner-only
+Configuration; in-app DB Test/Apply/Initialize; every record receives a final
+review before another intake; normalized duplicates blocked for two hours with an
+explicit audited Admin/Owner override but no unfinished-review bypass.
+API/gateway remain local pending always-on TAB hostnames. Power Apps/Automate
+remain Microsoft-hosted. Future initial targets are Azure SQL Stage/Prod, later
+PostgreSQL after separate schema/data readiness. Changing a connection string
+does not migrate data. Current Stage is local PostgreSQL; Prod DB disabled.
+No operational SQL Server write, Azure SQL activation, DNS or production cutover
+is authorized by this local pilot. Follow the network roadmap when inputs arrive.
 
-Reuse existing resources and private artifacts named in the checkpoint.
-Rediscover browser handles/tab order and foreground the browser before mouse
-clicks. Avoid generic Close selectors. Never export tokens or unmask protected
-permission rows. Do not retry the rejected SDK lookup; native UI already found
-the diagnostic flow. Continue without repeating completed work or asking again
-for already-granted approvals.
+Rediscover browser handles/tabs and foreground before input. New players may need
+Refresh after publication and normal Office 365 Users consent. Reconcile actual
+terminal/durable state before retrying any uncertain native command; preserve its
+exact identity/payload. Do not retry the previously rejected SDK tenant lookup.
+Keep progress concise; preserve independent design/review and exact evidence.
 ```

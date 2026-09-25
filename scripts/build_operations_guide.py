@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "operations-guide"
 DIAGRAMS = OUT / "diagrams"
 DATE = "September 25, 2026"
-VERSION = "1.5.0"
+VERSION = "1.6.0"
 PALETTE = {
     "dev": ("#e8f5f1", "#087f6c", "CURRENT"),
     "manual": ("#f0f3f7", "#53657d", "EXISTING MANUAL"),
@@ -87,15 +87,15 @@ class Chart:
 
 def charts():
     manifests=[]
-    c=Chart("01-current-functional.svg","Current functional flow","Intake, validation, review and audit within the authenticated environment.",850)
-    c.panel(20,150,960,400,"CURRENT  /  implemented and tested with synthetic input")
+    c=Chart("01-current-functional.svg","Current functional flow","Published Stage: receipt and final reviews verified; remaining native checks continue.",850)
+    c.panel(20,150,960,400,"IMPLEMENTED  /  synthetic Stage intake and review; no production delivery")
     c.node("source",40,205,280,102,"Original source",["Email or ticket text","Pasted by the operator"])
     c.node("intake",360,205,280,102,"Submit intake",["Source sent for validation","Receipt after storage commits"])
     c.node("parser",680,205,280,102,"Parse and validate",["Conservative normalization","Preserve / pad to 80 chars"])
     c.arrow([(320,255),(360,255)]);c.arrow([(640,255),(680,255)])
     c.node("results",680,390,280,122,"Record results",["VALID / REQUIRES_REVIEW","or REJECTED","Issues stay visible"])
     c.node("review",360,390,280,122,"Human review",["APPROVED or REJECTED","Reason + version required","Invalid approval blocked"])
-    c.node("audit",40,390,280,122,"Audit and history",["Authenticated actor saved","Review is not delivery","No operational write"])
+    c.node("audit",40,390,280,122,"Audit and history",["Human actor from broker","Review is not delivery","No operational write"])
     c.arrow([(820,307),(820,390)]);c.arrow([(680,451),(640,451)]);c.arrow([(360,451),(320,451)])
     c.panel(20,590,960,200,"EXISTING MANUAL  /  recorded production context, not invoked by this app","manual")
     for key,x,title,lines in [("raw",40,"Raw MILS",["SQL raw staging","Operator input"]),("batch",280,"Manual SQL batch",["Reference checks","ERP-order duplicates"]),("940",520,"download_ship940",["Direct insert target","Not 940 staging"]),("downstream",760,"Existing downstream",["ADF / ShipMaster","Boomi / SCALE"])]:
@@ -103,18 +103,20 @@ def charts():
     for x in [240,480,720]:c.arrow([(x,699),(x+40,699)])
     manifests.append(c.save())
 
-    c=Chart("02-current-architecture.svg","Stage and Prod architecture","Published players open. Prod database and in-app administration acceptance remain pending.",980)
-    c.panel(20,150,960,290,"POWER PLATFORM CLOUD  /  existing solution, connector and gateway")
-    c.node("stage-app",50,205,370,90,"MILSTRIP Stage",["Published player runtime checked","Licensing resolved"])
-    c.node("prod-app",50,320,370,90,"MILSTRIP Prod",["Published; separate connection","Database disabled; app opens"])
-    c.node("connector",570,250,370,110,"Existing custom connector",["Seven routes plus SSO broker","Broker deployment being validated"])
-    c.arrow([(420,250),(500,250),(500,280),(570,280)])
-    c.arrow([(420,365),(500,365),(500,320),(570,320)])
+    c=Chart("02-current-architecture.svg","Stage and Prod architecture","Published for limited acceptance; second-user and role checks remain pending.",980)
+    c.panel(20,150,960,290,"POWER PLATFORM CLOUD  /  existing apps, solution and connector")
+    c.node("stage-app",50,205,370,90,"MILSTRIP Stage",["Version 16 Live; Ready verified","Current administrator licensed"])
+    c.node("prod-app",50,320,370,90,"MILSTRIP Prod",["Version 6 Live; admin available","Business database disabled"])
+    c.node("broker",570,190,370,100,"Stage / Prod SSO brokers",["Office 365 Users: invoker identity","One fixed environment per broker"])
+    c.node("connector",570,325,370,100,"Existing custom connector",["Private embedded connections","Fixed Stage / Prod credentials"])
+    c.arrow([(420,250),(500,250),(500,230),(570,230)])
+    c.arrow([(420,365),(470,365),(470,265),(570,265)])
+    c.arrow([(755,290),(755,325)])
     c.panel(20,480,960,190,"API HOST  /  currently the laptop")
     c.node("gateway",40,535,280,105,"Standard gateway",["Existing cloud-to-local bridge","HTTP to the loopback API"])
-    c.node("api",360,535,280,105,"Shared API + parser",["Authenticated environment","One backend for both apps"])
-    c.node("profiles",680,535,280,105,"Fixed database profiles",["Host configuration screen","Activate by API restart"])
-    c.arrow([(755,360),(755,462),(180,462),(180,535)])
+    c.node("api",360,535,280,105,"Shared API + parser",["Broker-only; single worker","One backend for both apps"])
+    c.node("profiles",680,535,280,105,"Fixed database profiles",["In-app Configuration","Save / Test / Apply"])
+    c.arrow([(755,425),(755,462),(180,462),(180,535)])
     c.arrow([(320,587),(360,587)]);c.arrow([(640,587),(680,587)])
     c.panel(20,710,960,160,"DATABASE TARGETS  /  Stage and Prod must be different")
     c.node("stage-db",45,755,430,90,"Stage: local PostgreSQL",["Intake, validation, reviews and audit","Runtime tested; retained test preserved"])
@@ -128,15 +130,15 @@ def charts():
     c=Chart("03-current-user-sop.svg","Operator procedure","Use the intended environment; confirm availability before entering source text.",940)
     steps=[("source",155,"1  Enter the source",["Paste the original email or ticket text.","Obtain missing values from the source owner."]),
            ("submit",280,"2  Submit the intake",["Select Submit intake once.","Confirm Intake saved, Request ID and received time."]),
-           ("inspect",405,"3  Inspect the results",["Load / refresh results, then Inspect / review.","Read each issue; use Next results page if enabled."]),
+           ("inspect",405,"3  Inspect the results",["Load / refresh results, then Review record [number].","Read each issue; use Next results page if enabled."]),
            ("save",530,"4  Record your decision",["Choose APPROVED or REJECTED; enter a reason.","Select Save review. Invalid approval is disabled."]),
-           ("verify",655,"5  Verify the saved review",["Check the saved message and updated version.","Return to Results; Load / refresh results."]),
-           ("history",780,"6  Verify the audit event",["History → Load / refresh history.","Find REVIEW_DECIDED for the same record."])]
+           ("verify",655,"5  Verify every saved review",["Confirm each saved version in Results.","Finish every record before another intake."]),
+           ("history",780,"6  Verify history and continue",["History → Load / refresh history; check actor.","Then Intake → Resume / new intake."])]
     for key,y,title,lines in steps:c.node(key,30,y,570,104,title,lines)
     for y in [259,384,509,634,759]:c.arrow([(315,y),(315,y+21)])
-    c.node("unknown",650,280,320,127,"Submission uncertain",["Load recent requests; match","the displayed source ID.","Owner confirms not saved."],"gate")
+    c.node("unknown",650,280,320,127,"Submission uncertain",["Keep text + source ID.","Resume / new intake checks it.","No match: stay blocked."],"gate")
     c.arrow([(600,332),(650,332)],dashed=True)
-    c.node("invalid",650,430,320,127,"Validation REJECTED",["Obtain corrected source.","Submit a new intake.","Retain both Request IDs."],"gate")
+    c.node("invalid",650,430,320,127,"Validation REJECTED",["Reject this record in review.","Finish the intake first.","Then submit corrected source."],"gate")
     c.arrow([(600,457),(625,457),(625,493),(650,493)],dashed=True)
     c.node("retry",650,580,320,149,"Review exception",["Unknown: Retry same command.","Keep decision and reason.","Conflict: Reload after conflict;","inspect, then decide again."],"gate")
     c.arrow([(600,582),(625,582),(625,654),(650,654)],dashed=True)
@@ -199,7 +201,7 @@ def charts():
     manifests.append(c.save())
 
     c=Chart("07-phase2-transition.svg","Two periods: qualify, switch, stabilize","Q4 2026 is the owner's target. Dates never override the acceptance gates.",860,"future")
-    c.node("now",30,165,280,145,"NOW / September 25",["Existing players remain live","Drafts saved; unpublished","Access acceptance pending","Prod database disabled"],"dev")
+    c.node("now",30,165,280,145,"NOW / September 25",["Broker-only host active","Six memberships verified","Stage 16 / Prod 6 Live","Prod database disabled"],"dev")
     c.node("p21",360,165,280,145,"P2.1 / target October",["Published production pilot","Existing Azure SQL DB","API moved off laptop","Measured load and operations"],"future")
     c.node("p22",690,165,280,145,"P2.2 / target December",["Accepted PG Production","One writer switch","Stable IDs / history / commands","Qualified downstream flow"],"future")
     c.arrow([(310,237),(360,237)],dashed=True);c.arrow([(640,237),(690,237)],dashed=True)

@@ -1,3 +1,25 @@
+# Edition 1.6.0 checkpoint — September 25, 2026
+
+This internal companion preserves historical engineering records below. Current
+native evidence is in [pilot acceptance](../delivery/NATIVE_PILOT_ACCEPTANCE_2026-09-25.md)
+and [permission validation](../delivery/NATIVE_PERMISSION_VALIDATION_2026-09-25.md).
+Both broker bindings and six memberships are verified; host broker-only authority
+is active with one worker. Stage 16 and Prod 6 are Live for limited acceptance;
+both players and licensing are verified only for the current administrator.
+Native Configuration Save/Test/Apply, intake completion, normalized duplicate
+rejection, audited override and configuration/user-access/review recovery passed.
+Stage retains local PostgreSQL and Prod remains disabled. Prod's first startup
+after consent stalled and recovered after one read-only reload; cause is unproven.
+Second-user, role, intake-submission recovery and diagnostic/accessibility gates
+remain pending. Pages deployment history records guide publication separately.
+
+The host configuration editor described in the older notes is closed after this
+cutover. Routine active settings use the six-screen app's Configuration and Users
+screens. Earlier shared-service audit identity and unpublished single-app claims
+are historical, not current authority or actor behavior.
+
+---
+
 # MILSTRIP engineering notes: current operation and Phase 2
 
 **Internal companion:** implementation detail for edition 1.2.0. The

@@ -1,23 +1,32 @@
 # MILSTRIP operator guide
 
-## [Read the guide](https://edfortheblind.github.io/milstrip-guide/)
+## [Read the published guide](https://edfortheblind.github.io/milstrip-guide/)
 
-Version **1.5.0** · Update dated **September 25, 2026**.
+Edition **1.6.0**. Evidence date: **September 25, 2026**.
+Pages deployment history records publication of this documentation edition.
 
-Six operator steps with current Stage screenshots, the intake receipt and a
-separate administrator section for PostgreSQL/Azure SQL configuration. Select
-**View larger** to inspect a screen or diagram. The guide opens directly in a
-browser without downloads or sign-in.
+Six operator steps cover Intake, Results, Review and History; the administration
+section covers Configuration and Users. Select **View larger** to inspect the
+reference screens or diagrams. The guide works in a browser without downloads
+or sign-in.
 
-**The existing apps remain published; updated drafts are not yet released.**
-Licensing is resolved. September 24 player checks verified Stage connection and
-saved results; Prod's database remains disabled. September 25 drafts add in-app database
-initialization, intake completion checks and two-hour duplicate prevention with
-an audited Admin/Owner override. Native flows, sharing and access enforcement
-still require acceptance before those changes become available to users.
-Production handoff and downstream receipts remain Phase 2 work: Azure SQL first,
-then accepted PostgreSQL production. The API and gateway will run on managed
-organizational network hosts; Power Apps/Automate remain Microsoft-hosted.
-Existing screenshots contain synthetic data and show the published workflow.
+**Stage 16 and Prod 6 are published for limited acceptance.** Six memberships,
+native broker bindings and broker-only host authority are active. Both players
+and licensing are verified for the current administrator only. Configuration,
+intake completion, duplicate blocking and audited override passed. Prod's database
+stays disabled; an initial post-consent startup stall recovered after one
+read-only reload, with cause unproven. Second-user, role, intake-submission recovery
+and diagnostic/accessibility checks remain pending.
+
+The updated procedure requires every final record decision before a new intake,
+blocks identical normalized content for two hours, and allows Admins/Owners to
+override duplicates with an audited reason. Database configuration belongs in
+the app; changing its connection string does not migrate existing history.
+
+Production still requires managed network hostnames and Azure SQL acceptance,
+followed by qualified PostgreSQL migration. Power Apps/Automate remain
+Microsoft-hosted. Production handoff and downstream receipts are separate work.
+The five dated synthetic reference captures predate the new controls and audit
+identity; no fresh screenshots or credentials are included.
 
 This repository publishes documentation only; it does not grant app access.

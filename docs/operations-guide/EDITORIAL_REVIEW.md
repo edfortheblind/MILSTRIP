@@ -1,3 +1,32 @@
+# Editorial review — edition 1.6.0
+
+**September 25, 2026. Result: PASS — no unresolved must-fix editorial finding.**
+The guide author updated the six-step SOP, in-app Configuration/Users procedures,
+current broker authority and membership state, and dated screenshot labels.
+Native configuration, user-access and review-command recovery are recorded;
+intake-submission recovery and second-user/role acceptance are not claimed.
+Stage 16 and Prod 6 are Live for limited acceptance. The independent source
+review accepted the corrected Review record label, broker identity chart,
+administrator-only licensing scope and bounded native acceptance claims.
+
+The separate final reviewer checked the artifacts frozen at **20:32:32 UTC**
+against the corrected sources and final publication evidence. Exact HTML, PDF,
+SOP, guide, public README and public verification hashes matched. Rendered preview
+and architecture-chart review passed. Public HTML/SVG/Markdown and extracted PDF
+text/metadata passed privacy and offline guards. The ZIP had its exact 11-member
+allowlist, verified checksums and source-byte equality. All five embedded reference
+images matched unchanged source bytes. This is an independent documentation
+review, not completion of the application's remaining acceptance gates.
+
+The reviewer independently confirmed the author measurements:
+943 reading words, 294 visible operator/overview words, 455 visible words across
+the whole main reading area, six steps, five unchanged reference images and seven
+charts. The full PDF has 13 pages and the quick SOP four. Exact current labels,
+recovery distinctions, limited-pilot scope, historical captures, disabled Prod and
+outstanding gates passed review. Earlier reviews below apply to their named editions.
+
+---
+
 # Editorial review — web edition 1.5.0
 
 **Date:** September 25, 2026. **Result: PASS — no unresolved editorial finding.**

@@ -1,170 +1,105 @@
-# MILSTRIP Intake Automation — Master Document
+# MILSTRIP Intake Automation - Master Document
 
-**Version:** 1.3 **Date:** 2026-09-25 **Status:** PLAYERS_VERIFIED_ADMINISTRATION_BLOCKED_PROD_DISABLED
+**Version:** 1.4 **Date:** 2026-09-25 **Status:** PILOT_PUBLISHED_MULTIUSER_ACCEPTANCE_PENDING_PROD_DISABLED
 
-**Resumed September 25 after the owner requested Continue:** Guide 1.5.0 and
-its prior commits remain published/pushed. Updated Canvas drafts remain
-unpublished. Bounded three-page permission traversal is now implemented and
-independently reviewed; 322 reader/flow/package tests passed. Review fixes reject
-malformed compact evidence and self-access edits before state changes. The
-existing connector enum update imported successfully, and the local API restarted
-with the reviewed validator. The protected read-only native trial passed for both
-apps: two pages and three cumulative rows each, in 14 seconds total, with secure
-history and unchanged control state. The diagnostic is verified Off. The reviewed
-two-flow import completed using existing connection references. Independent native
-export comparison matched each broker's trigger and all 417 actions, with only
-expected connection serialization differences. Both brokers were verified Off
-after import, then explicitly activated and verified On. Broker workflow
-acceptance, membership reconciliation, second-user identity, host enforcement,
-configuration activation, intake workflow acceptance and Canvas publication
-remain pending. The full local suite
-passed **1,003 tests, none skipped**, with two upstream warnings.
-Read the [native evidence](delivery/NATIVE_PERMISSION_VALIDATION_2026-09-25.md)
+The owner resumed the September 25 release cut and authorized publication of both
+existing apps and the operating guide, plus commit/push. The current release uses
+the existing solution, gateway, connector, two apps and two broker flows. See the
+[native pilot evidence](delivery/NATIVE_PILOT_ACCEPTANCE_2026-09-25.md) and
+[pilot publication order](delivery/PILOT_PUBLISH_ORDER_2026-09-25.md). The earlier
+[release cut](delivery/RELEASE_CUT_2026-09-25.md) is a historical checkpoint.
+
+**Current runtime and access:** All six configured memberships are ACTIVE, each
+with a completed current sharing plan. Existing protected Owners and deployment
+ownership are preserved. All sharing executions are closed; no sharing lease or
+Management permit is outstanding. Broker-only security enforcement and runtime
+authority were activated at 19:24:13 UTC and the API restarted. Direct shared
+Basic access is denied before credential verification. One private control store
+now owns membership, configuration and audit state; the legacy runtime file is
+preserved but is no longer the active configuration authority. Do not restore the
+old direct-access bypass.
+
+Both updated broker flows are On. Independent native export comparison matched
+each trigger and all 417 actions, with expected connection serialization changes.
+Office 365 Users supplies the run-only caller's identity; API and sharing
+connections remain private. The bounded protected permission reader passed a
+native trial for both apps (two pages, three cumulative rows each); its diagnostic
+is Off. See [permission evidence](delivery/NATIVE_PERMISSION_VALIDATION_2026-09-25.md)
 and [design](delivery/FINITE_PERMISSION_READ_DESIGN_2026-09-25.md).
-The [release cut](delivery/RELEASE_CUT_2026-09-25.md) and counts below describe
-historical checkpoints; the explicit pause has been resumed.
 
-**Published apps:** Licensing is resolved for the verified player sessions.
-MILSTRIP Stage (`7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`) passed health and retained
-results reads in the actual published player. MILSTRIP Prod
-(`0aa02d8b-c7fa-42cc-87e8-6d287bd4c897`) opens in its published player and reports
-`Database: DISABLED`. Its independent database target still requires owner approval.
-Stage continues to use local PostgreSQL and the existing solution, connector and
-gateway. No new Canvas version has been published for the administration work.
+**Canvas publication:** Stage version **16** and Prod version **6** are Live
+(Power Apps release 3.26091.11) for the existing six-person audience. Both matching
+broker bindings were saved and exported. The apps retain 85 controls, 724 source
+properties, 37 behavior handlers, six screen events and three App properties;
+all 4,367 executable rules were unchanged by binding refresh. Studio reported
+zero formula errors. Export diagnostics retain one Parser, zero Binding, two
+literal-predicate SARIF findings and 66 accessibility items per app; these baseline
+items are not claimed resolved. The [actual deployment manifest](../powerapps/canvas/deployment-manifest.json)
+records the live versions. Stage's updated standalone player is Ready; its Configuration load, retained
+request reopening and audit-history read passed. Prod's updated player also passed administration and Configuration reads while its
+database remained disabled. Its first post-consent startup stalled; one read-only
+reload completed startup. The initial stall's cause is unproven.
 
-**Requirements update, September 25, 2026:** The API/HTTPS service and gateway
-will move to always-on IT-managed hosts inside TAB's network. Power Apps and
-Power Automate remain Microsoft-hosted. The existing **Azure SQL Stage and Prod**
-are the initial database targets; PostgreSQL Stage and Prod follow later. This
-supersedes the earlier requirement to move all databases immediately onto TAB VMs.
-The previously proposed API names remain unconfirmed deployment inputs; no DNS,
-Azure SQL connection or production cutover has been performed.
+**Native acceptance:** Both drafts resolve the current administrator through TAB
+SSO. Stage reports Ready against the retained local PostgreSQL target. Prod's
+database remains disabled while its administration works. In Stage Configuration,
+Save/Test/Apply passed for the unchanged target, including an unexpired matching
+test receipt, missing-test rejection, enabled-target Initialize guard and actual
+uncertain-command recovery. Only Stage's profile revision changed; Prod and the
+connection targets were unchanged. No database initialization occurred.
 
-Local source now adds automatic provider detection from the connection string,
-an admin-only **Initialize database** action inside Power Apps Configuration,
-and durable per-operator intake tracking. All records require final review before
-the next intake. Identical normalized content is blocked across users for **two
-hours** within an environment; an Admin/Owner can explicitly override duplicates
-with an audited reason, but cannot bypass unfinished review. See the
-[implementation and hosting roadmap](delivery/INTAKE_NETWORK_ROADMAP_2026-09-25.md)
-for verification and release boundaries. These changes are not published Canvas
-behavior, and the existing identity/sharing cutover blockers remain open.
-The final local PostgreSQL run in the
-[pre-hostname validation](delivery/PREHOSTNAME_VALIDATION_2026-09-25.md) passed
-**580 tests, none skipped**, with two upstream warnings in 151.18 seconds.
-The recovery implementation passed 47 tests; separate combined recovery review
-passed 160 tests with one PostgreSQL opt-in test skipped. Earlier counts of 458,
-504, 519 and the 29-test flow/lease increment describe preceding snapshots. The
-final API restart loaded the latest source, including transient-503 mappings;
-retained rows and complete tracking are preserved. Schema version 2 remains
-installed locally. Updated Canvas/flows are unpublished.
+Two synthetic two-record intakes now have all four final decisions, one decision
+and audit per record, with no active workflow remaining. A real uncertain review
+response recovered with the same command without another decision/version change.
+Unfinished review blocked submission even with an administrator override reason.
+After final decisions, Resume / new intake cleared the form. A CRLF/terminal-newline
+variant was blocked as the same normalized intake within two hours, with no added
+receipt. A blank override reason blocked Submit; an explicit reason created one
+distinct intake and one override audit linking the original receipt and human
+actor. Both override records were then reviewed. Historical rows were preserved.
 
-**Administration drafts:** September 25 updates are saved in both six-screen
-native drafts and remain unpublished. Separate comparison verified each exported
-app has 85 controls, 724 source properties, 37 behavior handlers, six screen events
-and three App properties, using only its matching broker. The
-[current native evidence](delivery/CANVAS_NATIVE_INTAKE_UPDATE_2026-09-25.md)
-retains baseline diagnostics: one Parser and zero Binding findings, two SARIF
-literal-predicate findings and 66 accessibility items per app. Native workflow
-acceptance remains open. The earlier v2 exports verified 81 controls and 679 source
-properties per draft; that snapshot and its four role-display/message fixes are
-recorded in the
-[Canvas evidence](delivery/CANVAS_SOURCE_ASSEMBLY_2026-09-24.md).
-For that earlier snapshot, the source suite passed **372 tests;
-73 database opt-in tests were skipped**, with two upstream dependency warnings
-in 77.51 seconds.
-The preceding pagination/flow/package/sharing batch passed **43 tests**. Skipped tests are not
-live database or tenant acceptance.
+Intake-specific unknown-submission recovery, actual second-user identity,
+role/denied-user, revocation and concurrent-session acceptance remain open.
+Licensing is verified only for the administrator's actual sessions, not all six
+recipients. Limited publication does not establish full multi-user acceptance.
 
-The existing connector exposes eight operations, including `InvokeBroker`, and
-gateway connectivity is verified. Both broker references are bound and both
-native flows are **Started**:
+**Requirements and hosting:** Power Apps and Power Automate remain Microsoft-hosted.
+The API/HTTPS service and gateway will move to always-on IT-managed hosts inside
+TAB's network once hostnames and infrastructure are ready. The initial database
+targets will be existing Azure SQL Stage and Prod; PostgreSQL follows after
+separate schema/data migration acceptance. The app detects the provider from its
+connection string. Admin/Owner-only Configuration supplies Save, Test, Apply and
+explicit Initialize actions in Power Apps. A connection-string change does not
+migrate data or remove target-readiness checks. No Azure SQL connection, DNS change,
+operational SQL Server write or production cutover has been performed.
 
-- Stage: `04d6229f-5ab8-f111-aaac-7ced8d6f317c`.
-- Prod: `fbe87a93-68ef-4efb-88db-facc21c125f6`.
+Every record needs a final review before the operator starts another intake.
+Identical normalized content is blocked across users for two hours within an
+environment. Admin/Owner can override duplicates with an audited reason, but
+cannot bypass unfinished review. The [network roadmap](delivery/INTAKE_NETWORK_ROADMAP_2026-09-25.md),
+[administrator SOP](RUNTIME_CONFIGURATION.md), [TAB SSO SOP](TAB_SSO_SETUP_SOP.md)
+and [ADR 0006](adr/0006-user-identity-and-administration.md) describe the design
+and remaining deployment inputs. Local PostgreSQL schema version 2 and retained
+acceptance rows remain in place. Delivery to the operational pipeline is not connected.
 
-The **Power Automate Management connection is Connected**, using existing TAB
-SSO: `MILSTRIPManagementSSO`, ID `07c12ec437fa43e289082155a221a981`. Licensing and
-OAuth are resolved; no SSO provider change is required. The
-[TAB sysadmin SOP](TAB_SSO_SETUP_SOP.md) records the working procedure, recovery
-and two successful native Stage run-metadata checks. Protected inputs/outputs
-were verified without opening protected content.
+**Verification and guide:** Source commit `925478e` passed **1,003 tests, none
+skipped**, with two upstream warnings. Reader/flow/package checks and separate
+reviews are recorded in the delivery evidence. Earlier test counts and native
+snapshots in linked documents describe preceding states, not current blockers.
+Guide **1.6.0** is live at https://edfortheblind.github.io/milstrip-guide/.
+Public commit `17173e1` passed independent editorial review and Pages deployment;
+anonymous HTTP returned the exact committed HTML. Git normalized only line endings
+from the reviewed local build. Its publication is separate from app publication. The [visual operating package](operations-guide/index.html)
+retains the Azure SQL-first then PostgreSQL roadmap and explicit acceptance limits.
 
-Native Stage checks passed for `GetCurrentUser`, `GetHealth`, `ListUsers`,
-`GetRuntimeProfiles`, saving a configuration draft and testing the unchanged
-target. Prod passed SSO and administration/configuration reads with its database
-disabled. Configuration Apply, sharing and second-user acceptance remain incomplete.
-After three executions returned incomplete app readback, the final built-in
-pagination trial stalled for more than eight minutes at `Before_add_stage_app`
-and was canceled in the native run UI around 23:48 UTC. It reached no permission
-mutation or Management call. That historical hold was resolved on September 25:
-the independently reviewed [host recovery](delivery/SHARING_RECOVERY_IMPLEMENTATION_2026-09-25.md)
-used fresh authenticated run/action/run-attached-definition evidence, closed the
-canceled execution and released only its matching lease. Readback confirmed the
-command, plan and membership remain pending; protected authority, profiles,
-memberships, observations and Management pacing are unchanged, with one audit
-event added and no active permit. Earlier grants remain untouched and no new app
-CanView grant was added. **Do not retry native sharing yet:** a finite, complete
-interactive permission-read path still requires acceptance. The finite read-only
-collector and applied host recovery do not satisfy that native gate. The
-[pagination evidence](delivery/MAKERS_PERMISSION_PAGINATION_2026-09-24.md) records
-the historical trial and exact recovery references. No OAuth or IT policy change
-is needed.
-
-Claude and Mike are ACTIVE protected application Owners after readback of their
-CanView grants on both apps and run-only grants on both flows. Ed is ACTIVE Admin
-and retains platform deployment ownership. Kristen, Thomas and Shawn remain
-PENDING. Private control therefore has three active and three pending memberships;
-post-restart readback confirms zero sharing leases, with security enforcement and
-runtime authority both inactive. The published
-four-screen apps still use the shared connection's API identity.
-
-The flows share one durable Management connector permit with a 13-second
-cooldown after each confirmed call. Unknown outcomes hold the permit until
-recovery. Six serial native calls observed post-completion intervals of at least
-13.516 seconds. Concurrent/timeout recovery acceptance remains pending.
-
-The [deployment manifest](../powerapps/canvas/deployment-manifest.json) records
-the published apps; [ADR 0006](adr/0006-user-identity-and-administration.md) and the
-[implementation contract](delivery/IDENTITY_ADMIN_IMPLEMENTATION_CONTRACT_2026-09-24.md)
-define the pending rollout. The [administrator SOP](RUNTIME_CONFIGURATION.md)
-covers both configuration authorities and explicit application-schema provisioning.
-Active control mode will use one private `control.json`, per-profile request
-draining and tested configuration changes. Until that cutover, the legacy private
-runtime configuration remains the running authority.
-
-PostgreSQL and SQL Server adapters are implemented; live Azure SQL acceptance is
-not established. Shared API releases and restarts affect both apps. The earlier
-[runtime/publication evidence](delivery/RUNTIME_PROFILES_2026-09-24.md) records the
-242-test increment and its then-current licensing limitation; it is historical.
-
-Use the [visual operating package](operations-guide/index.html) for the functional
-flow, architecture, end-user SOP and evidence limits.
-The [Phase 2 plan](operations-guide/guide.md#phase-2-two-production-periods)
-uses existing Azure SQL first, followed by accepted PostgreSQL migration. The
-September 25 owner clarification restores this database sequence while moving
-the API and gateway onto TAB-managed infrastructure. Database hostnames, migration
-sequencing and cutover acceptance remain pending.
-Earlier increment sections are historical snapshots. The public visual guide
-**1.5.0** is published and verified at the existing guide URL. It retains the
-current four-screen procedure and adds the saved-draft rules and managed TAB
-hosting roadmap, with administration acceptance explicitly pending. Public
-commit `0c54fdc` passed independent editorial review and exact anonymous-HTTP
-readback. This status supplies the detailed implementation and blocker evidence.
-
-The September 23 [acknowledgement update](delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md)
-added the persistent intake receipt now included in Stage. The
-[retained September 24 runtime test](delivery/RETAINED_RUNTIME_TEST_2026-09-24.md)
-preserves its intake, reviews and audit events in PostgreSQL. Do not delete it.
-Production handoff and downstream receipts remain Phase 2 work; the current API
-still records the shared connection identity on the published app path.
-The illustrated guide has a separate editorial review and publication standard.
+Historical retained runtime and recovery records must not be deleted or replayed.
+The canceled historical sharing execution was recovered and its lease closed;
+old noncurrent pending plans do not invalidate completed current memberships.
 Incoming change documents belong in the local [inbox](../inbox/README.md).
 
-Built with the AEKR (AI Engineering Knowledge Repo) workflow — see the root
-`README.md` footer and `meta/OPERATING_PRINCIPLES.md` in the `AEKR` repo for
-what that means. This document is this project's own single source of truth;
-it does not duplicate that framework's content, only points at it.
+Built with the AEKR workflow; see the root README and the AEKR repository's
+`meta/OPERATING_PRINCIPLES.md`. This is the project's source of truth; it references
+that framework without duplicating it.
 
 ## 0. Normative scope
 
@@ -279,7 +214,11 @@ changes. A local development database slice is separately authorized under
 the `milstrip_app` isolation boundary. No legacy-table write is authorized
 until the original parser/handoff contract is recovered and approved.
 
-## 9. Current backend increment
+## 9. Historical backend increment
+
+Sections 9-12 and the dated Canvas update preserve September 23 checkpoints.
+Their current/next/pending wording refers to those increments; the September 25
+status at the top of this document is the active deployment record.
 
 The parser, local intake API, metadata migrations, pure PostgreSQL parser and
 read-only legacy row mapper are present. The original one-case/six-field parity

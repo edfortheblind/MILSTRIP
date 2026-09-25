@@ -1,6 +1,10 @@
 # Owner-requested release cut — September 25, 2026
 
-**PAUSED at the owner's request, around 17:02 UTC / 12:02 CDT.**
+**Historical pause at the owner's request, around 17:02 UTC / 12:02 CDT.**
+
+The owner subsequently resumed work. Read [master](../master.md) and the
+[native pilot acceptance](NATIVE_PILOT_ACCEPTANCE_2026-09-25.md) for current
+status; the facts below describe the cut, not the resumed deployment.
 Browser, tenant and agent work stopped. Existing services were left running.
 Resume only when the owner requests it. Prior commit/push/publication approval
 persists; this checkpoint does not authorize work during the pause.

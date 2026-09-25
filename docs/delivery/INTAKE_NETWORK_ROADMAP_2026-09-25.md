@@ -1,6 +1,11 @@
 # MILSTRIP Intake: local changes and TAB hosting roadmap
 
-Owner requirements confirmed September 25, 2026. The current checkpoint includes
+**Current deployment status:** See [master](../master.md) and
+[native pilot acceptance](NATIVE_PILOT_ACCEPTANCE_2026-09-25.md). The implementation
+and test snapshots below are historical; their pending flags are not current
+deployment status. The hostname and database-migration roadmap remains applicable.
+
+Owner requirements confirmed September 25, 2026. The historical implementation checkpoint includes
 local implementation, saved unpublished native drafts and reviewed recovery of
 the canceled sharing execution. Production database connections and Canvas
 publication are not established by this document. Implementation verification

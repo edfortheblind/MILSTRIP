@@ -1,3 +1,25 @@
+# Web edition 1.6.0 — September 25, 2026
+
+This edition records Stage 16 and Prod 6 Live for limited acceptance, six active
+memberships and broker-only host authority. Both standalone players and licensing
+are verified for the current administrator only. Configuration, intake completion,
+normalized duplicate rejection, audited override and three distinct command
+recovery cases passed. Native intake-submission uncertainty, second-user/role and
+diagnostic/accessibility acceptance remain open. Prod remains disabled; its first
+post-consent startup stalled and recovered after one read-only reload, with cause
+unproven. Pages deployment history records publication of the guide separately.
+
+The six-step SOP uses the updated controls: every-record final review,
+source-ID reconciliation, two-hour normalized duplicate prevention and the
+Admin/Owner override reason. Configuration and Users are in-app procedures.
+The earlier five synthetic reference captures are retained and identified as
+historical where their controls or audit identity differ. The managed-network,
+Azure SQL and PostgreSQL migration plan is preserved.
+
+No application version, database target or hostname is changed by this guide.
+
+---
+
 # Web edition 1.5.0 — September 25, 2026
 
 The [operator guide](https://edfortheblind.github.io/milstrip-guide/) now records
@@ -13,7 +35,7 @@ does not activate the pending app or database release.
 ## Web edition 1.4.0 — September 24, 2026
 
 Read the [operator guide](https://edfortheblind.github.io/milstrip-guide/) directly
-in a browser. This published edition records resolved licensing, verified Stage
+in a browser. This published edition records licensing for the tested administrator, verified Stage
 player checks, disabled Prod and administration awaiting deployment acceptance.
 Existing Studio captures are retained. Public commit: `af9334d`.
 

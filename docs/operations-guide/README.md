@@ -1,16 +1,25 @@
-# MILSTRIP operator guide — edition 1.5.0
+# MILSTRIP operator guide — edition 1.6.0
 
 **Share:** [MILSTRIP operator guide](https://edfortheblind.github.io/milstrip-guide/).
 The webpage opens without a download or login. App access is separate.
 
-The existing Stage and Prod players remain published; licensing is resolved.
-September 24 player checks verified Stage connection and saved results; Prod
-database remains disabled. September 25 native drafts add database initialization, intake
-completion checks and two-hour duplicate prevention. They remain unpublished
-pending native flow, sharing and access-enforcement acceptance. The guide retains
-the current procedure and dated Studio captures, and records the managed TAB
-network hosting plan. Azure SQL runtime, production handoff and downstream
-receipts remain unaccepted.
+**Evidence edition: September 25, 2026.** Stage version 16 and Prod version 6 are
+Live for limited acceptance by the existing six-person audience. Both players
+and licensing are verified for the current administrator only. Six memberships,
+native bindings and broker-only host authority are active with one API worker.
+Configuration Save/Test/Apply, intake completion, normalized duplicate blocking,
+audited override and configuration/user-access/review recovery passed. Stage
+retains local PostgreSQL; Prod's database stays disabled. Its initial startup
+stalled after consent and recovered after one read-only reload; cause is unproven.
+Second-user, role, intake-submission recovery and diagnostic/accessibility gates
+remain open. Guide publication is recorded by Pages deployment history.
+
+The six operator steps now include every-record completion, normalized two-hour
+duplicates, the audited Admin/Owner override and source-ID reconciliation. The
+administration section uses the in-app Configuration and Users controls. Five
+September 24 reference captures are retained and dated; the host editor image is
+explicitly historical. Managed hostnames, Azure SQL runtime, production handoff
+and downstream receipts remain unaccepted.
 
 - [Guide source](guide.md), [styles](theme.css), [interactions](guide.js).
 - [Full app and database SOP](../../sop/powerapps-setup.md).
