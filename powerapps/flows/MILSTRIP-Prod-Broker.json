@@ -425,6 +425,11 @@
                                 "Acquire_payload_add": {
                                   "inputs": {
                                     "execution_id": "@outputs('Request_id')",
+                                    "native_run": {
+                                      "environment_name": "__POWER_PLATFORM_ENVIRONMENT__",
+                                      "flow_id": "__PROD_FLOW_ID__",
+                                      "run_id": "@workflow().run.name"
+                                    },
                                     "plan_id": "@outputs('Saved_add')?['sharing_plan']?['plan_id']",
                                     "revision": "@outputs('Saved_add')?['sharing_plan']?['revision']"
                                   },
@@ -467,9 +472,6 @@
                                     ]
                                   },
                                   "runtimeConfiguration": {
-                                    "paginationPolicy": {
-                                      "minimumItemCount": 1000
-                                    },
                                     "secureData": {
                                       "properties": [
                                         "inputs",
@@ -539,9 +541,6 @@
                                     ]
                                   },
                                   "runtimeConfiguration": {
-                                    "paginationPolicy": {
-                                      "minimumItemCount": 1000
-                                    },
                                     "secureData": {
                                       "properties": [
                                         "inputs",
@@ -2521,9 +2520,6 @@
                                     ]
                                   },
                                   "runtimeConfiguration": {
-                                    "paginationPolicy": {
-                                      "minimumItemCount": 1000
-                                    },
                                     "secureData": {
                                       "properties": [
                                         "inputs",
@@ -2596,9 +2592,6 @@
                                     ]
                                   },
                                   "runtimeConfiguration": {
-                                    "paginationPolicy": {
-                                      "minimumItemCount": 1000
-                                    },
                                     "secureData": {
                                       "properties": [
                                         "inputs",
@@ -3730,6 +3723,11 @@
                               "Acquire_payload_remove": {
                                 "inputs": {
                                   "execution_id": "@outputs('Request_id')",
+                                  "native_run": {
+                                    "environment_name": "__POWER_PLATFORM_ENVIRONMENT__",
+                                    "flow_id": "__PROD_FLOW_ID__",
+                                    "run_id": "@workflow().run.name"
+                                  },
                                   "plan_id": "@outputs('Saved_remove')?['sharing_plan']?['plan_id']",
                                   "revision": "@outputs('Saved_remove')?['sharing_plan']?['revision']"
                                 },
@@ -3772,9 +3770,6 @@
                                   ]
                                 },
                                 "runtimeConfiguration": {
-                                  "paginationPolicy": {
-                                    "minimumItemCount": 1000
-                                  },
                                   "secureData": {
                                     "properties": [
                                       "inputs",
@@ -3844,9 +3839,6 @@
                                   ]
                                 },
                                 "runtimeConfiguration": {
-                                  "paginationPolicy": {
-                                    "minimumItemCount": 1000
-                                  },
                                   "secureData": {
                                     "properties": [
                                       "inputs",
@@ -5902,9 +5894,6 @@
                                   ]
                                 },
                                 "runtimeConfiguration": {
-                                  "paginationPolicy": {
-                                    "minimumItemCount": 1000
-                                  },
                                   "secureData": {
                                     "properties": [
                                       "inputs",
@@ -5977,9 +5966,6 @@
                                   ]
                                 },
                                 "runtimeConfiguration": {
-                                  "paginationPolicy": {
-                                    "minimumItemCount": 1000
-                                  },
                                   "secureData": {
                                     "properties": [
                                       "inputs",
@@ -7147,7 +7133,7 @@
               }
             }
           },
-          "expression": "@and(and(equals(toLower(coalesce(body('Invoker_profile')?['id'], '')), toLower(coalesce(body('Directory_caller')?['id'], ''))), not(empty(body('Invoker_profile')?['id'])), equals(body('Directory_caller')?['accountEnabled'], true), equals(body('Directory_caller')?['userType'], 'Member'), endsWith(toLower(coalesce(body('Directory_caller')?['userPrincipalName'], '')), '@austinlighthouse.org')), contains(createArray('GetCurrentUser','GetHealth','ListIntakeRequests','GetIntakeRequest','ListRecordResults','ListAuditEvents','CreateIntakeRequest','CreateReviewDecision','ListUsers','SaveUserAccess','GetRuntimeProfiles','SaveRuntimeDraft','TestRuntimeDraft','ApplyRuntimeDraft','GetAdministrationOperation'), triggerBody()?['operation']))",
+          "expression": "@and(and(equals(toLower(coalesce(body('Invoker_profile')?['id'], '')), toLower(coalesce(body('Directory_caller')?['id'], ''))), not(empty(body('Invoker_profile')?['id'])), equals(body('Directory_caller')?['accountEnabled'], true), equals(body('Directory_caller')?['userType'], 'Member'), endsWith(toLower(coalesce(body('Directory_caller')?['userPrincipalName'], '')), '@austinlighthouse.org')), contains(createArray('GetCurrentUser','GetHealth','ListIntakeRequests','GetIntakeRequest','ListRecordResults','ListAuditEvents','CreateIntakeRequest','CreateReviewDecision','ListUsers','SaveUserAccess','GetRuntimeProfiles','SaveRuntimeDraft','TestRuntimeDraft','ApplyRuntimeDraft','GetAdministrationOperation','InitializeRuntimeDraft','GetIntakeWorkflow'), triggerBody()?['operation']))",
           "metadata": {
             "operationMetadataId": "acc01d18-e5e9-5a1d-9b44-a5a04bddded2"
           },

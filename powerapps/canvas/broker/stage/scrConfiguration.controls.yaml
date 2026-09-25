@@ -77,11 +77,11 @@
       Y: =236
       Width: =240
       Height: =44
-      Items: =["postgresql","sqlserver"]
-      Default: =Coalesce(varActiveProfile.provider,"postgresql")
+      Items: =["auto"]
+      Default: ="auto"
       DisplayMode: =If(Coalesce(varBusy,false) || !("runtime.configure" in colCapabilities.Value) || !IsBlank(varAdminCommand.command_id)
         || !IsBlank(varDraft.draft_id),DisplayMode.Disabled,DisplayMode.Edit)
-      AccessibleLabel: ="Database provider"
+      AccessibleLabel: ="Database provider, automatically detected"
       TabIndex: =0
       FocusedBorderThickness: =3
       FocusedBorderColor: =RGBA(0,0,0,1)
@@ -147,8 +147,8 @@
       Y: =436
       Width: =Parent.Width-48
       Height: =54
-      Text: '="Draft: " & Coalesce(varDraft.draft_id,"none") & " | Test: " & Coalesce(varTest.status,"not run")
-        & If(!IsBlank(varTest.expires_at)," | Expires: " & Text(varTest.expires_at,DateTimeFormat.ShortDateTime),"")'
+      Text: '= "Draft target: " & Coalesce(varDraft.target,"none") & " | Test: " & Coalesce(varTest.status,"not
+        run")'
 - btnSaveDraft:
     Control: Classic/Button
     Properties:
@@ -194,7 +194,7 @@
         If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
         Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
         settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
-        change.")); false,If(IsError(If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision)});
+        change.")); false,If(IsError(If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision),target:Text(varAdminRaw.target)});
         Set(varTest,Blank()),varAdminOperation="TestRuntimeDraft",Set(varTest,{test_id:Text(varAdminRaw.test_id),status:Text(varAdminRaw.status),expires_at:DateTimeValue(Text(varAdminRaw.expires_at))}),varAdminOperation="ApplyRuntimeDraft",Set(varEnvironmentReady,false);
         Set(varDraft,Blank()); Set(varTest,Blank()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
         If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
@@ -263,7 +263,7 @@
         If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
         Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
         settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
-        change.")); false,If(IsError(If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision)});
+        change.")); false,If(IsError(If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision),target:Text(varAdminRaw.target)});
         Set(varTest,Blank()),varAdminOperation="TestRuntimeDraft",Set(varTest,{test_id:Text(varAdminRaw.test_id),status:Text(varAdminRaw.status),expires_at:DateTimeValue(Text(varAdminRaw.expires_at))}),varAdminOperation="ApplyRuntimeDraft",Set(varEnvironmentReady,false);
         Set(varDraft,Blank()); Set(varTest,Blank()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
         If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
@@ -332,7 +332,7 @@
         If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
         Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
         settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
-        change.")); false,If(IsError(If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision)});
+        change.")); false,If(IsError(If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision),target:Text(varAdminRaw.target)});
         Set(varTest,Blank()),varAdminOperation="TestRuntimeDraft",Set(varTest,{test_id:Text(varAdminRaw.test_id),status:Text(varAdminRaw.status),expires_at:DateTimeValue(Text(varAdminRaw.expires_at))}),varAdminOperation="ApplyRuntimeDraft",Set(varEnvironmentReady,false);
         Set(varDraft,Blank()); Set(varTest,Blank()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
         If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
@@ -404,7 +404,7 @@
         Set(varMessage,"No confirmed result. Retry the retained command if its outcome is still unknown."); false,If(IsError(Set(varOperationRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
         Set(varMessage,"No confirmed result. Retry the retained command if its outcome is still unknown."); false,If(IsError(varOperationRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
         Set(varMessage,"No confirmed result. Retry the retained command if its outcome is still unknown."); false,If(IsError(Set(varAdminRaw,varOperationRaw.result)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
-        Set(varMessage,"No confirmed result. Retry the retained command if its outcome is still unknown."); false,If(IsError(If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision)});
+        Set(varMessage,"No confirmed result. Retry the retained command if its outcome is still unknown."); false,If(IsError(If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision),target:Text(varAdminRaw.target)});
         Set(varTest,Blank()),varAdminOperation="TestRuntimeDraft",Set(varTest,{test_id:Text(varAdminRaw.test_id),status:Text(varAdminRaw.status),expires_at:DateTimeValue(Text(varAdminRaw.expires_at))}),varAdminOperation="ApplyRuntimeDraft",Set(varEnvironmentReady,false);
         Set(varDraft,Blank()); Set(varTest,Blank()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
         Set(varMessage,"No confirmed result. Retry the retained command if its outcome is still unknown."); false,If(IsError(Set(varAdminCommand,Blank())),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
@@ -459,7 +459,7 @@
         If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
         Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
         settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
-        change.")); false,If(IsError(If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision)});
+        change.")); false,If(IsError(If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision),target:Text(varAdminRaw.target)});
         Set(varTest,Blank()),varAdminOperation="TestRuntimeDraft",Set(varTest,{test_id:Text(varAdminRaw.test_id),status:Text(varAdminRaw.status),expires_at:DateTimeValue(Text(varAdminRaw.expires_at))}),varAdminOperation="ApplyRuntimeDraft",Set(varEnvironmentReady,false);
         Set(varDraft,Blank()); Set(varTest,Blank()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
         If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
@@ -506,3 +506,86 @@
       Width: =Parent.Width-48
       Height: =46
       Text: '=If(!IsBlank(varAdminCommand.command_id),"Pending command: " & varAdminCommand.command_id,"")'
+- txtInitializeTarget:
+    Control: Classic/TextInput
+    Properties:
+      X: =484
+      Y: =570
+      Width: =440
+      Height: =44
+      Default: =""
+      HintText: ="Type saved draft target to confirm initialization"
+      DisplayMode: =If(Coalesce(varBusy,false) || !("runtime.configure" in colCapabilities.Value) || !IsBlank(varAdminCommand.command_id),DisplayMode.Disabled,DisplayMode.Edit)
+      AccessibleLabel: ="Confirm saved draft target for database initialization"
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =RGBA(0,0,0,1)
+- btnInitializeDatabase:
+    Control: Classic/Button
+    Properties:
+      X: =954
+      Y: =570
+      Width: =210
+      Height: =44
+      Text: ="Initialize database"
+      OnSelect: '=If(!Coalesce(varBusy,false) && "runtime.configure" in colCapabilities.Value,Set(varBusy,true);
+        Set(varFlow,Blank()); If(IsError(Set(varAdminOperation,"InitializeRuntimeDraft")),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,If(IsError(Set(varAdminCommandId,Text(GUID()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,If(IsError(Set(varAdminCommand,{command_id:varAdminCommandId,payload_json:JSON({command_id:varAdminCommandId,draft_id:varDraft.draft_id,draft_revision:varDraft.draft_revision,confirm_target:txtInitializeTarget.Text},JSONFormat.Compact)})),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,If(IsError(Reset(txtConnectionString)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("InitializeRuntimeDraft",varAdminCommand.payload_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,If(IsError(Set(varAdminRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,If(IsError(varAdminRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,If(IsError(If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision),target:Text(varAdminRaw.target)});
+        Set(varTest,Blank()),varAdminOperation="TestRuntimeDraft",Set(varTest,{test_id:Text(varAdminRaw.test_id),status:Text(varAdminRaw.status),expires_at:DateTimeValue(Text(varAdminRaw.expires_at))}),varAdminOperation="ApplyRuntimeDraft",Set(varEnvironmentReady,false);
+        Set(varDraft,Blank()); Set(varTest,Blank()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,If(IsError(Set(varAdminCommand,Blank())),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,If(IsError(Reset(txtConnectionString)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,If(IsError(Set(varMessage,"Configuration command: " & Text(varAdminRaw.status))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        If(!Coalesce(varFlow.ok,false) && Coalesce(varFlow.status,0) in [400,401,403,404,409,412,422],Set(varAdminCommand,Blank());
+        Reset(txtConnectionString); Set(varMessage,"Command rejected. Reload configuration and check the proposed
+        settings."),Set(varMessage,"Outcome unknown. Check command status or retry the same command before another
+        change.")); false,true))))))))))))); Set(varBusy,false))'
+      DisplayMode: =If(Coalesce(varBusy,false) || !("runtime.configure" in colCapabilities.Value) || !IsBlank(varAdminCommand.command_id)
+        || IsBlank(varDraft.draft_id) || varActiveProfile.enabled || txtInitializeTarget.Text<>varDraft.target,DisplayMode.Disabled,DisplayMode.Edit)
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =Self.Color

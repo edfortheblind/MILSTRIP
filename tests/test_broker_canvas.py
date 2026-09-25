@@ -52,7 +52,7 @@ def test_business_records_and_dates_are_explicitly_converted():
                  "Set(varRecordsCursor,Text(varRaw.next_cursor))"):
         assert text in formula
     submit = props(files, "stage", "scrIntake", "btnSubmit")["OnSelect"]
-    assert "Set(varIntakeUncertain,true)" in submit
+    assert "Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422]))" in submit
     assert submit.index("If(!varFlow.ok") < submit.index("Set(varAck,")
     retry = props(files, "stage", "scrReview", "btnRetryReview")["OnSelect"]
     save = props(files, "stage", "scrReview", "btnSaveReview")["OnSelect"]
@@ -92,6 +92,36 @@ def test_config_secrets_are_write_only_and_uncertain_commands_keep_their_identit
                     if value["Control"] == "Label":
                         assert "payload_json" not in value["Properties"]["Text"]
                         assert "txtConnectionString" not in value["Properties"]["Text"]
+
+
+def test_config_conflicts_release_commands_but_busy_and_user_conflicts_remain_frozen():
+    files = CANVAS.render()
+    for profile in ("stage", "prod"):
+        for screen, name in (("scrConfiguration", "btnSaveDraft"),
+                             ("scrConfiguration", "btnRetryConfiguration"),
+                             ("scrUsers", "btnGrantUser"), ("scrUsers", "btnRetryUser")):
+            formula = props(files, profile, screen, name)["OnSelect"]
+            rejection_lists = re.findall(r"Coalesce\(varFlow.status,0\) in \[([^\]]+)\]", formula)
+            assert rejection_lists and all("503" not in values.split(",") for values in rejection_lists)
+            if screen == "scrConfiguration":
+                assert all("409" in values.split(",") for values in rejection_lists)
+            else:
+                assert all("409" not in values.split(",") for values in rejection_lists)
+
+
+def test_unknown_intake_requires_exact_receipt_and_keeps_source_and_override_frozen():
+    files = CANVAS.render()
+    for profile in ("stage", "prod"):
+        formula = props(files, profile, "scrIntake", "btnIntakeRetryConfirm")["OnSelect"]
+        assert "source_id:If(Coalesce(varIntakeUncertain,false),varSourceId,Blank())" in formula
+        assert 'Text(varWorkflowRaw.source_resolution)="matched"' in formula
+        assert "Text(varRecoveredIntake.source_id)=varSourceId" in formula
+        assert "Set(varIntakeUncertain,false)" in formula
+        assert formula.index("Text(varRecoveredIntake.source_id)=varSourceId") < formula.index("Set(varIntakeUncertain,false)")
+        assert "original request may still be running" in formula
+        assert "If(!Coalesce(varIntakeUncertain,false),Reset(txtSource)); Set(varIntakeUncertain,false)" not in formula
+        for name in ("txtSource", "chkDuplicateOverride", "txtOverrideReason", "btnSubmit"):
+            assert "Coalesce(varIntakeUncertain,false)" in props(files, profile, "scrIntake", name)["DisplayMode"]
 
 
 def test_users_keep_pending_grants_retryable_and_owner_controls_disabled():
@@ -289,4 +319,4 @@ def test_keyboard_labels_and_live_messages_cover_both_variants():
                 visit(control.get("Children", []))
         for screen in CANVAS.SCREENS:
             visit(yaml.safe_load(files[f"{profile}/{screen}.controls.yaml"]))
-        assert counts == {"keyboard": 46, "input_labels": 9, "gallery_labels": 4, "live": 6}
+        assert counts == {"keyboard": 50, "input_labels": 11, "gallery_labels": 4, "live": 6}

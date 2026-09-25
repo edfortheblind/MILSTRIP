@@ -2,6 +2,13 @@
 
 **September 24, 2026: native pagination trial stalled and was canceled; user administration is not accepted.**
 
+**September 25 update:** The evidence below preserves the original trial.
+Current generated source removes the stalled aggregation policy, and independently
+reviewed host recovery has closed the canceled execution and released its lease.
+Membership remains pending; the finite interactive permission-read path is still
+unaccepted. See the [current validation](PREHOSTNAME_VALIDATION_2026-09-25.md)
+and [applied recovery evidence](SHARING_RECOVERY_IMPLEMENTATION_2026-09-25.md).
+
 The authorized Kristen sharing command remains pending. In the preceding three
 executions, native reads succeeded but the returned continuation marker
 prevented complete app-permission verification. The diagnostic reported `READBACK_PAGINATED_STAGE_APP`; changing

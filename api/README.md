@@ -1,16 +1,16 @@
 # MILSTRIP API 0.4.0
 
-**Current: September 24, 2026.** The API serves the published Stage and Prod
-canvas apps through the existing custom connector and gateway. Stage uses local
-PostgreSQL. Prod's profile is disabled without an independent target. Standalone
-player acceptance is blocked by the current account's licensing; IT owns
-resolution and no trial was started.
+**Current: September 25, 2026.** The local API and schema version 2 are installed.
+The published four-screen Stage/Prod apps still use the legacy shared-credential
+path; the updated broker Canvas/flow sources remain unpublished. Licensing is
+resolved; user-sharing recovery and broker-only cutover remain open. See the
+[local delivery and hosting roadmap](../docs/delivery/INTAKE_NETWORK_ROADMAP_2026-09-25.md).
 
 Each Basic credential selects one fixed server-side profile. The shared
 SQLAlchemy Core repository supports PostgreSQL/psycopg and SQL Server/pyodbc.
 Live Azure SQL acceptance remains pending. Runtime checks the database's
 `environment_identity` before application operations; operators cannot choose
-the destination. The API owns six `milstrip_app` tables, including this marker.
+the destination. The API owns seven `milstrip_app` tables, including this marker.
 It does not connect Power Apps directly to a database or write legacy tables.
 The recovered MILSTRIP owner-run flow is `dbo.staging_download_shipmils`
 directly to `dbo.download_ship940`. It does not use `staging_download_ship940`.
@@ -121,12 +121,13 @@ PostgreSQL client. The database contains these five application tables under
 
 No legacy operational tables were referenced or modified by the migration.
 The current profile increment adds `environment_identity`, bringing the runtime
-table count to six. See [ADR 0005](../docs/adr/0005-runtime-profiles.md).
+table count to six. The September 25 workflow increment adds `intake_workflow`
+and schema version 2, bringing the count to seven. See [ADR 0005](../docs/adr/0005-runtime-profiles.md).
 
 ## Backend verification
 
 Set `MILSTRIP_TEST_DATABASE_URL` to the approved localhost development connection
-and run `.venv/Scripts/python.exe -m pytest -q`. Apply migration 005 first.
+and run `.venv/Scripts/python.exe -m pytest -q`. Apply the current additive schema upgrade first.
 Most database tests use rollback-only application transactions, including
 transactional identity-sequence restarts. The concurrency test uses two real
 committing sessions with one synthetic record and removes its rows afterward;

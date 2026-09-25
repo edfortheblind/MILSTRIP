@@ -1,5 +1,6 @@
 """Security cutover cannot revive an obsolete imported database target."""
 from dataclasses import replace
+from contextlib import contextmanager
 from uuid import uuid4
 
 import pytest
@@ -12,6 +13,30 @@ from scripts.runtime_host import save_legacy_configuration
 from tests.test_control_broker import control
 
 
+@pytest.fixture(autouse=True)
+def verified_database(monkeypatch):
+    calls = []
+
+    class VerifiedRepository:
+        def health(self):
+            calls.append("health")
+            return True
+
+        def validate_identity(self, profile_id):
+            calls.append(("identity", profile_id))
+
+        def validate_workflow_tracking(self):
+            calls.append("tracking")
+
+    @contextmanager
+    def connect(provider, connection_string):
+        calls.append("connect")
+        yield VerifiedRepository()
+
+    monkeypatch.setattr("api.control_bootstrap.open_repository", connect)
+    return calls
+
+
 def imported(control):
     store, _ = control
     config = load_runtime_config()
@@ -19,7 +44,7 @@ def imported(control):
     return store, config
 
 
-def test_cutover_accepts_exact_import_and_preserves_drafts(control):
+def test_cutover_accepts_exact_import_and_preserves_drafts(control, verified_database):
     store, _ = imported(control)
     store.mutate(lambda state: state["runtime"]["drafts"].update({"synthetic-draft": {"retained": True}}))
     before = store.read()
@@ -28,6 +53,32 @@ def test_cutover_accepts_exact_import_and_preserves_drafts(control):
     assert after["runtime"]["active"] and after["security"]["enforced"]
     assert after["runtime"]["profiles"] == before["runtime"]["profiles"]
     assert after["runtime"]["drafts"] == before["runtime"]["drafts"]
+    assert verified_database == ["connect", "health", ("identity", "stage"), "tracking"]
+
+
+def test_missing_tracking_blocks_activation_without_changing_control(control, monkeypatch):
+    store, _ = imported(control)
+    before = store.read()
+
+    class MissingTracking:
+        def health(self):
+            return True
+
+        def validate_identity(self, profile_id):
+            pass
+
+        def validate_workflow_tracking(self):
+            raise ValueError("PRIVATE_DRIVER_DETAIL")
+
+    @contextmanager
+    def connect(*args):
+        yield MissingTracking()
+
+    monkeypatch.setattr("api.control_bootstrap.open_repository", connect)
+    with pytest.raises(ControlError, match="complete intake workflow tracking") as caught:
+        enforce_security(store, before["revision"])
+    assert "PRIVATE_DRIVER_DETAIL" not in str(caught.value)
+    assert store.read() == before
 
 
 @pytest.mark.parametrize("changed_content", [False, True])

@@ -14,15 +14,15 @@ from pydantic import SecretStr, ValidationError
 
 from api.admin_models import (
     AdministrationOperationPayload, ApplyRuntimeDraftPayload, EmptyPayload,
-    SaveRuntimeDraftPayload, TestRuntimeDraftPayload,
+    SaveRuntimeDraftPayload, TestRuntimeDraftPayload, InitializeRuntimeDraftPayload,
 )
 from api.authorization import AuthorizationError, _authorized, authorize
 from api.control import ControlError
-from api.persistence import open_repository
+from api.persistence import open_repository, provision_schema
 from api.profile_manager import ProfileBusy
 from api.profiles import (
     ConfigurationError, CredentialBinding, RuntimeConfig, RuntimeProfile,
-    normalized_target, target_summary, validate_runtime_config,
+    normalized_target, target_summary, validate_runtime_config, detect_provider,
 )
 
 
@@ -74,6 +74,7 @@ class AdministrationService:
     def invoke(self, operation, payload, context):
         models = {"GetRuntimeProfiles": EmptyPayload, "SaveRuntimeDraft": SaveRuntimeDraftPayload,
                   "TestRuntimeDraft": TestRuntimeDraftPayload, "ApplyRuntimeDraft": ApplyRuntimeDraftPayload,
+                  "InitializeRuntimeDraft": InitializeRuntimeDraftPayload,
                   "GetAdministrationOperation": AdministrationOperationPayload}
         if operation not in models:
             raise ControlError(400, "Unknown runtime administration operation")
@@ -85,6 +86,7 @@ class AdministrationService:
             raise ControlError(422, "Administration payload is invalid") from None
         methods = {"GetRuntimeProfiles": self.get_profiles, "SaveRuntimeDraft": self.save_draft,
                    "TestRuntimeDraft": self.test_draft, "ApplyRuntimeDraft": self.apply_draft,
+                   "InitializeRuntimeDraft": self.initialize_draft,
                    "GetAdministrationOperation": self.get_operation}
         try:
             return methods[operation](parsed, context)
@@ -93,7 +95,7 @@ class AdministrationService:
         except ConfigurationError:
             raise ControlError(422, "Database configuration is invalid; verify provider, target and TLS settings") from None
         except ProfileBusy:
-            raise ControlError(409, "Environment is changing, busy or requires administrator recovery") from None
+            raise ControlError(503, "Environment is changing, busy or requires administrator recovery; retain the same command") from None
         except (KeyError, TypeError, ValueError, OSError):
             raise ControlError(503, "Administration state is invalid; contact the host administrator") from None
 
@@ -177,9 +179,10 @@ class AdministrationService:
                 raise ControlError(409, "The active configuration changed; reload it")
             replacement = payload.replacement_connection_string
             replacement = replacement.get_secret_value() if replacement is not None else ""
-            if payload.provider != previous["provider"] and not replacement and previous["connection_string"]:
+            provider = (detect_provider(replacement) if replacement else previous["provider"]) if payload.provider == "auto" else payload.provider
+            if provider != previous["provider"] and not replacement and previous["connection_string"]:
                 raise ControlError(422, "Changing providers requires a replacement connection string")
-            candidate = {"provider": payload.provider, "label": payload.label.strip(),
+            candidate = {"provider": provider, "label": payload.label.strip(),
                          "connection_string": replacement or previous["connection_string"],
                          "enabled": payload.enabled}
             records = {**runtime["profiles"], context.profile_id: candidate}
@@ -194,6 +197,36 @@ class AdministrationService:
                       "base_revision": previous["revision"], "status": "SAVED",
                       "target": target_summary(profile_from_record(context.profile_id, candidate))}
             return self._record(state, "SaveRuntimeDraft", payload, context, result)
+        return self.store.mutate(update)
+
+    def initialize_draft(self, payload, context):
+        # Serialize preparation with all control changes. The database operation
+        # is additive and repeatable if a crash precedes the durable result.
+        def update(state):
+            _authorized(state, context, "runtime.configure")
+            replay = self._existing(state, "InitializeRuntimeDraft", payload, context)
+            if replay is not None:
+                return replay
+            runtime = self._runtime(state)
+            if (not runtime.get("active") or not state["security"].get("enforced")
+                    or self.manager is None or self.manager.control_path != self.store.path):
+                raise ControlError(409, "Activate broker-only administration before initializing a database")
+            if runtime["profiles"][context.profile_id]["enabled"]:
+                raise ControlError(409, "Disable this environment before initializing its database")
+            running = self.manager.snapshot(context.profile_id)
+            if running.profile.enabled or running.revision != runtime["profiles"][context.profile_id]["revision"]:
+                raise ControlError(409, "Running configuration differs from saved state; recover before initialization")
+            draft = self._draft(state, payload, context)
+            profile = profile_from_record(context.profile_id, draft["candidate"])
+            if not profile.connection_string or payload.confirm_target != target_summary(profile):
+                raise ControlError(412, "Confirm the exact saved draft target before initialization")
+            try:
+                provision_schema(profile.provider, profile.connection_string, context.profile_id)
+            except Exception:
+                raise ControlError(503, "Database initialization unconfirmed; check access and schema compatibility, then retry the same command") from None
+            result = {"status": "INITIALIZED", "profile_id": context.profile_id,
+                      "target": target_summary(profile)}
+            return self._record(state, "InitializeRuntimeDraft", payload, context, result)
         return self.store.mutate(update)
 
     def test_draft(self, payload, context):
@@ -211,6 +244,7 @@ class AdministrationService:
             with open_repository(profile.provider, profile.connection_string) as repository:
                 if repository.health():
                     repository.validate_identity(profile.profile_id)
+                    repository.validate_workflow_tracking()
                     passed = True
         except Exception:
             pass  # Driver messages can contain credentials; never return them.
@@ -234,7 +268,7 @@ class AdministrationService:
             result = {"test_id": test_id, "status": "PASSED" if passed else "FAILED",
                       "checked_at": checked_at.isoformat(), "expires_at": expires_at.isoformat()}
             if not passed:
-                result["detail"] = "Check database access, certificate trust, application schema and environment identity"
+                result["detail"] = "Check database access, certificate trust, application schema, environment identity and intake workflow tracking"
             return self._record(current, "TestRuntimeDraft", payload, context, result)
         return self.store.mutate(update)
 

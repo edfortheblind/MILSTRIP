@@ -23,6 +23,7 @@ OPERATIONS = (
     "ListRecordResults", "ListAuditEvents", "CreateIntakeRequest", "CreateReviewDecision",
     "ListUsers", "SaveUserAccess", "GetRuntimeProfiles", "SaveRuntimeDraft",
     "TestRuntimeDraft", "ApplyRuntimeDraft", "GetAdministrationOperation",
+    "InitializeRuntimeDraft", "GetIntakeWorkflow",
 )
 TERMINAL = ["Succeeded", "Failed", "Skipped", "TimedOut"]
 API_PREFIX = "/providers/Microsoft.PowerApps/apis/"
@@ -124,11 +125,9 @@ class Builder:
             "parameters": params, "authentication": "@parameters('$authentication')",
             "retryPolicy": {"type": "none"},
         }, previous)
-        if name == "makers" and operation == "Get-AppRoleAssignment":
-            # The connector advertises x-ms-pageable.nextLinkName=nextLink.
-            # This is a retrieval threshold, not a hard transport cap; the
-            # existing <1000 and empty-nextLink guards still decide completeness.
-            result["runtimeConfiguration"]["paginationPolicy"] = {"minimumItemCount": 1000}
+        # Do not turn on connector-side aggregation: the native trial stalled
+        # indefinitely. A continuation on a single page remains unverified;
+        # host diagnostics are not an alternative authorization path.
         return result
 
     def invoke(self, operation, payload, previous=None):
@@ -254,7 +253,10 @@ class Builder:
             f"Acquire_payload_{suffix}": compose({
                 "plan_id": f"@outputs('Saved_{suffix}')?['sharing_plan']?['plan_id']",
                 "revision": f"@outputs('Saved_{suffix}')?['sharing_plan']?['revision']",
-                "execution_id": "@outputs('Request_id')"}),
+                "execution_id": "@outputs('Request_id')",
+                "native_run": {"environment_name": self.bindings["environment_name"],
+                               "flow_id": self.bindings["profiles"][self.profile]["flow_id"],
+                               "run_id": "@workflow().run.name"}}),
             f"Acquire_lease_{suffix}": self.invoke("AcquireSharingLease",
                 f"@string(outputs('Acquire_payload_{suffix}'))", f"Acquire_payload_{suffix}"),
             f"Lease_failure_{suffix}": self.fail_after(f"Acquire_lease_{suffix}", "SHARING_PENDING"),

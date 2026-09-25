@@ -94,6 +94,7 @@ def cleanup(database_url, marker):
         db.execute('DELETE FROM milstrip_app.review_decision WHERE record_id=ANY(%s)', (record_ids,))
         db.execute('DELETE FROM milstrip_app.validation_issue WHERE record_id=ANY(%s)', (record_ids,))
         db.execute('DELETE FROM milstrip_app.milstrip_record WHERE request_id=ANY(%s)', (request_ids,))
+        db.execute('DELETE FROM milstrip_app.intake_workflow WHERE request_id=ANY(%s)', (request_ids,))
         db.execute('DELETE FROM milstrip_app.intake_request WHERE request_id=ANY(%s)', (request_ids,))
     with psycopg.connect(database_url, connect_timeout=5) as db:
         require(db.execute('SELECT count(*) FROM milstrip_app.intake_request WHERE source_id=%s', (marker,)).fetchone()[0] == 0, 'Synthetic cleanup incomplete')

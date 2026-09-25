@@ -12,7 +12,7 @@ from api.auth import load_verifier, password_digest
 from api.authorization import (AuthorizationError, acquire_sharing_lease, administration_operation, authorize, authorize_person,
     current_user, list_users, record_sharing_result, save_user_access)
 from api.broker_models import (AcquireSharingLease, AdministrationOperationPayload, BrokerEnvelope, BrokerResult, ChildPagePayload,
-    EmptyPayload, IntakePayload, RecordManagementCall, RequestPagePayload, RequestPayload, ReserveManagementCall,
+    EmptyPayload, IntakePayload, IntakeWorkflowPayload, RecordManagementCall, RequestPagePayload, RequestPayload, ReserveManagementCall,
     ReviewPayload, SaveUserAccess, SharingResult)
 from api.control import ControlError, ControlStore
 from api.management_pacing import record_management_call, reserve_management_call
@@ -20,8 +20,8 @@ from api.management_pacing import record_management_call, reserve_management_cal
 
 router = APIRouter(prefix="/api/v1/broker", tags=["broker"])
 BUSINESS = {"GetHealth", "ListIntakeRequests", "GetIntakeRequest", "ListRecordResults",
-            "ListAuditEvents", "CreateIntakeRequest", "CreateReviewDecision"}
-CONFIGURATION = {"GetRuntimeProfiles", "SaveRuntimeDraft", "TestRuntimeDraft", "ApplyRuntimeDraft"}
+            "ListAuditEvents", "CreateIntakeRequest", "CreateReviewDecision", "GetIntakeWorkflow"}
+CONFIGURATION = {"GetRuntimeProfiles", "SaveRuntimeDraft", "TestRuntimeDraft", "ApplyRuntimeDraft", "InitializeRuntimeDraft"}
 
 
 def authenticate_transport(request, credentials):
@@ -70,6 +70,11 @@ def _business(request, context, operation, payload):
     with business_scope(request, context.profile_id) as lease:
         request.state.context = RequestContext(context.actor_id, context.profile_id, lease.revision)
         request.state.reviewer = context.actor_id
+        if operation == "GetIntakeWorkflow":
+            from api.runtime import repository
+            parsed = _parse(IntakeWorkflowPayload, payload)
+            with repository(request) as value:
+                return value.workflow_status(context.actor_id, source_id=parsed.source_id)
         if operation == "GetHealth":
             _parse(EmptyPayload, payload)
             return intake_api.health(request)

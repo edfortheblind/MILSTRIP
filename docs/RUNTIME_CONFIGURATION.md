@@ -1,6 +1,6 @@
 # MILSTRIP administration SOP
 
-**Status: September 24, 2026 - Stage administration draft tested; publication and full acceptance pending.**
+**Status: September 25, 2026 - updated local source; native publication and full acceptance pending.**
 
 The existing published **MILSTRIP Stage** player is healthy and can read retained
 results. The published **MILSTRIP Prod** player opens and reports an unavailable,
@@ -55,14 +55,18 @@ destination, and Prod cannot configure Stage's. Authorized administration remain
 available when that app's business database is disabled or unavailable.
 
 1. Open **Configuration**, then **Load configuration**. Check the environment,
-   active target and revision.
-2. Select `postgresql` or `sqlserver`, enter a short target label and set
-   **Enabled**. Enter a replacement connection string in the masked field only
-   when changing it. Blank retains the saved string; a provider change requires
-   a replacement.
+   active target and revision. This is a screen inside the same Power Apps app.
+2. Leave the provider on `auto`, enter a short target label and set
+   **Enabled**. The server detects PostgreSQL or SQL Server from the string. Enter a replacement connection string in the masked field only
+   when changing it. Blank retains the saved string and provider. Entering the new provider
+   connection string is the only engine selection needed.
 3. Select **Save draft**. This stores the proposal privately and clears the
    visible connection-string field. It does not activate or provision anything.
-4. Select **Test draft**. A pass checks connectivity, the six application tables
+4. For an uninitialized or version-1 target, first disable this environment,
+   save the proposed draft, type its displayed target into the confirmation field
+   and select **Initialize database**. This creates/upgrades only `milstrip_app`
+   objects through the app; no operator uses Python, psql or a host editor.
+   Select **Test draft**. A pass checks connectivity, the seven application tables
    and the matching Stage/Prod identity. It does not establish write permissions
    or production readiness. A failed test does not change the active target.
 5. Select **Apply draft**. Enabling a target requires a successful test of this
@@ -178,24 +182,18 @@ same intended authority; an alternate legacy file cannot override active control
 
 ### Provisioning and data moves
 
-The DBA must approve the destination and create the database/runtime identity.
-Schema provisioning is a separate host operation; Save, Test and Apply do not
-create tables. The provisioning CLI selects the authoritative saved profile:
-active control after cutover, otherwise the legacy runtime configuration. It
-does not select an unapplied draft. For a new destination, save and apply it
-with **Enabled** cleared first; it remains unavailable to business requests.
-Confirm the CLI's printed target before a provisioning write:
+IT supplies an existing database and service identity with the necessary scoped
+permissions. Routine connection configuration and application-schema initialization
+use **Configuration** in Power Apps. Disable the environment first; save a draft,
+confirm its exact displayed target and select **Initialize database**, then Test
+and Apply. Initialization is explicit, additive and repeatable after an uncertain
+outcome. It upgrades schema version 1 to 2, preserving rows, and rejects a mismatched
+environment or unsupported version. Save/Test/Apply alone do not create tables.
 
-```powershell
-.\scripts\Initialize-ApplicationDatabase.ps1 -Environment prod
-.\scripts\Initialize-ApplicationDatabase.ps1 -Environment prod -ProvisionApplicationSchema -ConfirmTarget '<exact preview target>'
-```
-
-This creates the five application data tables plus `environment_identity` in an
-existing database, preserving compatible rows. It does not create a database,
-relabel another environment, or modify operational shipment tables. An Azure SQL
-production source is not authorized by this SOP; its freeze and deployment
-approval remain separate.
+The legacy host provisioning tool remains a deployment/recovery utility, not the
+administrator user flow. The app cannot create an Azure resource, database login,
+firewall rule or certificate; IT prepares these infrastructure prerequisites once.
+No application administrator needs direct database access for connectivity setup.
 
 Changing a connection string does not transfer intake, review or audit history.
 Use an approved backup/restore or provider migration and reconcile IDs, counts,
@@ -221,22 +219,22 @@ encryption and certificate validation. Live Azure SQL acceptance remains pending
 ## TAB network hosting target
 
 **Owner-confirmed target, September 25, 2026; not yet deployed.** MILSTRIP's
-complete backend will run on always-on, IT-managed servers inside TAB's network.
+API/HTTPS service and gateway will run on always-on, IT-managed servers inside TAB's network.
 No personal laptop may be required for normal operation. Power Apps and Power
 Automate remain in Microsoft's cloud, using the existing TAB sign-in.
 
 | Component | Required location |
 |---|---|
 | MILSTRIP API and HTTPS service | Central TAB network server(s), managed as services that start without an interactive user session |
-| Stage and Prod databases | Internal TAB VMs, with separate approved database targets and permissions |
+| Initial Stage and Prod databases | Existing Azure SQL databases, independently configured in each app |
+| Future Stage and Prod databases | Prepared PostgreSQL targets with migrated and reconciled application data |
 | Existing Power Platform gateway runtime | IT-managed Windows server inside TAB's network; preserve the existing gateway registration |
 | User interface and flows | Existing Microsoft Power Apps and Power Automate resources |
 
-IT will determine whether the API and databases share a VM or use separate
-servers. Both placements satisfy the network requirement; neither has been
-selected here. SQL Server hosted on a TAB VM is distinct from Azure SQL Database.
-The internal-VM requirement supersedes the earlier Azure-hosted planning
-assumption, without authorizing a database engine change or cutover.
+The owner's latest clarification supersedes the earlier all-databases-on-TAB-VMs
+assumption: keep Azure SQL first, then migrate Stage and Prod to PostgreSQL.
+Power Apps stays Microsoft-hosted and connects through the TAB-managed gateway.
+See Microsoft's [gateway architecture](https://learn.microsoft.com/en-us/power-apps/maker/canvas-apps/gateway-reference).
 
 ### DNS and network request
 
@@ -245,11 +243,11 @@ assumption, without authorizing a database engine change or cutover.
 | `milstrip.austinlighthouse.org` | IT-assigned private IP or internal alias for the Production API/HTTPS service | HTTPS TCP 443 |
 | `stage-milstrip.austinlighthouse.org` | IT-assigned private IP or internal alias for the Stage API/HTTPS service | HTTPS TCP 443 |
 
-These names are API endpoints, superseding the earlier optional browser-redirect
+These previously proposed names need IT confirmation before use. They are API endpoints, superseding the earlier optional browser-redirect
 draft. The Power Apps player URLs remain unchanged. No public DNS or public
 inbound access is requested. The gateway host must resolve the names and trust
 certificates covering them. The API service needs access to each selected
-database's private host: PostgreSQL TCP 5432 or SQL Server's configured TCP port
+database endpoint over IT-approved routing: PostgreSQL TCP 5432 or SQL Server's configured TCP port
 (normally 1433). Restrict those database connections to approved service hosts.
 Keep the gateway's required outbound Microsoft connectivity.
 

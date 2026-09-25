@@ -1,6 +1,6 @@
 # MILSTRIP Intake Automation — Master Document
 
-**Version:** 1.2 **Date:** 2026-09-24 **Status:** PLAYERS_VERIFIED_ADMINISTRATION_BLOCKED_PROD_DISABLED
+**Version:** 1.3 **Date:** 2026-09-25 **Status:** PLAYERS_VERIFIED_ADMINISTRATION_BLOCKED_PROD_DISABLED
 
 **Published apps:** Licensing is resolved for the verified player sessions.
 MILSTRIP Stage (`7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`) passed health and retained
@@ -10,26 +10,48 @@ results reads in the actual published player. MILSTRIP Prod
 Stage continues to use local PostgreSQL and the existing solution, connector and
 gateway. No new Canvas version has been published for the administration work.
 
-**Hosting target confirmed September 25, 2026:** Move the entire MILSTRIP
-backend off personal laptops. The API/HTTPS service, all Stage/Prod databases
-and gateway runtime belong on always-on, IT-managed servers inside TAB's network.
-Power Apps and Power Automate remain Microsoft-hosted. Reuse the existing
-solution, connector and gateway registration; relocate the gateway runtime through
-the supported migration procedure. The internal API names are
-`milstrip.austinlighthouse.org` and `stage-milstrip.austinlighthouse.org`.
-IT must assign the service hosts, private IPs and certificates. This is the
-deployment target, not a completed migration or database cutover. See the
-[network hosting requirements](RUNTIME_CONFIGURATION.md#tab-network-hosting-target).
+**Requirements update, September 25, 2026:** The API/HTTPS service and gateway
+will move to always-on IT-managed hosts inside TAB's network. Power Apps and
+Power Automate remain Microsoft-hosted. The existing **Azure SQL Stage and Prod**
+are the initial database targets; PostgreSQL Stage and Prod follow later. This
+supersedes the earlier requirement to move all databases immediately onto TAB VMs.
+The previously proposed API names remain unconfirmed deployment inputs; no DNS,
+Azure SQL connection or production cutover has been performed.
 
-**Administration rollout:** Both six-screen v2 drafts are saved and natively
-exported, with no direct API data source. Independent executable comparison
-verified six screens, 81 controls and 679 source properties in each draft. The
-four v2 role-display/message-handling fixes are recorded in the
+Local source now adds automatic provider detection from the connection string,
+an admin-only **Initialize database** action inside Power Apps Configuration,
+and durable per-operator intake tracking. All records require final review before
+the next intake. Identical normalized content is blocked across users for **two
+hours** within an environment; an Admin/Owner can explicitly override duplicates
+with an audited reason, but cannot bypass unfinished review. See the
+[implementation and hosting roadmap](delivery/INTAKE_NETWORK_ROADMAP_2026-09-25.md)
+for verification and release boundaries. These changes are not published Canvas
+behavior, and the existing identity/sharing cutover blockers remain open.
+The final local PostgreSQL run in the
+[pre-hostname validation](delivery/PREHOSTNAME_VALIDATION_2026-09-25.md) passed
+**580 tests, none skipped**, with two upstream warnings in 151.18 seconds.
+The recovery implementation passed 47 tests; separate combined recovery review
+passed 160 tests with one PostgreSQL opt-in test skipped. Earlier counts of 458,
+504, 519 and the 29-test flow/lease increment describe preceding snapshots. The
+final API restart loaded the latest source, including transient-503 mappings;
+retained rows and complete tracking are preserved. Schema version 2 remains
+installed locally. Updated Canvas/flows are unpublished.
+
+**Administration drafts:** September 25 updates are saved in both six-screen
+native drafts and remain unpublished. Separate comparison verified each exported
+app has 85 controls, 724 source properties, 37 behavior handlers, six screen events
+and three App properties, using only its matching broker. The
+[current native evidence](delivery/CANVAS_NATIVE_INTAKE_UPDATE_2026-09-25.md)
+retains baseline diagnostics: one Parser and zero Binding findings, two SARIF
+literal-predicate findings and 66 accessibility items per app. Native workflow
+acceptance remains open. The earlier v2 exports verified 81 controls and 679 source
+properties per draft; that snapshot and its four role-display/message fixes are
+recorded in the
 [Canvas evidence](delivery/CANVAS_SOURCE_ASSEMBLY_2026-09-24.md).
-Neither administration version is published. The source suite passed **372 tests;
+For that earlier snapshot, the source suite passed **372 tests;
 73 database opt-in tests were skipped**, with two upstream dependency warnings
 in 77.51 seconds.
-The latest pagination/flow/package/sharing batch passed **43 tests**. Skipped tests are not
+The preceding pagination/flow/package/sharing batch passed **43 tests**. Skipped tests are not
 live database or tenant acceptance.
 
 The existing connector exposes eight operations, including `InvokeBroker`, and
@@ -49,23 +71,30 @@ were verified without opening protected content.
 Native Stage checks passed for `GetCurrentUser`, `GetHealth`, `ListUsers`,
 `GetRuntimeProfiles`, saving a configuration draft and testing the unchanged
 target. Prod passed SSO and administration/configuration reads with its database
-disabled. Apply, sharing/recovery and second-user acceptance remain incomplete.
+disabled. Configuration Apply, sharing and second-user acceptance remain incomplete.
 After three executions returned incomplete app readback, the final built-in
 pagination trial stalled for more than eight minutes at `Before_add_stage_app`
 and was canceled in the native run UI around 23:48 UTC. It reached no permission
-mutation or Management call. The command remains pending and its durable lease
-remains RUNNING; no Management permit is held. Earlier flow grants remain
-verified and neither app CanView grant was added. Stop native retries. The next
-step is independent design of canceled-run reconciliation and finite permission
-readback; do not clear the lease or fabricate completion. The
+mutation or Management call. That historical hold was resolved on September 25:
+the independently reviewed [host recovery](delivery/SHARING_RECOVERY_IMPLEMENTATION_2026-09-25.md)
+used fresh authenticated run/action/run-attached-definition evidence, closed the
+canceled execution and released only its matching lease. Readback confirmed the
+command, plan and membership remain pending; protected authority, profiles,
+memberships, observations and Management pacing are unchanged, with one audit
+event added and no active permit. Earlier grants remain untouched and no new app
+CanView grant was added. **Do not retry native sharing yet:** a finite, complete
+interactive permission-read path still requires acceptance. The finite read-only
+collector and applied host recovery do not satisfy that native gate. The
 [pagination evidence](delivery/MAKERS_PERMISSION_PAGINATION_2026-09-24.md) records
-exact recovery references. No OAuth or IT policy change is needed.
+the historical trial and exact recovery references. No OAuth or IT policy change
+is needed.
 
 Claude and Mike are ACTIVE protected application Owners after readback of their
 CanView grants on both apps and run-only grants on both flows. Ed is ACTIVE Admin
 and retains platform deployment ownership. Kristen, Thomas and Shawn remain
 PENDING. Private control therefore has three active and three pending memberships;
-security enforcement and runtime authority remain inactive. The published
+post-restart readback confirms zero sharing leases, with security enforcement and
+runtime authority both inactive. The published
 four-screen apps still use the shared connection's API identity.
 
 The flows share one durable Management connector permit with a 13-second
@@ -89,13 +118,11 @@ not established. Shared API releases and restarts affect both apps. The earlier
 
 Use the [visual operating package](operations-guide/index.html) for the functional
 flow, architecture, end-user SOP and evidence limits.
-The earlier [Phase 2 plan](operations-guide/guide.md#phase-2-two-production-periods)
-assumed existing Azure SQL first, then accepted production PostgreSQL with an
-end-Q4 2026 target. Its hosting assumption is superseded by the September 25
-requirement that all target databases reside on internal TAB VMs. SQL Server and
-PostgreSQL support remains relevant; engine/version, migration sequencing and
-Stage/Prod placement still require confirmation. Historical guide material is
-not approval for an Azure-hosted target or a database cutover.
+The [Phase 2 plan](operations-guide/guide.md#phase-2-two-production-periods)
+uses existing Azure SQL first, followed by accepted PostgreSQL migration. The
+September 25 owner clarification restores this database sequence while moving
+the API and gateway onto TAB-managed infrastructure. Database hostnames, migration
+sequencing and cutover acceptance remain pending.
 Earlier increment sections are historical snapshots. The public visual guide
 **1.4.0** is published and verified; it describes the current four-screen release
 and clearly leaves administration acceptance pending. This status supplies the

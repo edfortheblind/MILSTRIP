@@ -91,7 +91,9 @@
               "SaveRuntimeDraft",
               "TestRuntimeDraft",
               "ApplyRuntimeDraft",
-              "GetAdministrationOperation"
+              "GetAdministrationOperation",
+              "InitializeRuntimeDraft",
+              "GetIntakeWorkflow"
             ],
             "title": "Operation",
             "type": "string"
@@ -338,6 +340,19 @@
       },
       "IntakeRequest": {
         "properties": {
+          "duplicate_override_reason": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duplicate Override Reason"
+          },
           "source_id": {
             "anyOf": [
               {

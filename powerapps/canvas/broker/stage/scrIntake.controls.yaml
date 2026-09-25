@@ -30,11 +30,12 @@
       X: =24
       Y: =152
       Width: =Parent.Width-48
-      Height: =320
+      Height: =244
       Default: =""
       Mode: =TextMode.MultiLine
       HintText: ="Paste the original email or ticket text"
-      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit))
+      DisplayMode: =If(Coalesce(varBusy,false) || !Coalesce(varEnvironmentReady,false) || Coalesce(varIntakeUncertain,false)
+        || !IsBlank(varActiveIntake),DisplayMode.Disabled,DisplayMode.Edit)
       AccessibleLabel: ="Original email or ticket text"
       TabIndex: =0
       FocusedBorderThickness: =3
@@ -49,32 +50,64 @@
       Text: ="Submit intake"
       OnSelect: '=If(!Coalesce(varBusy,false) && Coalesce(varEnvironmentReady,false),Set(varBusy,true); Set(varFlow,Blank());
         If(IsError(Set(varSourceId,Text(GUID()))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
-        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep the text and compare this
-        source ID in recent requests: " & varSourceId); false,If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("CreateIntakeRequest",JSON({source_type:"PASTE",source_id:varSourceId,source_text:txtSource.Text},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
-        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep the text and compare this
-        source ID in recent requests: " & varSourceId); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
-        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep the text and compare this
-        source ID in recent requests: " & varSourceId); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
-        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
-        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep the text and compare this
-        source ID in recent requests: " & varSourceId); false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
-        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep the text and compare this
-        source ID in recent requests: " & varSourceId); false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
-        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep the text and compare this
-        source ID in recent requests: " & varSourceId); false,If(IsError(Set(varAck,{request_id:Text(varRaw.request_id),status:Text(varRaw.status),received_at:DateTimeValue(Text(varRaw.received_at)),records:Value(varRaw.records),rejected:Value(varRaw.rejected),requires_review:Value(varRaw.requires_review)})),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
-        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep the text and compare this
-        source ID in recent requests: " & varSourceId); false,If(IsError(Set(varRequestId,varAck.request_id)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
-        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep the text and compare this
-        source ID in recent requests: " & varSourceId); false,If(IsError(Set(varIntakeUncertain,false)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
-        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep the text and compare this
-        source ID in recent requests: " & varSourceId); false,If(IsError(Set(varMessage,"Intake saved. Load results
-        to inspect validation.")),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
-        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep the text and compare this
-        source ID in recent requests: " & varSourceId); false,If(IsError(Navigate(scrResults)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
-        Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep the text and compare this
-        source ID in recent requests: " & varSourceId); false,true))))))))))); Set(varBusy,false))'
-      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || IsBlank(txtSource.Text)
-        || Coalesce(varIntakeUncertain,false),DisplayMode.Disabled,DisplayMode.Edit))
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("CreateIntakeRequest",JSON({source_type:"PASTE",source_id:varSourceId,source_text:txtSource.Text,duplicate_override_reason:If(chkDuplicateOverride.Value,txtOverrideReason.Text,Blank())},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(Set(varRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(varRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(Set(varAck,{request_id:Text(varRaw.request_id),status:Text(varRaw.status),received_at:DateTimeValue(Text(varRaw.received_at)),records:Value(varRaw.records),rejected:Value(varRaw.rejected),requires_review:Value(varRaw.requires_review)})),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(Set(varRequestId,varAck.request_id)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(Set(varActiveIntake,varAck.request_id)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(Set(varIntakeUncertain,false)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(Reset(chkDuplicateOverride)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(Reset(txtOverrideReason)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(Set(varMessage,"Intake saved. Load results to inspect validation.")),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,If(IsError(Navigate(scrResults)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake
+        blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within
+        2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: "
+        & varSourceId)); false,true)))))))))))))); Set(varBusy,false))'
+      DisplayMode: =If(Coalesce(varBusy,false) || !Coalesce(varEnvironmentReady,false) || Coalesce(varIntakeUncertain,false)
+        || !IsBlank(varActiveIntake) || IsBlank(Trim(txtSource.Text)) || (chkDuplicateOverride.Value && IsBlank(Trim(txtOverrideReason.Text))),DisplayMode.Disabled,DisplayMode.Edit)
       TabIndex: =0
       FocusedBorderThickness: =3
       FocusedBorderColor: =Self.Color
@@ -108,10 +141,28 @@
       Y: =490
       Width: =210
       Height: =44
-      Text: ="Allow new submission"
-      OnSelect: =Set(varIntakeUncertain,false); Set(varMessage,"A new submission creates another request. Submit
-        only after checking recent requests.")
-      DisplayMode: =If(!Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,If(Coalesce(varBusy,false) || !Coalesce(varIntakeUncertain,false),DisplayMode.Disabled,DisplayMode.Edit))
+      Text: = "Resume / new intake"
+      OnSelect: '=If(!Coalesce(varBusy,false) && Coalesce(varEnvironmentReady,false),Set(varBusy,true); Set(varFlow,Blank());
+        If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("GetIntakeWorkflow",JSON({source_id:If(Coalesce(varIntakeUncertain,false),varSourceId,Blank())},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Workflow status unavailable. Keep the current intake and retry."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Workflow status unavailable. Keep the current intake and retry."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Workflow status unavailable. Keep the current intake and retry."); false,If(IsError(Set(varWorkflowRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Workflow status unavailable. Keep the current intake and retry."); false,If(IsError(varWorkflowRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Workflow status unavailable. Keep the current intake and retry."); false,If(IsError(Set(varActiveIntake,Text(varWorkflowRaw.active_request_id))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Workflow status unavailable. Keep the current intake and retry."); false,If(IsError(If(Coalesce(varIntakeUncertain,false),If(Text(varWorkflowRaw.source_resolution)="matched"
+        && CountRows(Table(varWorkflowRaw.source_receipts))=1,Set(varRecoveredIntake,First(Table(varWorkflowRaw.source_receipts)).Value);
+        If(Text(varRecoveredIntake.source_id)=varSourceId,Set(varAck,{request_id:Text(varRecoveredIntake.request_id),status:Text(varRecoveredIntake.status),received_at:DateTimeValue(Text(varRecoveredIntake.received_at)),records:Value(varRecoveredIntake.records),rejected:Value(varRecoveredIntake.rejected),requires_review:Value(varRecoveredIntake.requires_review)});
+        Set(varRequestId,varAck.request_id); Set(varIntakeUncertain,false); Reset(chkDuplicateOverride); Reset(txtOverrideReason);
+        Set(varMessage,"Saved intake confirmed by its source ID. Load results to inspect it."); Navigate(scrResults),Set(varMessage,"Receipt
+        did not match this source ID. Keep the submission and contact an administrator.")),Set(varMessage,"Submission
+        remains unconfirmed. Keep the text and source ID: " & varSourceId & ". Check again later or contact an administrator;
+        the original request may still be running.")),If(!Boolean(varWorkflowRaw.can_start),Set(varRequestId,varActiveIntake);
+        Navigate(scrResults),Reset(txtSource); Reset(chkDuplicateOverride); Reset(txtOverrideReason); Set(varSourceId,Blank());
+        Set(varAck,Blank()); Set(varRequestId,Blank()); Set(varMessage,"Ready for a new intake. Identical content
+        is blocked for 2 hours.")))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varMessage,"Workflow status unavailable. Keep the current intake and retry."); false,true))))))); Set(varBusy,false))'
+      DisplayMode: =If(Coalesce(varBusy,false) || !Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,DisplayMode.Edit)
       TabIndex: =0
       FocusedBorderThickness: =3
       FocusedBorderColor: =Self.Color
@@ -221,9 +272,22 @@
         to authorized administrators."); false,If(IsError(Set(varEnvironmentReady,varEnvironment.environment=AppEnvironment
         && varEnvironment.ready)),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
         Set(varEnvironmentReady,false); Set(varMessage,"Connection unavailable. Configuration and Users remain available
+        to authorized administrators."); false,If(IsError(Set(varFlow,MILSTRIPStageBroker.Run("GetIntakeWorkflow",JSON({},JSONFormat.Compact)))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varEnvironmentReady,false); Set(varMessage,"Connection unavailable. Configuration and Users remain available
+        to authorized administrators."); false,If(IsError(varFlow),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varEnvironmentReady,false); Set(varMessage,"Connection unavailable. Configuration and Users remain available
+        to authorized administrators."); false,If(IsError(If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request
+        failed"}))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varEnvironmentReady,false); Set(varMessage,"Connection unavailable. Configuration and Users remain available
+        to authorized administrators."); false,If(IsError(Set(varWorkflowRaw,ParseJSON(varFlow.result_json))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varEnvironmentReady,false); Set(varMessage,"Connection unavailable. Configuration and Users remain available
+        to authorized administrators."); false,If(IsError(varWorkflowRaw),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varEnvironmentReady,false); Set(varMessage,"Connection unavailable. Configuration and Users remain available
+        to authorized administrators."); false,If(IsError(Set(varActiveIntake,Text(varWorkflowRaw.active_request_id))),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
+        Set(varEnvironmentReady,false); Set(varMessage,"Connection unavailable. Configuration and Users remain available
         to authorized administrators."); false,If(IsError(Set(varMessage,"Connection checked.")),If(IsError(varFlow),Set(varFlow,{ok:false,status:0,error_code:"TRANSPORT_UNKNOWN",error_message:"",request_id:"",result_json:""}));
         Set(varEnvironmentReady,false); Set(varMessage,"Connection unavailable. Configuration and Users remain available
-        to authorized administrators."); false,true)))))))))))))))))); Set(varBusy,false))
+        to authorized administrators."); false,true)))))))))))))))))))))))); Set(varBusy,false))
       DisplayMode: =If(Coalesce(varBusy,false),DisplayMode.Disabled,DisplayMode.Edit)
       TabIndex: =0
       FocusedBorderThickness: =3
@@ -256,3 +320,33 @@
       TabIndex: =0
       FocusedBorderThickness: =3
       FocusedBorderColor: =Self.Color
+- chkDuplicateOverride:
+    Control: Classic/CheckBox
+    Properties:
+      X: =24
+      Y: =416
+      Width: =290
+      Height: =44
+      Text: ="Override 2-hour duplicate block"
+      Default: =false
+      Visible: ="runtime.configure" in colCapabilities.Value
+      DisplayMode: =If(Coalesce(varBusy,false) || Coalesce(varIntakeUncertain,false),DisplayMode.Disabled,DisplayMode.Edit)
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =RGBA(0,0,0,1)
+- txtOverrideReason:
+    Control: Classic/TextInput
+    Properties:
+      X: =330
+      Y: =416
+      Width: =Parent.Width-354
+      Height: =44
+      Default: =""
+      HintText: ="Required override reason (recorded in audit)"
+      MaxLength: =1000
+      Visible: ="runtime.configure" in colCapabilities.Value && chkDuplicateOverride.Value
+      DisplayMode: =If(Coalesce(varBusy,false) || Coalesce(varIntakeUncertain,false),DisplayMode.Disabled,DisplayMode.Edit)
+      AccessibleLabel: ="Audited duplicate override reason"
+      TabIndex: =0
+      FocusedBorderThickness: =3
+      FocusedBorderColor: =RGBA(0,0,0,1)

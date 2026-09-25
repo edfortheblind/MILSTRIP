@@ -17,6 +17,52 @@ def claim(store, plan, profile='stage', execution_id=None):
     return acquire_sharing_lease(binding, command, store), command
 
 
+def test_native_run_binding_is_exact_immutable_and_retry_safe(control):
+    store, _ = control
+    plan = save_user_access(context(control), access_command(control), store)['sharing_plan']
+    state = store.read()
+    binding = state['security']['brokers']['stage']
+    native = dict(environment_name='Default-' + binding['tenant_id'],
+                  flow_id=state['resources']['stage']['flow_id'], run_id='synthetic-run-01')
+    command = AcquireSharingLease(plan_id=plan['plan_id'], revision=plan['revision'],
+                                  execution_id=uuid4(), native_run=native)
+    receipt = acquire_sharing_lease(binding, command, store)
+    assert acquire_sharing_lease(binding, command, store) == receipt
+    changed = command.model_copy(update={'native_run': command.native_run.model_copy(update={'run_id': 'other-run'})})
+    with pytest.raises(AuthorizationError, match='cannot restart'):
+        acquire_sharing_lease(binding, changed, store)
+    # A bound execution cannot become a legacy execution on retry.
+    with pytest.raises(AuthorizationError, match='cannot restart'):
+        acquire_sharing_lease(binding, command.model_copy(update={'native_run': None}), store)
+    def rewrite(state):
+        execution = state['sharing_plans'][plan['plan_id']]['executions'][str(command.execution_id)]
+        execution['native_run']['run_id'] = 'rewritten'
+        key = principal_key(plan['target']['tenant_id'], plan['target']['object_id'])
+        state['sharing_leases'][key]['native_run']['run_id'] = 'rewritten'
+    with pytest.raises(ControlError):
+        store.mutate(rewrite)
+    finish(store, plan, receipt)
+    saved = store.read()['sharing_plans'][plan['plan_id']]['executions'][str(command.execution_id)]
+    assert saved['native_run'] == native
+
+
+@pytest.mark.parametrize('field,value', [('flow_id', str(uuid4())), ('environment_name', 'Default-wrong')])
+def test_native_run_cannot_claim_another_bound_resource(control, field, value):
+    store, _ = control
+    plan = save_user_access(context(control), access_command(control), store)['sharing_plan']
+    state = store.read()
+    binding = state['security']['brokers']['stage']
+    native = dict(environment_name='Default-' + binding['tenant_id'],
+                  flow_id=state['resources']['stage']['flow_id'], run_id='synthetic-run-02')
+    native[field] = value
+    command = AcquireSharingLease(plan_id=plan['plan_id'], revision=plan['revision'],
+                                  execution_id=uuid4(), native_run=native)
+    before = store.read()
+    with pytest.raises(AuthorizationError, match='does not match'):
+        acquire_sharing_lease(binding, command, store)
+    assert store.read() == before
+
+
 def finish(store, plan, lease, *, profile='stage', known=True, observations=None):
     if observations is None:
         observations = [{k: item[k] for k in ('kind', 'resource_id', 'permission', 'present')} | {'verified': True}

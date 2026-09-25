@@ -94,11 +94,14 @@ existing verification gates. A native retry identified
 `READBACK_PAGINATED_STAGE_APP`. App permission reads now use the Makers
 connector's documented `2017-06-01` default; edits retain `2016-11-01` and the
 fixed deployment-environment filter. That version change did not resolve the
-native continuation marker. Makers permission reads now enable supported
-pagination with a minimum-item threshold of 1000. This is not a transport cap;
-the existing `<1000` and no-continuation checks still require complete results.
-Native Save/activation and one bounded same-command retry remain pending.
-See the [pagination acceptance note](../../docs/delivery/MAKERS_PERMISSION_PAGINATION_2026-09-24.md).
+native continuation marker. The September 24 native pagination trial stalled
+and was canceled. Current generated source removes that aggregation policy;
+a single-page read still requires fewer than 1,000 rows and no continuation
+marker. Incomplete reads remain unverified. The historical canceled execution
+has been reconciled and its matching lease released, without adding permissions.
+Do not retry sharing until a finite, complete interactive permission-read path
+is accepted. See the [historical pagination evidence](../../docs/delivery/MAKERS_PERMISSION_PAGINATION_2026-09-24.md)
+and [current validation and recovery](../../docs/delivery/PREHOSTNAME_VALIDATION_2026-09-25.md).
 
 ## Evidence and remaining acceptance
 

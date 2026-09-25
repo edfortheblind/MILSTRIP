@@ -173,15 +173,47 @@ def build_business():
                button("btnUsers", "Users", "Parent.Width-234", 22,
                       '=Navigate(scrUsers)', visible='"users.manage" in colCapabilities.Value')]
     properties(intake, "btnCheckEnvironment")["OnSelect"] = action(
-        'Set(varEnvironmentReady,false); Clear(colCapabilities); ' + identity() + '; ' + health() +
+        'Set(varEnvironmentReady,false); Clear(colCapabilities); ' + identity() + '; ' + health() + '; ' + invoke('GetIntakeWorkflow',raw='varWorkflowRaw') + '; Set(varActiveIntake,Text(varWorkflowRaw.active_request_id))' +
         '; ' + message("Connection checked."),
         'Set(varEnvironmentReady,false); ' + message("Connection unavailable. Configuration and Users remain available to authorized administrators."))
     properties(intake, "btnSubmit")["OnSelect"] = action(
-        'Set(varSourceId,Text(GUID())); ' + invoke("CreateIntakeRequest", '{source_type:"PASTE",source_id:varSourceId,source_text:txtSource.Text}') +
+        'Set(varSourceId,Text(GUID())); ' + invoke("CreateIntakeRequest", '{source_type:"PASTE",source_id:varSourceId,source_text:txtSource.Text,duplicate_override_reason:If(chkDuplicateOverride.Value,txtOverrideReason.Text,Blank())}') +
         '; Set(varAck,{request_id:Text(varRaw.request_id),status:Text(varRaw.status),received_at:DateTimeValue(Text(varRaw.received_at)),'
         'records:Value(varRaw.records),rejected:Value(varRaw.rejected),requires_review:Value(varRaw.requires_review)}); '
-        'Set(varRequestId,varAck.request_id); Set(varIntakeUncertain,false); ' + message("Intake saved. Load results to inspect validation.") + '; Navigate(scrResults)',
-        'Set(varIntakeUncertain,true); Set(varMessage,"Submission outcome is unknown. Keep the text and compare this source ID in recent requests: " & varSourceId)', business=True)
+        'Set(varRequestId,varAck.request_id); Set(varActiveIntake,varAck.request_id); Set(varIntakeUncertain,false); Reset(chkDuplicateOverride); Reset(txtOverrideReason); ' + message("Intake saved. Load results to inspect validation.") + '; Navigate(scrResults)',
+        'Set(varIntakeUncertain,!(Coalesce(varFlow.status,0) in [400,401,403,409,422])); Set(varMessage,If(Coalesce(varFlow.status,0)=409,"Intake blocked. Resume your unfinished intake, or ask an administrator to override a duplicate submitted within 2 hours.","Submission outcome is unknown. Keep the text and compare this source ID in recent requests: " & varSourceId))', business=True)
+    workflow = (invoke("GetIntakeWorkflow", '{source_id:If(Coalesce(varIntakeUncertain,false),varSourceId,Blank())}', raw="varWorkflowRaw") +
+                '; Set(varActiveIntake,Text(varWorkflowRaw.active_request_id))')
+    retry = properties(intake, "btnIntakeRetryConfirm")
+    retry["Text"] = '= "Resume / new intake"'
+    retry["DisplayMode"] = '=If(Coalesce(varBusy,false) || !Coalesce(varEnvironmentReady,false),DisplayMode.Disabled,DisplayMode.Edit)'
+    retry["OnSelect"] = action(workflow +
+        '; If(Coalesce(varIntakeUncertain,false),'
+        'If(Text(varWorkflowRaw.source_resolution)="matched" && CountRows(Table(varWorkflowRaw.source_receipts))=1,'
+        'Set(varRecoveredIntake,First(Table(varWorkflowRaw.source_receipts)).Value); '
+        'If(Text(varRecoveredIntake.source_id)=varSourceId,'
+        'Set(varAck,{request_id:Text(varRecoveredIntake.request_id),status:Text(varRecoveredIntake.status),'
+        'received_at:DateTimeValue(Text(varRecoveredIntake.received_at)),records:Value(varRecoveredIntake.records),'
+        'rejected:Value(varRecoveredIntake.rejected),requires_review:Value(varRecoveredIntake.requires_review)}); '
+        'Set(varRequestId,varAck.request_id); Set(varIntakeUncertain,false); '
+        'Reset(chkDuplicateOverride); Reset(txtOverrideReason); '
+        'Set(varMessage,"Saved intake confirmed by its source ID. Load results to inspect it."); Navigate(scrResults),'
+        'Set(varMessage,"Receipt did not match this source ID. Keep the submission and contact an administrator.")),'
+        'Set(varMessage,"Submission remains unconfirmed. Keep the text and source ID: " & varSourceId & ". Check again later or contact an administrator; the original request may still be running.")),'
+        'If(!Boolean(varWorkflowRaw.can_start),Set(varRequestId,varActiveIntake); Navigate(scrResults),'
+        'Reset(txtSource); Reset(chkDuplicateOverride); Reset(txtOverrideReason); '
+        'Set(varSourceId,Blank()); Set(varAck,Blank()); Set(varRequestId,Blank()); '
+        'Set(varMessage,"Ready for a new intake. Identical content is blocked for 2 hours.")))',
+        message("Workflow status unavailable. Keep the current intake and retry."), business=True)
+    properties(intake,"txtSource")["Height"] = "=244"
+    properties(intake,"txtSource")["DisplayMode"] = '=If(Coalesce(varBusy,false) || !Coalesce(varEnvironmentReady,false) || Coalesce(varIntakeUncertain,false) || !IsBlank(varActiveIntake),DisplayMode.Disabled,DisplayMode.Edit)'
+    properties(intake,"btnSubmit")["DisplayMode"] = '=If(Coalesce(varBusy,false) || !Coalesce(varEnvironmentReady,false) || Coalesce(varIntakeUncertain,false) || !IsBlank(varActiveIntake) || IsBlank(Trim(txtSource.Text)) || (chkDuplicateOverride.Value && IsBlank(Trim(txtOverrideReason.Text))),DisplayMode.Disabled,DisplayMode.Edit)'
+    intake += [control("chkDuplicateOverride","Classic/CheckBox",X=24,Y=416,Width=290,Height=44,
+                       Text='"Override 2-hour duplicate block"',Default="false",
+                       Visible='"runtime.configure" in colCapabilities.Value',DisplayMode='If(Coalesce(varBusy,false) || Coalesce(varIntakeUncertain,false),DisplayMode.Disabled,DisplayMode.Edit)'),
+               control("txtOverrideReason","Classic/TextInput",X=330,Y=416,Width="Parent.Width-354",Height=44,
+                       Default='""',HintText='"Required override reason (recorded in audit)"',MaxLength=1000,
+                       Visible='"runtime.configure" in colCapabilities.Value && chkDuplicateOverride.Value',DisplayMode='If(Coalesce(varBusy,false) || Coalesce(varIntakeUncertain,false),DisplayMode.Disabled,DisplayMode.Edit)')]
     for name, more in (("btnRecent", False), ("btnMoreRequests", True)):
         payload = '{limit:50,cursor:varRequestsCursor}' if more else '{limit:50}'
         method = "Collect" if more else "ClearCollect"
@@ -235,7 +267,7 @@ def admin_heading(prefix, title):
 
 def admin_result():
     # GetAdministrationOperation wraps the original result. Normal calls do not.
-    return ('If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision)}); Set(varTest,Blank()),'
+    return ('If(varAdminOperation="SaveRuntimeDraft",Set(varDraft,{draft_id:Text(varAdminRaw.draft_id),draft_revision:Text(varAdminRaw.draft_revision),base_revision:Text(varAdminRaw.base_revision),target:Text(varAdminRaw.target)}); Set(varTest,Blank()),'
             'varAdminOperation="TestRuntimeDraft",Set(varTest,{test_id:Text(varAdminRaw.test_id),status:Text(varAdminRaw.status),expires_at:DateTimeValue(Text(varAdminRaw.expires_at))}),'
             'varAdminOperation="ApplyRuntimeDraft",Set(varEnvironmentReady,false); Set(varDraft,Blank()); Set(varTest,Blank())); '
             'Set(varAdminCommand,Blank()); Reset(txtConnectionString); '
@@ -256,7 +288,7 @@ def build_configuration():
     controls += [button("btnLoadConfiguration", "Load configuration", 24, 148,
         action('If(!IsBlank(varDraft.draft_id),Error({Kind:ErrorKind.Custom,Message:"Draft exists"})); ' + load_profiles() + '; Set(varMessage,"")', message("Configuration unavailable. Discard any saved draft before reloading."), capability="runtime.configure"), disabled=editing),
         label("ActiveConfiguration", '"Active: " & Coalesce(varActiveProfile.label,"Load configuration") & " | " & Coalesce(varActiveProfile.provider,"") & " | " & If(Coalesce(varActiveProfile.enabled,false),"Enabled","Disabled") & Char(10) & "Revision: " & Coalesce(varActiveProfile.revision,"")', 254, 146, width="Parent.Width-278", height=66),
-        control("ddProvider", "Classic/DropDown", X=24,Y=236,Width=240,Height=44,Items='["postgresql","sqlserver"]',Default='Coalesce(varActiveProfile.provider,"postgresql")',DisplayMode=f'If({editing},DisplayMode.Disabled,DisplayMode.Edit)'),
+        control("ddProvider", "Classic/DropDown", X=24,Y=236,Width=240,Height=44,Items='["auto"]',Default='"auto"',DisplayMode=f'If({editing},DisplayMode.Disabled,DisplayMode.Edit)'),
         control("txtTargetLabel", "Classic/TextInput", X=284,Y=236,Width=440,Height=44,Default='Coalesce(varActiveProfile.label,"")',HintText='"Target label"',MaxLength=80,DisplayMode=f'If({editing},DisplayMode.Disabled,DisplayMode.Edit)'),
         control("chkEnabled", "Classic/CheckBox", X=748,Y=236,Width=200,Height=44,Text='"Enabled"',Default='Coalesce(varActiveProfile.enabled,false)',DisplayMode=f'If({editing},DisplayMode.Disabled,DisplayMode.Edit)'),
         label("ConnectionGuidance", '"Replacement connection string (optional). Saved credentials are never displayed. Disable the environment before changing its database target."', 24, 300, height=64),
@@ -273,6 +305,13 @@ def build_configuration():
         button("btnRecoverConfiguration","Check command status",24,570,action(invoke("GetAdministrationOperation",'{command_id:varAdminCommand.command_id}',"varOperationRaw")+'; Set(varAdminRaw,varOperationRaw.result); '+admin_result()+'; If(varAdminOperation="ApplyRuntimeDraft",'+guarded(load_profiles(),message("Command result confirmed. Reload configuration to refresh the display."))+')',message("No confirmed result. Retry the retained command if its outcome is still unknown."),capability="runtime.configure"),disabled=busy+' || IsBlank(varAdminCommand.command_id)'),
         button("btnRetryConfiguration","Retry same command",254,570,action('Set(varFlow,__FLOW__.Run(varAdminOperation,varAdminCommand.payload_json)); varFlow; If(!varFlow.ok,Error({Kind:ErrorKind.Custom,Message:"Request failed"})); Set(varAdminRaw,ParseJSON(varFlow.result_json)); varAdminRaw; '+admin_result()+'; If(varAdminOperation="ApplyRuntimeDraft",'+guarded(load_profiles(),message("Configuration applied. Reload configuration to refresh the display."))+')',failed,capability="runtime.configure"),disabled=busy+' || IsBlank(varAdminCommand.command_id)'),
         label("ConfigurationCommand", 'If(!IsBlank(varAdminCommand.command_id),"Pending command: " & varAdminCommand.command_id,"")',24,634,height=46)]
+    controls += [control("txtInitializeTarget","Classic/TextInput",X=484,Y=570,Width=440,Height=44,
+                        Default='""',HintText='"Type saved draft target to confirm initialization"',
+                        DisplayMode=f'If({pending},DisplayMode.Disabled,DisplayMode.Edit)'),
+                 button("btnInitializeDatabase","Initialize database",954,570,
+                        action(admin_submit("InitializeRuntimeDraft",'{command_id:varAdminCommandId,draft_id:varDraft.draft_id,draft_revision:varDraft.draft_revision,confirm_target:txtInitializeTarget.Text}'),failed,capability="runtime.configure"),
+                        disabled=pending+' || IsBlank(varDraft.draft_id) || varActiveProfile.enabled || txtInitializeTarget.Text<>varDraft.target')]
+    properties(controls,"DraftState")["Text"] = '= "Draft target: " & Coalesce(varDraft.target,"none") & " | Test: " & Coalesce(varTest.status,"not run")'
     return controls
 
 
@@ -287,7 +326,7 @@ def build_users():
     # acquiring the sharing lease). A status lookup can also race an original
     # execution that has not reached SaveUserAccess yet. Keep the same command.
     fail = ('If(!Coalesce(varUserSaveReturned,false) && '
-            '((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0) in [400,401,403,404,409,422]) || '
+            '((varFlow.error_code="REQUEST_FAILED" && Coalesce(varFlow.status,0) in [400,401,403,404,422]) || '
             'varFlow.error_code in ["INVALID_TARGET","INVALID_COMMAND"] || '
             '(varFlow.error_code="ACCESS_DENIED" && Coalesce(varFlow.status,0) in [401,403])),'
             'Set(varUserCommand,Blank()); ' + message("Access command rejected. Reload users and check the account and role.") + ',' +
@@ -324,7 +363,9 @@ def apply_accessibility(screens):
         "txtCanonical": "Canonical MILSTRIP record, read only",
         "txtReason": "Review reason, required",
         "ddDecision": "Review decision",
-        "ddProvider": "Database provider",
+        "ddProvider": "Database provider, automatically detected",
+        "txtInitializeTarget": "Confirm saved draft target for database initialization",
+        "txtOverrideReason": "Audited duplicate override reason",
         "txtTargetLabel": "Database target label",
         "txtConnectionString": "Replacement connection string, optional. Leave blank to keep the saved connection.",
         "txtUserUPN": "Corporate user email address",
@@ -382,7 +423,7 @@ def render():
     files = {}
     startup = ('Set(varBusy,true); Set(varEnvironmentReady,false); '
                + guarded(identity(), 'Clear(colCapabilities); ' + message("Sign-in or app access could not be verified.")) + '; '
-               'If("business" in colCapabilities.Value,' + guarded(health(),'Set(varEnvironmentReady,false)') + '); Set(varBusy,false)')
+               'If("business" in colCapabilities.Value,' + guarded(health() + '; ' + invoke('GetIntakeWorkflow',raw='varWorkflowRaw') + '; Set(varActiveIntake,Text(varWorkflowRaw.active_request_id))','Set(varEnvironmentReady,false)') + '); Set(varBusy,false)')
     for profile in ("stage","prod"):
         flow = "MILSTRIP" + profile.title() + "Broker"
         for name,controls in screens.items():

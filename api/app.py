@@ -22,6 +22,7 @@ class IntakeRequest(BaseModel):
     source_id: str | None = None
     source_text: str = Field(min_length=1, max_length=1_000_000)
     submitted_by: str | None = None
+    duplicate_override_reason: str | None = Field(default=None, min_length=1, max_length=1000)
 
 
 @app.get("/api/v1/health", response_model=HealthResponse, operation_id="GetHealth")
@@ -44,11 +45,21 @@ def health(request: Request):
 
 @app.post("/api/v1/intake/requests", status_code=201, response_model=IntakeAcknowledgement, operation_id="CreateIntakeRequest")
 def create_intake_request(request: IntakeRequest, http_request: Request):
+    broker = getattr(http_request.state, "broker_context", None)
+    if request.duplicate_override_reason is not None:
+        if broker is None:
+            raise HTTPException(403, "Duplicate override requires verified administrator identity")
+        from api.authorization import authorize
+        authorize(broker, "runtime.configure", store=http_request.state.control_store)
+        if not request.duplicate_override_reason.strip():
+            raise HTTPException(422, "An override reason is required")
     with repository(http_request) as value:
         result = value.create_intake(
             request_id=str(uuid4()), source_type=request.source_type, source_id=request.source_id,
             source_text=request.source_text, source_sha256=hashlib.sha256(request.source_text.encode("utf-8")).hexdigest(),
-            actor=http_request.state.context.actor, records=process_text(request.source_text))
+            actor=http_request.state.context.actor, records=process_text(request.source_text),
+            **({"enforce_workflow": True, "duplicate_override_reason": request.duplicate_override_reason}
+               if broker else {}))
     return result  # Receipt is returned only after the transaction commits.
 
 

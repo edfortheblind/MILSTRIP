@@ -16,7 +16,7 @@ class EmptyPayload(AdminPayload):
 class SaveRuntimeDraftPayload(AdminPayload):
     command_id: UUID
     expected_active_revision: UUID
-    provider: Literal["postgresql", "sqlserver"]
+    provider: Literal["auto", "postgresql", "sqlserver"] = "auto"
     label: str = Field(min_length=1, max_length=80)
     enabled: StrictBool
     replacement_connection_string: SecretStr | None = Field(default=None, json_schema_extra={"writeOnly": True})
@@ -31,6 +31,10 @@ class TestRuntimeDraftPayload(AdminPayload):
 class ApplyRuntimeDraftPayload(TestRuntimeDraftPayload):
     expected_active_revision: UUID
     test_id: UUID | None = None
+
+
+class InitializeRuntimeDraftPayload(TestRuntimeDraftPayload):
+    confirm_target: str = Field(min_length=1)
 
 
 class AdministrationOperationPayload(AdminPayload):

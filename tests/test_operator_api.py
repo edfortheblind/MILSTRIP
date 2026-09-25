@@ -282,6 +282,7 @@ def test_concurrent_commands_have_one_winner(monkeypatch, api_credentials):
             db.execute("DELETE FROM milstrip_app.audit_event WHERE aggregate_type='milstrip_record' AND aggregate_id=%s", (record_id,))
             db.execute("DELETE FROM milstrip_app.review_decision WHERE record_id=%s", (record_id,))
             db.execute("DELETE FROM milstrip_app.milstrip_record WHERE record_id=%s", (record_id,))
+            db.execute("DELETE FROM milstrip_app.intake_workflow WHERE request_id=%s", (request_id,))
             db.execute("DELETE FROM milstrip_app.intake_request WHERE request_id=%s", (request_id,))
             assert db.execute("SELECT count(*) FROM milstrip_app.intake_request WHERE request_id=%s", (request_id,)).fetchone()[0] == 0
 

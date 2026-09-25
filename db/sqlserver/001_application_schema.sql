@@ -129,4 +129,18 @@ CREATE TABLE milstrip_app.validation_issue (
 CREATE INDEX validation_issue_record_id_idx ON milstrip_app.validation_issue (record_id);
 END;
 
+IF OBJECT_ID(N'milstrip_app.intake_workflow', N'U') IS NULL
+BEGIN
+CREATE TABLE milstrip_app.intake_workflow (
+	request_id NVARCHAR(200) COLLATE Latin1_General_100_BIN2 NOT NULL,
+	actor_key NVARCHAR(64) NOT NULL,
+	fingerprint NVARCHAR(64) NOT NULL,
+	created_at DATETIMEOFFSET NOT NULL DEFAULT TODATETIMEOFFSET(SYSUTCDATETIME(), '+00:00'),
+	PRIMARY KEY (request_id),
+	FOREIGN KEY(request_id) REFERENCES milstrip_app.intake_request (request_id)
+);
+CREATE INDEX intake_workflow_actor_idx ON milstrip_app.intake_workflow (actor_key);
+CREATE INDEX intake_workflow_duplicate_idx ON milstrip_app.intake_workflow (fingerprint, created_at);
+END;
+
 COMMIT TRANSACTION;

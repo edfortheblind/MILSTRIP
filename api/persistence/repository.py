@@ -1,19 +1,22 @@
 """Intake/review operations; callers own HTTP and cursor serialization."""
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import timedelta
+import hashlib
+import json
 import os
 from typing import Any
 
 import psycopg
 from psycopg.conninfo import conninfo_to_dict
-from sqlalchemy import and_, create_engine, event, exists, func, inspect, or_, select, text
+from sqlalchemy import and_, case, create_engine, event, exists, func, inspect, or_, select, text
 from sqlalchemy.engine import URL
 from sqlalchemy.pool import NullPool
 from sqlalchemy.schema import CreateSchema
 
 from .schema import (
     SCHEMA_VERSION, audit_event, environment_identity, intake_request,
-    metadata, milstrip_record, review_decision, utc_now, validation_issue,
+    metadata, milstrip_record, review_decision, utc_now, validation_issue, intake_workflow,
 )
 
 
@@ -106,7 +109,25 @@ def provision_schema(provider: str, connection_string: str, profile_id: str):
         if identity is None:
             connection.execute(environment_identity.insert().values(singleton_id=1, profile_id=profile_id,
                                                                    schema_version=SCHEMA_VERSION))
+        elif identity["profile_id"] == profile_id and identity["schema_version"] == 1:
+            # Version 2 is additive: retain every legacy intake/review/audit row.
+            connection.execute(environment_identity.update().where(
+                environment_identity.c.singleton_id == 1).values(schema_version=SCHEMA_VERSION))
         repository.validate_identity(profile_id)
+        # Preserve duplicate protection and known ownership across upgrades.
+        # Shared legacy actors remain shared; never infer a person's identity.
+        from milstrip.service import process_text
+        missing = connection.execute(select(
+            intake_request.c.request_id, intake_request.c.source_text,
+            intake_request.c.submitted_by, intake_request.c.received_at).where(
+                ~exists(select(intake_workflow.c.request_id).where(
+                    intake_workflow.c.request_id == intake_request.c.request_id)))).mappings().all()
+        for row in missing:
+            actor = row['submitted_by'] or ('legacy-unattributed:' + row['request_id'])
+            connection.execute(intake_workflow.insert().values(
+                request_id=row['request_id'], actor_key=hashlib.sha256(actor.encode()).hexdigest(),
+                fingerprint=intake_fingerprint(process_text(row['source_text']), row['source_text']),
+                created_at=row['received_at']))
         return {"profile_id": profile_id, "schema_version": SCHEMA_VERSION}
 
 
@@ -139,6 +160,20 @@ def locked_record_statement(record_id):
             milstrip_record, "WITH (UPDLOCK, HOLDLOCK, ROWLOCK)", dialect_name="mssql")
 
 
+def workflow_lock_statement():
+    return select(environment_identity.c.singleton_id).where(
+        environment_identity.c.singleton_id == 1).with_for_update().with_hint(
+            environment_identity, "WITH (UPDLOCK, HOLDLOCK, ROWLOCK)", dialect_name="mssql")
+
+
+def intake_fingerprint(records, source_text):
+    # Record order and fixed-position spaces are significant. Transport wrappers
+    # disappear through the existing parser; never collapse internal whitespace.
+    values = [record.canonical or record.fields.source for record in records]
+    value = {"records": values} if values else {"empty_source": source_text.replace("\r\n", "\n").strip()}
+    return hashlib.sha256(json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+
+
 class Repository:
     def __init__(self, connection):
         self.connection = connection
@@ -158,8 +193,65 @@ class Repository:
         if row is None or row["profile_id"] != profile_id or row["schema_version"] != SCHEMA_VERSION:
             raise ProviderMismatch("Database environment or schema version does not match the profile")
 
-    def create_intake(self, request_id, source_type, source_id, source_text, source_sha256, actor, records):
+    def validate_workflow_tracking(self):
+        missing = self.connection.scalar(select(intake_request.c.request_id).where(
+            ~exists(select(intake_workflow.c.request_id).where(
+                intake_workflow.c.request_id == intake_request.c.request_id))).limit(1))
+        if missing is not None:
+            raise ProviderMismatch("Intake workflow tracking is incomplete; initialize the application schema before activation")
+
+    def workflow_status(self, actor, source_id=None):
+        pending = exists(select(milstrip_record.c.record_id).where(
+            milstrip_record.c.request_id == intake_workflow.c.request_id,
+            milstrip_record.c.review_version == 0))
+        active = self.connection.scalar(select(intake_workflow.c.request_id).where(
+            intake_workflow.c.actor_key == hashlib.sha256(actor.encode()).hexdigest(), pending
+        ).order_by(intake_workflow.c.created_at, intake_workflow.c.request_id).limit(1))
+        result = {"active_request_id": active, "can_start": active is None, "duplicate_window_hours": 2,
+                  "source_resolution": "unconfirmed", "source_receipts": []}
+        if source_id is not None:
+            # A missing row can still be in flight. Only a committed receipt for
+            # this exact person/source resolves an uncertain submission.
+            rows = self.connection.execute(select(*REQUEST_COLUMNS).join(intake_workflow,
+                intake_workflow.c.request_id == intake_request.c.request_id).where(
+                    intake_workflow.c.actor_key == hashlib.sha256(actor.encode()).hexdigest(),
+                    intake_request.c.submitted_by == actor, intake_request.c.source_id == source_id)
+                .order_by(intake_request.c.received_at, intake_request.c.request_id).limit(2)).mappings().all()
+            for row in rows:
+                # SQL Server's database collation can compare text loosely.
+                if row["submitted_by"] != actor or row["source_id"] != source_id:
+                    continue
+                counts = self.connection.execute(select(func.count().label("records"),
+                    func.sum(case((milstrip_record.c.status == "REJECTED", 1), else_=0)).label("rejected"),
+                    func.sum(case((milstrip_record.c.status == "REQUIRES_REVIEW", 1), else_=0)).label("requires_review"),
+                    func.sum(case((milstrip_record.c.review_version == 0, 1), else_=0)).label("pending"))
+                    .where(milstrip_record.c.request_id == row["request_id"])).mappings().one()
+                result["source_receipts"].append({key: row[key] for key in
+                    ("request_id", "source_id", "status", "received_at")} | {
+                    key: int(counts[key] or 0) for key in ("records", "rejected", "requires_review")} | {
+                    "review_complete": not counts["pending"]})
+            result["source_resolution"] = ("ambiguous" if len(rows) > 1 else
+                "matched" if len(result["source_receipts"]) == 1 else "unconfirmed")
+        return result
+
+    def create_intake(self, request_id, source_type, source_id, source_text, source_sha256, actor, records,
+                      *, enforce_workflow=False, duplicate_override_reason=None):
         records = list(records)
+        fingerprint = intake_fingerprint(records, source_text)
+        if enforce_workflow:
+            # One durable per-environment mutex serializes check + insert across
+            # users, tabs and API processes until the surrounding transaction ends.
+            if self.connection.scalar(workflow_lock_statement()) != 1:
+                raise ProviderMismatch("Workflow environment identity is missing")
+            current = self.workflow_status(actor)
+            if not current["can_start"]:
+                raise RepositoryConflict("Finish every record review in intake " + current["active_request_id"] + " before starting another")
+            now = self.connection.scalar(select(utc_now()))
+            duplicate = self.connection.scalar(select(intake_workflow.c.request_id).where(
+                intake_workflow.c.fingerprint == fingerprint,
+                intake_workflow.c.created_at > now - timedelta(hours=2)).limit(1))
+            if duplicate and not duplicate_override_reason:
+                raise RepositoryConflict("Identical normalized intake was submitted within the last 2 hours; an admin or owner can override it")
         received_at = self.connection.execute(intake_request.insert().values(
             request_id=request_id, source_type=source_type, source_id=source_id,
             source_text=source_text, source_sha256=source_sha256, submitted_by=actor,
@@ -185,6 +277,18 @@ class Repository:
             aggregate_type="intake_request", aggregate_id=request_id, event_type=status,
             actor=actor, correlation_id=request_id, event_data={},
         ))
+        # The legacy HTTP path remains callable until cutover, so every new
+        # intake must participate in future duplicate/ownership checks.
+        self.connection.execute(intake_workflow.insert().values(
+            request_id=request_id, actor_key=hashlib.sha256(actor.encode()).hexdigest(),
+            fingerprint=fingerprint, created_at=received_at))
+        if enforce_workflow:
+            if duplicate_override_reason:
+                self.connection.execute(audit_event.insert().values(
+                    aggregate_type="intake_request", aggregate_id=request_id, event_type="DUPLICATE_OVERRIDE",
+                    actor=actor, correlation_id=request_id,
+                    event_data={"reason": duplicate_override_reason, "duplicate_request_id": duplicate,
+                                "window_hours": 2}))
         return {"request_id": request_id, "status": status, "received_at": received_at,
                 "records": len(records), "rejected": sum(record.status == "REJECTED" for record in records),
                 "requires_review": sum(record.status == "REQUIRES_REVIEW" for record in records)}

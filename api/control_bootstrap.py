@@ -5,6 +5,7 @@ from pydantic import ValidationError
 from api.authorization import sharing_plan
 from api.broker_models import DirectoryPerson
 from api.control import ControlError, append_audit, principal_key
+from api.persistence import open_repository
 
 
 SEED_ROLES = {"Claude Furry": "OWNER", "Mike Thompson": "OWNER", "Ed Lopez": "ADMIN",
@@ -101,6 +102,15 @@ def enforce_security(store, expected_revision):
             imported = state["runtime"]["profiles"][profile_id]
             if any(imported.get(field) != value for field, value in expected.items()):
                 raise ControlError(409, "Legacy runtime changed after import; back up and review the inactive import before enforcement")
+            if profile.enabled:
+                try:
+                    with open_repository(profile.provider, profile.connection_string) as repository:
+                        if not repository.health():
+                            raise ValueError("Database unavailable")
+                        repository.validate_identity(profile_id)
+                        repository.validate_workflow_tracking()
+                except Exception:
+                    raise ControlError(409, "Enabled database requires verified schema, environment identity and complete intake workflow tracking before enforcement") from None
         # A stale import is never automatically refreshed: that would discard
         # administrator-reviewed profiles or invalidate existing draft receipts.
         state["security"]["enforced"] = True

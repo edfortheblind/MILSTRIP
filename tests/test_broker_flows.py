@@ -205,7 +205,7 @@ def test_app_permission_calls_use_official_versions_and_fixed_write_environment(
     assert counts == {"Get-AppRoleAssignment": 16, "Edit-AppRoleAssignment": 16}
 
 
-def test_only_makers_permission_reads_use_supported_pagination_without_relaxing_completeness():
+def test_makers_permission_reads_do_not_aggregate_and_keep_completeness_guards():
     contract = json.loads((OUT / "schema/app-role-assignment-contract.json").read_text())["operations"]
     assert contract["Get-AppRoleAssignment"]["x-ms-pageable"] == {"nextLinkName": "nextLink"}
     for flow in build().values():
@@ -222,16 +222,14 @@ def test_only_makers_permission_reads_use_supported_pagination_without_relaxing_
                 assert "paginationPolicy" not in runtime
                 continue
             paginated.append(name)
-            assert runtime == {"secureData": {"properties": ["inputs", "outputs"]},
-                               "paginationPolicy": {"minimumItemCount": 1000}}
+            assert runtime == {"secureData": {"properties": ["inputs", "outputs"]}}
             assert item["inputs"]["retryPolicy"] == {"type": "none"}
             assert "uri" not in item["inputs"] and "url" not in item["inputs"]
         assert set(paginated) == {
             f"{phase}_{mode}_{profile}_app" for phase in ("Before", "Readback")
             for mode in ("add", "remove") for profile in ("stage", "prod")}
-        # Pagination can aggregate a whole page past its threshold or suppress
-        # a continuation. Reaching 1000 must still fail the existing strict
-        # count guard, even if the resulting nextLink is empty.
+        # A single page with a continuation or at the row limit is incomplete.
+        # Host diagnostics do not authorize this native mutation branch.
         for mode in ("add", "remove"):
             for profile in ("stage", "prod"):
                 key = f"{mode}_{profile}_app"

@@ -185,6 +185,20 @@ def _sqlserver_target(connection_string: str) -> tuple[str, str, str]:
     return _host(parts[0]), str(port), database.casefold()
 
 
+def detect_provider(connection_string: str) -> str:
+    """Accept exactly one validated native format; never probe a network."""
+    matches = []
+    for provider, validate in (("postgresql", _postgres_target), ("sqlserver", _sqlserver_target)):
+        try:
+            validate(connection_string)
+            matches.append(provider)
+        except ConfigurationError:
+            pass
+    if len(matches) != 1:
+        raise ConfigurationError("Enter a supported PostgreSQL or SQL Server connection string with verified TLS.")
+    return matches[0]
+
+
 def normalized_target(profile: RuntimeProfile) -> tuple[str, str, str, str] | None:
     if profile.provider not in PROVIDERS:
         raise ConfigurationError("Database provider is invalid.")

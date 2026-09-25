@@ -135,6 +135,20 @@ def _validate(state, previous=None):
             UUID(lease["execution_id"])
             _require(lease["broker_id"] in {binding["broker_id"] for binding in bindings.values()})
             _require(plan["executions"][lease["execution_id"]] == lease)
+        for plan in state["sharing_plans"].values():
+            for execution_id, execution in plan.get("executions", {}).items():
+                native = execution.get("native_run")
+                if native is not None:
+                    from .broker_models import NativeSharingRun
+                    parsed = NativeSharingRun.model_validate(native).model_dump(mode="json")
+                    _require(parsed == native)
+                    profile = next(name for name, binding in bindings.items()
+                                   if binding["broker_id"] == execution["broker_id"])
+                    _require(native["flow_id"] == state["resources"][profile]["flow_id"])
+                    _require(native["environment_name"] == "Default-" + tenant)
+                old = (previous or {}).get("sharing_plans", {}).get(plan["plan_id"], {}).get("executions", {}).get(execution_id)
+                if old is not None:
+                    _require(old.get("native_run") == native)
         _validate_management_pacing(state, previous)
         _require(isinstance(state["audit"], list))
         if previous:
@@ -148,7 +162,7 @@ def _validate(state, previous=None):
             for key in state["protected_owners"]:
                 for field in ("tenant_id", "object_id", "upn", "display_name", "role", "desired_active"):
                     _require(state["users"][key][field] == previous["users"][key][field])
-    except (KeyError, TypeError, ValueError, AttributeError):
+    except (KeyError, TypeError, ValueError, AttributeError, StopIteration):
         raise ControlError(503, "Private administration state is invalid") from None
 
 
@@ -206,7 +220,7 @@ class ControlStore:
         except OSError:
             if descriptor is not None:
                 os.close(descriptor)
-            raise ControlError(409, "Administration state is busy; retry the same command") from None
+            raise ControlError(503, "Administration state is busy; retry the same command") from None
 
     def _unlock(self, descriptor):
         try:

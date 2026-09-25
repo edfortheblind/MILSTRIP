@@ -24,3 +24,11 @@ administration, typed results and issue rendering, receipt after commit, review
 retry, pending sharing, protected owners, configuration Save/Test/Apply and an
 unknown-result recovery. Source tests do not replace native compilation or
 tenant acceptance.
+
+
+September 25 local-source increment: provider `auto`, explicit Initialize database
+in Configuration, GetIntakeWorkflow on startup/connection check, Resume / new intake,
+and an Admin/Owner-only two-hour duplicate override with reason. The API enforces
+completion and duplicate rules transactionally; browser state is not authoritative.
+Generated source requires native Studio compilation and published-player acceptance.
+See [roadmap and evidence](../../../docs/delivery/INTAKE_NETWORK_ROADMAP_2026-09-25.md).

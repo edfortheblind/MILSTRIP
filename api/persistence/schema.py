@@ -14,7 +14,7 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.functions import FunctionElement
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 metadata = MetaData(schema="milstrip_app")
 
 
@@ -72,6 +72,16 @@ intake_request = Table(
     CheckConstraint("source_type IN ('PASTE', 'FILE', 'FRESHSERVICE')", name="intake_request_source_type_ck"),
     CheckConstraint(f"status IN ({STATUSES})", name="intake_request_status_ck"),
 )
+
+intake_workflow = Table(
+    "intake_workflow", metadata,
+    Column("request_id", identifier(), ForeignKey(intake_request.c.request_id), primary_key=True),
+    Column("actor_key", Unicode(64), nullable=False),
+    Column("fingerprint", Unicode(64), nullable=False),
+    timestamp("created_at"),
+)
+Index("intake_workflow_actor_idx", intake_workflow.c.actor_key)
+Index("intake_workflow_duplicate_idx", intake_workflow.c.fingerprint, intake_workflow.c.created_at)
 
 milstrip_record = Table(
     "milstrip_record", metadata,

@@ -182,3 +182,21 @@ shipment delivery.
 
 Implementation handoff: [contract and task list](../delivery/IDENTITY_ADMIN_IMPLEMENTATION_CONTRACT_2026-09-24.md).
 Current observations and remaining work: [delivery status](../delivery/IDENTITY_ADMIN_STATUS_2026-09-24.md).
+
+
+## September 25 extension (local source)
+
+Database provider selection defaults to automatic detection from a validated
+connection string. InitializeRuntimeDraft is an explicit admin-only command in
+the existing Power Apps Configuration screen. It requires a disabled environment,
+a saved draft, exact target confirmation and active broker-only administration.
+It creates/updates application schema version 2 while preserving existing data;
+Save/Test/Apply retain their previous separation. Historical data migration is
+still a prerequisite to changing engines, not a side effect of a connection string.
+
+GetIntakeWorkflow and CreateIntakeRequest enforce one unfinished intake per verified
+operator, with final decisions on every record. A database transaction serializes
+submission checks through the environment identity row. Normalized fingerprints
+block repeats across operators in that environment for two hours. A verified
+Admin/Owner may supply an explicit reason to override only the duplicate check;
+the actor, reason and matching intake are recorded in the database audit.

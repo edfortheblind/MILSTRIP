@@ -221,18 +221,26 @@ def acquire_sharing_lease(binding, command, store=None):
             raise AuthorizationError(409, "Sharing plan is completed; inspect its recorded outcome")
         executions = plan.setdefault("executions", {})
         execution_id = str(command.execution_id)
+        native_run = command.native_run.model_dump(mode="json") if command.native_run else None
+        if native_run is not None and (
+                native_run["flow_id"] != state["resources"][binding["profile_id"]]["flow_id"]
+                or native_run["environment_name"] != "Default-" + state["security"]["tenant_id"]):
+            raise AuthorizationError(422, "Native sharing run does not match the bound flow and environment")
         previous = executions.get(execution_id)
         leases = state.setdefault("sharing_leases", {})
         held = leases.get(key)
         if previous is not None:
             if (previous["broker_id"] != binding["broker_id"] or previous["status"] != "RUNNING"
-                    or held is None or held["lease_id"] != previous["lease_id"]):
+                    or held is None or held["lease_id"] != previous["lease_id"]
+                    or previous.get("native_run") != native_run):
                 raise AuthorizationError(409, "This sharing execution cannot restart; inspect its recorded outcome")
             return {"lease_id": previous["lease_id"], "execution_id": execution_id, "sharing_plan": public_plan(plan)}
         if held is not None:
             raise AuthorizationError(409, "An earlier sharing execution must finish or be recovered before reconciliation")
         lease = {"lease_id": str(uuid4()), "execution_id": execution_id, "plan_id": plan["plan_id"],
                  "revision": plan["revision"], "broker_id": binding["broker_id"], "status": "RUNNING"}
+        if native_run is not None:
+            lease["native_run"] = native_run
         leases[key] = lease
         executions[execution_id] = dict(lease)
         # Every attempt must read back all four grants; do not combine stale

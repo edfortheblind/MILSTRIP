@@ -68,6 +68,9 @@ def configured_admin(tmp_path, monkeypatch):
         def validate_identity(self, profile_id):
             calls.append(('identity', profile_id))
 
+        def validate_workflow_tracking(self):
+            calls.append('tracking')
+
     @contextmanager
     def open_repository(provider, dsn):
         calls.append(('connect', provider, dsn))
@@ -104,10 +107,37 @@ def test_draft_and_test_leave_routing_unchanged_and_never_return_secret(configur
     receipt = probe(env, draft)
     summaries = env.service.invoke('GetRuntimeProfiles', {}, env.context)
     assert receipt['status'] == 'PASSED' and env.manager.snapshot('stage') == before
-    assert env.calls[1:] == ['health', ('identity', 'stage')]
+    assert env.calls[1:] == ['health', ('identity', 'stage'), 'tracking']
     public = json.dumps([draft, receipt, summaries, env.store.read()['audit'], env.store.read()['operations']])
     assert 'private-replacement' not in public and 'stage-secret' not in public and 'user=' not in public
     assert env.service.invoke('SaveRuntimeDraft', payload, env.context) == draft
+
+
+def test_draft_with_missing_intake_tracking_cannot_get_passed_receipt(configured_admin, monkeypatch):
+    env = configured_admin
+    draft, _ = save(env)
+
+    class MissingTracking:
+        def health(self):
+            return True
+
+        def validate_identity(self, profile_id):
+            pass
+
+        def validate_workflow_tracking(self):
+            raise ValueError('PRIVATE_TRACKING_DETAIL')
+
+    @contextmanager
+    def connect(*args):
+        yield MissingTracking()
+
+    monkeypatch.setattr(administration, 'open_repository', connect)
+    receipt = probe(env, draft)
+    assert receipt['status'] == 'FAILED'
+    assert 'workflow tracking' in receipt['detail']
+    assert 'PRIVATE_TRACKING_DETAIL' not in json.dumps(receipt)
+    with pytest.raises(ControlError):
+        apply(env, draft, receipt)
 
 
 def test_apply_changes_only_stage_and_replay_preserves_revision(configured_admin):
@@ -185,6 +215,34 @@ def test_stale_draft_and_compare_and_swap_cannot_overwrite(configured_admin):
     with pytest.raises(ControlError, match='active configuration changed'):
         env.service.invoke('SaveRuntimeDraft', stale_payload, env.context)
     assert env.manager.snapshot('stage').profile.label == 'New draft'
+
+
+def test_stale_apply_is_definite_conflict_and_new_draft_can_continue(configured_admin):
+    env = configured_admin
+    stale, _ = save(env, label='Stale target', enabled=False)
+    current, _ = save(env, label='Current target', enabled=False)
+    apply(env, current)
+    command_id = identifier()
+    with pytest.raises(ControlError, match='active configuration changed') as error:
+        apply(env, stale, command_id=command_id)
+    assert error.value.status_code == 409
+    assert command_id not in env.store.read()['operations']
+    fresh, _ = save(env, label='Updated target', enabled=False)
+    assert apply(env, fresh)[0]['status'] == 'APPLIED'
+
+
+def test_concurrent_apply_keeps_command_retryable_until_profile_is_available(configured_admin):
+    env = configured_admin
+    draft, _ = save(env, enabled=False)
+    command_id = identifier()
+    with env.manager.drain('stage'):
+        with pytest.raises(ControlError, match='busy') as error:
+            apply(env, draft, command_id=command_id)
+        assert error.value.status_code == 503
+        assert command_id not in env.store.read()['operations']
+    result, payload = apply(env, draft, command_id=command_id)
+    assert result['status'] == 'APPLIED'
+    assert env.service.invoke('ApplyRuntimeDraft', payload, env.context) == result
 
 
 def test_receipt_cannot_be_reused_by_another_administrator(configured_admin):
@@ -284,7 +342,7 @@ def test_apply_timeout_leaves_old_profile_and_durable_revision(configured_admin)
     with env.manager.lease('stage'):
         with pytest.raises(ControlError) as error:
             apply(env, draft)
-    assert error.value.status_code == 409
+    assert error.value.status_code == 503
     assert env.manager.status('stage') == 'AVAILABLE'
     assert env.store.read()['runtime']['profiles']['stage']['revision'] == draft['base_revision']
 
@@ -368,3 +426,58 @@ def test_private_profile_revisions_are_validated(configured_admin):
     records['stage']['revision'] = 'bad-revision'
     with pytest.raises(ValueError, match='canonical UUID'):
         validate_control_profiles(records, require_revisions=True)
+
+
+def test_auto_provider_changes_engine_from_connection_string_only(configured_admin):
+    env = configured_admin
+    sql = 'Driver={ODBC Driver 18 for SQL Server};Server=tcp:synthetic.example.invalid,1433;Database=stage;Uid=test;Pwd={private};Encrypt=yes;TrustServerCertificate=no;'
+    draft, _ = save(env, provider='auto', replacement_connection_string=sql)
+    assert env.store.read()['runtime']['drafts'][draft['draft_id']]['candidate']['provider']=='sqlserver'
+    draft, _ = save(env, provider='auto', replacement_connection_string='host=localhost dbname=synthetic_stage')
+    assert env.store.read()['runtime']['drafts'][draft['draft_id']]['candidate']['provider']=='postgresql'
+    with pytest.raises(ControlError):
+        save(env, provider='auto', replacement_connection_string='Driver={ODBC Driver 18 for SQL Server};Server=remote;Database=stage;Encrypt=no;')
+
+
+def test_initialize_from_draft_requires_disabled_profile_and_target_confirmation(configured_admin, monkeypatch):
+    env=configured_admin
+    calls=[]
+    monkeypatch.setattr(administration,'provision_schema',lambda *args: calls.append(args))
+    draft,_=save(env)
+    def command(d):
+        return {'command_id':identifier(),'draft_id':d['draft_id'],'draft_revision':d['draft_revision'],'confirm_target':d['target']}
+    with pytest.raises(ControlError,match='Disable'):
+        env.service.invoke('InitializeRuntimeDraft',command(draft),env.context)
+    disabled,_=save(env,enabled=False)
+    apply(env,disabled)
+    draft,_=save(env,enabled=True)
+    payload=command(draft)
+    with pytest.raises(ControlError,match='Confirm'):
+        env.service.invoke('InitializeRuntimeDraft',{**payload,'confirm_target':'wrong'},env.context)
+    result=env.service.invoke('InitializeRuntimeDraft',payload,env.context)
+    assert result['status']=='INITIALIZED'
+    assert env.service.invoke('InitializeRuntimeDraft',payload,env.context)==result
+    assert len(calls)==1 and not env.manager.snapshot('stage').profile.enabled
+
+
+def test_initialize_failure_is_sanitized_and_retryable(configured_admin,monkeypatch):
+    env=configured_admin
+    disabled,_=save(env,enabled=False)
+    apply(env,disabled)
+    draft,_=save(env)
+    def fail(*args):
+        raise RuntimeError('password=must-never-escape')
+    monkeypatch.setattr(administration,'provision_schema',fail)
+    payload={'command_id':identifier(),'draft_id':draft['draft_id'],'draft_revision':draft['draft_revision'],'confirm_target':draft['target']}
+    with pytest.raises(ControlError) as error:
+        env.service.invoke('InitializeRuntimeDraft',payload,env.context)
+    assert 'must-never-escape' not in str(error.value)
+    monkeypatch.setattr(administration,'provision_schema',lambda *args: None)
+    assert env.service.invoke('InitializeRuntimeDraft',payload,env.context)['status']=='INITIALIZED'
+
+
+def test_operator_cannot_initialize_database(configured_admin):
+    env=configured_admin
+    env.store.mutate(lambda state: state['users'][env.context.actor_id.removeprefix('entra:')].update(role='OPERATOR'))
+    with pytest.raises(AuthorizationError):
+        env.service.invoke('InitializeRuntimeDraft',{},env.context)

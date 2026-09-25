@@ -170,8 +170,9 @@ def test_existing_lock_file_is_not_stale_ownership_and_live_lock_rejects_concurr
     assert store.read()["runtime"]["test_marker"] == "recovered"
     descriptor = store._lock()
     try:
-        with pytest.raises(ControlError, match="busy"):
+        with pytest.raises(ControlError, match="busy") as error:
             ControlStore(store.path).mutate(lambda state: None)
+        assert error.value.status_code == 503
     finally:
         store._unlock(descriptor)
     store.mutate(lambda state: state["runtime"].pop("test_marker"))
@@ -403,3 +404,50 @@ def test_business_uses_verified_human_identity_and_returns_no_receipt_on_commit_
     assert response.status_code == 503 and "PRIVATE_COMMIT_SENTINEL" not in response.text
     assert len(captured) == 1
     assert captured[0]["actor"] == context(control).actor_id
+
+
+def test_operator_cannot_use_duplicate_override(control, monkeypatch):
+    store,manifest=control
+    person=actor(manifest)
+    key=principal_key(manifest['tenant_id'],str(person.object_id))
+    store.mutate(lambda state: state['users'][key].update(role='OPERATOR'))
+    from types import SimpleNamespace
+    from api import runtime as runtime_module
+    @contextmanager
+    def scope(request,profile):
+        yield SimpleNamespace(revision='synthetic')
+    monkeypatch.setattr(runtime_module,'business_scope',scope)
+    with TestClient(api.app,client=('127.0.0.1',5000)) as client:
+        response=client.post('/api/v1/broker/invoke',auth=('synthetic-stage-broker','synthetic-broker-password'),
+            json=envelope(control,'CreateIntakeRequest',{'source_type':'PASTE','source_text':'A2A',
+                 'duplicate_override_reason':'Operator must not bypass duplicates'}))
+    assert response.status_code==403
+
+
+def test_verified_broker_intake_resume_completion_and_override(control, portable_database, monkeypatch):
+    from api import runtime as runtime_module
+    from scripts.run_controlled_handoff_test import SYNTHETIC_RECORD
+    @contextmanager
+    def database(provider, connection_string):
+        yield portable_database.repository
+    monkeypatch.setattr(runtime_module,'open_repository',database)
+    with TestClient(api.app,client=('127.0.0.1',5000)) as client:
+        def call(operation,payload=None,status=200):
+            response=client.post('/api/v1/broker/invoke',
+                auth=('synthetic-stage-broker','synthetic-broker-password'),
+                json=envelope(control,operation,payload))
+            assert response.status_code==status
+            return json.loads(response.json()['result_json']) if status==200 else None
+        source=SYNTHETIC_RECORD[:30]+str(uuid4())[:10]+SYNTHETIC_RECORD[40:]
+        payload={'source_type':'PASTE','source_text':source}
+        first=call('CreateIntakeRequest',payload)
+        workflow=call('GetIntakeWorkflow')
+        assert workflow['active_request_id']==first['request_id'] and not workflow['can_start']
+        call('CreateIntakeRequest',{**payload,'source_text':source+'\nA2A'},409)
+        call('CreateReviewDecision',{'record_id':first['request_id']+':1','decision':'REJECTED',
+             'reason':'Synthetic final decision','expected_version':0,'command_id':str(uuid4())})
+        assert call('GetIntakeWorkflow')['can_start']
+        call('CreateIntakeRequest',payload,409)
+        second=call('CreateIntakeRequest',{**payload,'duplicate_override_reason':'Authorized synthetic override'})
+        assert second['request_id']!=first['request_id']
+        assert call('GetIntakeWorkflow')['active_request_id']==second['request_id']

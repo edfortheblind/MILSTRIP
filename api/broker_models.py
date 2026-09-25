@@ -29,6 +29,7 @@ Operation = Literal[
     "ListUsers", "SaveUserAccess", "AcquireSharingLease", "RecordSharingResult",
     "ReserveManagementCall", "RecordManagementCall", "GetRuntimeProfiles",
     "SaveRuntimeDraft", "TestRuntimeDraft", "ApplyRuntimeDraft", "GetAdministrationOperation",
+    "InitializeRuntimeDraft", "GetIntakeWorkflow",
 ]
 
 
@@ -49,10 +50,15 @@ class EmptyPayload(StrictModel):
     pass
 
 
+class IntakeWorkflowPayload(StrictModel):
+    source_id: str | None = Field(default=None, min_length=1, max_length=200)
+
+
 class IntakePayload(StrictModel):
     source_type: Literal["PASTE", "FILE", "FRESHSERVICE"]
     source_id: str | None = Field(default=None, max_length=200)
     source_text: str = Field(min_length=1, max_length=1_000_000)
+    duplicate_override_reason: str | None = Field(default=None, min_length=1, max_length=1000)
 
 
 class RequestPayload(StrictModel):
@@ -105,10 +111,22 @@ class SharingObservation(StrictModel):
     verified: bool = Field(strict=True)
 
 
-class AcquireSharingLease(StrictModel):
+class SharingExecutionRef(StrictModel):
     plan_id: UUID
     revision: UUID
     execution_id: UUID
+
+
+class NativeSharingRun(StrictModel):
+    environment_name: str = Field(min_length=1, max_length=100, pattern=r"^[A-Za-z0-9-]+$")
+    flow_id: UUID
+    run_id: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
+
+
+class AcquireSharingLease(SharingExecutionRef):
+    # Optional only for compatibility with already-deployed flows. Unbound
+    # executions are never eligible for generic metadata-only host recovery.
+    native_run: NativeSharingRun | None = None
 
 
 # Only fixed diagnostics cross this private broker boundary. Native response
@@ -130,7 +148,7 @@ SharingErrorCode = Literal[
 ]
 
 
-class SharingResult(AcquireSharingLease):
+class SharingResult(SharingExecutionRef):
     lease_id: UUID
     external_calls_complete: bool = Field(strict=True)
     observations: list[SharingObservation] = Field(max_length=4)
@@ -145,7 +163,7 @@ ManagementStep = Literal[
 ]
 
 
-class ReserveManagementCall(AcquireSharingLease):
+class ReserveManagementCall(SharingExecutionRef):
     lease_id: UUID
     step: ManagementStep
 

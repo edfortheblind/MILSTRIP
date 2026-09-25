@@ -73,7 +73,9 @@
             "SaveRuntimeDraft",
             "TestRuntimeDraft",
             "ApplyRuntimeDraft",
-            "GetAdministrationOperation"
+            "GetAdministrationOperation",
+            "InitializeRuntimeDraft",
+            "GetIntakeWorkflow"
           ],
           "type": "string"
         },
@@ -275,6 +277,12 @@
     },
     "IntakeRequest": {
       "properties": {
+        "duplicate_override_reason": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "type": "string",
+          "x-nullable": true
+        },
         "source_id": {
           "type": "string",
           "x-nullable": true

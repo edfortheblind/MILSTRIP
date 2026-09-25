@@ -97,6 +97,8 @@ def repository():
                 connection.execute(text("SET LOCAL lock_timeout = '5s'"))
                 connection.execute(text("SET LOCAL statement_timeout = '15s'"))
                 metadata.create_all(connection)
+                connection.execute(environment_identity.update().where(
+                    environment_identity.c.schema_version == 1).values(schema_version=SCHEMA_VERSION))
                 # Restart is transactional, unlike nextval. Rollback restores
                 # the pre-test sequence positions as well as all synthetic rows.
                 for table_name, column in [("validation_issue", "issue_id"), ("review_decision", "decision_id"), ("audit_event", "event_id")]:
@@ -215,8 +217,18 @@ def test_identity_cannot_cross_stage_prod_and_provision_preserves_rows(repositor
     def reuse_transaction(provider, connection_string):
         yield repository
     monkeypatch.setattr(implementation, "open_repository", reuse_transaction)
+    repository.connection.execute(environment_identity.update().values(schema_version=1))
+    # New legacy-path submissions already track themselves; remove only this
+    # synthetic row to retain explicit historical backfill coverage.
+    from api.persistence.schema import intake_workflow
+    repository.connection.execute(intake_workflow.delete().where(intake_workflow.c.request_id == request_id))
+    with pytest.raises(ProviderMismatch, match="tracking is incomplete"):
+        repository.validate_workflow_tracking()
     assert implementation.provision_schema("postgresql", "synthetic", "stage") == {"profile_id": "stage", "schema_version": SCHEMA_VERSION}
     assert repository.get_request(request_id) is not None
+    # Upgrade/backfill retains recent legacy content in the duplicate guard.
+    assert repository.connection.scalar(select(intake_workflow.c.request_id).where(
+        intake_workflow.c.request_id == request_id)) == request_id
     with pytest.raises(ProviderMismatch):
         implementation.provision_schema("postgresql", "synthetic", "prod")
     repository.validate_identity("stage")
