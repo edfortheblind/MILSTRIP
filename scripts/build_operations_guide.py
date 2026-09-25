@@ -20,8 +20,8 @@ import markdown
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "operations-guide"
 DIAGRAMS = OUT / "diagrams"
-DATE = "September 24, 2026"
-VERSION = "1.4.0"
+DATE = "September 25, 2026"
+VERSION = "1.5.0"
 PALETTE = {
     "dev": ("#e8f5f1", "#087f6c", "CURRENT"),
     "manual": ("#f0f3f7", "#53657d", "EXISTING MANUAL"),
@@ -106,14 +106,14 @@ def charts():
     c=Chart("02-current-architecture.svg","Stage and Prod architecture","Published players open. Prod database and in-app administration acceptance remain pending.",980)
     c.panel(20,150,960,290,"POWER PLATFORM CLOUD  /  existing solution, connector and gateway")
     c.node("stage-app",50,205,370,90,"MILSTRIP Stage",["Published player runtime checked","Licensing resolved"])
-    c.node("prod-app",50,320,370,90,"MILSTRIP Prod",["Published; separate connection","Disabled until target is configured"])
+    c.node("prod-app",50,320,370,90,"MILSTRIP Prod",["Published; separate connection","Database disabled; app opens"])
     c.node("connector",570,250,370,110,"Existing custom connector",["Seven routes plus SSO broker","Broker deployment being validated"])
     c.arrow([(420,250),(500,250),(500,280),(570,280)])
     c.arrow([(420,365),(500,365),(500,320),(570,320)])
     c.panel(20,480,960,190,"API HOST  /  currently the laptop")
     c.node("gateway",40,535,280,105,"Standard gateway",["Existing cloud-to-local bridge","HTTP to the loopback API"])
     c.node("api",360,535,280,105,"Shared API + parser",["Authenticated environment","One backend for both apps"])
-    c.node("profiles",680,535,280,105,"Fixed database profiles",["Native configuration screen","Activate by API restart"])
+    c.node("profiles",680,535,280,105,"Fixed database profiles",["Host configuration screen","Activate by API restart"])
     c.arrow([(755,360),(755,462),(180,462),(180,535)])
     c.arrow([(320,587),(360,587)]);c.arrow([(640,587),(680,587)])
     c.panel(20,710,960,160,"DATABASE TARGETS  /  Stage and Prod must be different")
@@ -134,7 +134,7 @@ def charts():
            ("history",780,"6  Verify the audit event",["History → Load / refresh history.","Find REVIEW_DECIDED for the same record."])]
     for key,y,title,lines in steps:c.node(key,30,y,570,104,title,lines)
     for y in [259,384,509,634,759]:c.arrow([(315,y),(315,y+21)])
-    c.node("unknown",650,280,320,127,"Submission uncertain",["Load recent requests; match","the displayed source ID.","Confirm absence before retry."],"gate")
+    c.node("unknown",650,280,320,127,"Submission uncertain",["Load recent requests; match","the displayed source ID.","Owner confirms not saved."],"gate")
     c.arrow([(600,332),(650,332)],dashed=True)
     c.node("invalid",650,430,320,127,"Validation REJECTED",["Obtain corrected source.","Submit a new intake.","Retain both Request IDs."],"gate")
     c.arrow([(600,457),(625,457),(625,493),(650,493)],dashed=True)
@@ -145,7 +145,7 @@ def charts():
 
     c=Chart("04-phase2-azure-sql.svg","P2.1 architecture: Azure SQL production","PROPOSED deployment. Adapter implemented; Azure SQL runtime acceptance is pending.",880,"future")
     c.node("app",30,160,280,126,"Published canvas app",["Same intake / review contract","Per-user Entra sign-in","Production release gate"],"future")
-    c.node("api",360,160,280,126,"Managed API host",["Proposed Azure App Service","HTTPS + Entra authorization","Python parser; role checks"],"future")
+    c.node("api",360,160,280,126,"Managed network hosts",["API + gateway off the laptop","TAB SSO through broker","Hostnames pending"],"future")
     c.node("adapter",690,160,280,126,"SQL repository",["SQLAlchemy + ODBC adapter","Stable IDs / review versions","Bounded calls + transactions"],"future")
     c.arrow([(310,223),(360,223)]);c.arrow([(640,223),(690,223)])
     c.panel(20,355,960,285,"EXISTING AZURE SQL WORKBENCH  /  new application objects need explicit approval","future")
@@ -183,14 +183,14 @@ def charts():
     c=Chart("06-phase2-postgresql.svg","P2.2 architecture: PostgreSQL production","PROPOSED. Switch only after migration, business parity and production acceptance.",920,"future")
     c.node("app",30,155,280,103,"Same published app",["Stable workflow and IDs","Individual reviewer identity"],"future")
     c.node("api",360,155,280,103,"Same API contract",["Qualified PG repository","Accepted release adapter"],"future")
-    c.node("config",690,155,280,103,"One writer setting",["Server-side configuration","SQL writers fenced at cutover"],"gate")
+    c.node("config",690,155,280,103,"In-app configuration",["Admin/Owner connection string","SQL writers fenced at cutover"],"gate")
     c.arrow([(310,207),(360,207)]);c.arrow([(640,207),(690,207)])
-    c.panel(20,330,960,345,"MIGRATION TARGET  /  one Azure Windows VM; distinct PostgreSQL services","future")
+    c.panel(20,330,960,345,"MIGRATION TARGET  /  separate Stage and Prod; hosting names pending","future")
     c.node("stage",45,395,430,126,"PostgreSQL Stage",["Isolated port, data, identity and backup","Restore accepted artifact; qualify behavior","Not a production writer"],"future")
     c.node("prod",525,395,430,126,"PostgreSQL Production",["milstrip_app + accepted dbo compatibility","Migrated history / commands / releases","Production identity recorded before GO"],"future")
     c.arrow([(830,258),(830,300),(740,300),(740,395)])
     c.arrow([(475,458),(525,458)],dashed=True)
-    c.text(45,568,"Separate services on one VM are not high availability; the failure domain is shared.",19)
+    c.text(45,568,"Prepare schema and migrate history before the in-app connection-string switch.",19)
     c.text(45,602,"Backups / WAL / configuration recovery must meet agreed and rehearsed RPO/RTO.",19)
     c.text(45,636,"The current localhost development database is not the future production service.",19)
     c.node("sql",30,735,440,130,"Azure SQL rollback baseline",["Frozen after writer cutover","30 stable days after PG acceptance","No blind failback after new PG writes"],"gate")
@@ -199,7 +199,7 @@ def charts():
     manifests.append(c.save())
 
     c=Chart("07-phase2-transition.svg","Two periods: qualify, switch, stabilize","Q4 2026 is the owner's target. Dates never override the acceptance gates.",860,"future")
-    c.node("now",30,165,280,145,"NOW / September 24",["Both published players open","Stage runtime checked","SSO administration in validation","Prod target pending; disabled"],"dev")
+    c.node("now",30,165,280,145,"NOW / September 25",["Existing players remain live","Drafts saved; unpublished","Access acceptance pending","Prod database disabled"],"dev")
     c.node("p21",360,165,280,145,"P2.1 / target October",["Published production pilot","Existing Azure SQL DB","API moved off laptop","Measured load and operations"],"future")
     c.node("p22",690,165,280,145,"P2.2 / target December",["Accepted PG Production","One writer switch","Stable IDs / history / commands","Qualified downstream flow"],"future")
     c.arrow([(310,237),(360,237)],dashed=True);c.arrow([(640,237),(690,237)],dashed=True)

@@ -1,4 +1,27 @@
-# Web edition 1.4.0 ? September 24, 2026
+# Web edition 1.5.0 — September 25, 2026
+
+Published at [the existing guide URL](https://edfortheblind.github.io/milstrip-guide/)
+from public commit `0c54fdc0e2d6779954ed799974ad7eccd4fe5afa`.
+Anonymous HTTPS returned 200 and its 2,156,505-byte body exactly matched the
+committed `index.html`, SHA-256
+`1edc851bb7f33a5433fee3683d14c82ef56a4fc42c4e3a317bae5a9942072136`.
+
+The separate [editorial review](EDITORIAL_REVIEW.md) passed at 994 reading words,
+328 visible operator/overview words, six steps, five screenshots and seven charts.
+The isolated browser build passed offline loading, disclosures, enlargement,
+Escape dismissal, anchors, print expansion, text bounds and 390/1440-pixel layouts.
+The 13-page full PDF and four-page quick SOP passed version/date, extracted-text
+and metadata checks. The public package allowlist and private-identifier guards
+passed. The public repository receives only HTML, README and safe verification
+text; private reports, configuration and native app exports are excluded.
+
+This release describes September 25 saved drafts and the hosting roadmap while
+retaining September 24 player evidence. It does not publish the updated apps or
+enable access enforcement. Earlier edition evidence below is historical.
+
+---
+
+# Web edition 1.4.0 — September 24, 2026
 
 Published at [the existing guide URL](https://edfortheblind.github.io/milstrip-guide/).
 GitHub Pages built public commit `af9334de8eec8d81afc945489a3e5ee9515b1613`

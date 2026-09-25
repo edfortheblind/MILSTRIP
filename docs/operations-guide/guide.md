@@ -1,8 +1,8 @@
-**Status — September 24, 2026:** Both apps are published; licensing is resolved. Stage passed published-player connection and saved-results checks. Prod opens but is disabled pending database selection. In-app administration awaits acceptance. Review approval does not deliver an order.
+**Status — September 25, 2026:** Published Stage passed connection and saved-results checks; Prod's database remains disabled. Licensing is resolved. Updated intake and administration drafts remain unpublished. Review approval does not deliver an order.
 
 ## Use the app
 
-Use **MILSTRIP Stage** for testing and **MILSTRIP Prod** after activation. Select **Check connection**; confirm the environment and **Ready**. The gateway, API and database must run.
+Use **MILSTRIP Stage** for testing; **MILSTRIP Prod** after activation. Select **Check connection**; confirm the environment and **Ready**.
 
 <div class="screen-step-group" markdown="1">
 
@@ -41,7 +41,7 @@ Use **MILSTRIP Stage** for testing and **MILSTRIP Prod** after activation. Selec
 ![History screen showing recorded review events.](screens/04-history.png)
 
 <ol class="steps" start="6">
-<li><h3>Verify the audit event</h3><p>Select <strong>History</strong>, then <strong>Load / refresh history</strong>. Find <strong>REVIEW_DECIDED</strong>; use <strong>More history</strong> when enabled. Results shows the decision. The audit identifies the environment's connection, not the individual reviewer.</p></li>
+<li><h3>Verify the audit event</h3><p>Select <strong>History</strong>, then <strong>Load / refresh history</strong>. Find <strong>REVIEW_DECIDED</strong>; use <strong>More history</strong> when enabled. The audit identifies the environment's connection, not the individual reviewer.</p></li>
 </ol>
 
 </div>
@@ -51,7 +51,7 @@ Use **MILSTRIP Stage** for testing and **MILSTRIP Prod** after activation. Selec
 <details markdown="1" class="recovery">
 <summary>Submission has no confirmation</summary>
 
-Keep the source text and **source ID** shown in the error. Select **Load recent requests** and, if needed, **More requests**. Match the source ID and open the request. If absent, have the owner verify it was not saved before selecting **Allow new submission**. Repeated intake submissions can create duplicates.
+Keep the source text and **source ID** shown in the error. Select **Load recent requests** and, if needed, **More requests**. Match the source ID and open the request. If absent, have the owner verify it was not saved before selecting **Allow new submission**.
 </details>
 
 <details markdown="1" class="recovery">
@@ -101,7 +101,7 @@ Manual production loads MILS staging, checks references/duplicates, and writes t
 
 ![Separate app connections select fixed database profiles.](diagrams/02-current-architecture.svg)
 
-Each app's API credential selects a separate database profile. PostgreSQL has runtime evidence; Azure SQL acceptance is pending. Corporate SSO connections are configured; individual-user enforcement and administration screens await deployment acceptance.
+Each app's credential selects its database profile. PostgreSQL and corporate SSO connections are verified; Azure SQL, individual-user enforcement and administration screens await acceptance.
 </details>
 
 ## Administrator: database configuration
@@ -111,7 +111,7 @@ Each app's API credential selects a separate database profile. PostgreSQL has ru
 
 ![Administrator configuration screen with the replacement connection string hidden.](screens/runtime-configuration.png)
 
-Run **Configure-Runtime.ps1** on the API host. Select the environment and provider; enter IT's connection string and certificate settings. Saved strings remain hidden.
+Run **Configure-Runtime.ps1** on the API host. Select the environment and provider; enter IT's connection string and certificate settings.
 
 Select **Test connection** to check access, tables and environment identity without changing data. Provision new destinations separately with approval. After a successful test, enable the environment and select **Save pending configuration**.
 
@@ -123,26 +123,24 @@ Reconcile migrated requests, reviews and history before switching; a connection 
 <details markdown="1" class="planning-detail">
 <summary>In-app administration — awaiting acceptance</summary>
 
-The implemented **Configuration** screen provides **Load configuration**, **Save draft**, **Test draft** and **Apply draft**. Strings stay hidden. Disable the environment before changing its destination. Once activated, this screen replaces the host editor.
+The saved **Configuration** draft provides **Load configuration**, **Save draft**, **Test draft**, **Initialize database** and **Apply draft**. Only Admins/Owners can open it. The connection string selects SQL Server or PostgreSQL; saved strings stay hidden. Disable the environment before changing its destination. After activation, this screen replaces the host editor.
 
-In **Users**, administrators manage corporate access; two protected Owners retain full access. Additions require confirmed access to both apps and supporting flows. Removal denies API access immediately; pending sharing remains incomplete.
+In **Users**, Admins/Owners manage access; two Owners are protected. Additions require verified app/flow permissions. Incomplete reads block sharing and enforcement.
 
-These screens have not passed published-player acceptance. Continue using the host procedure. IT's setup SOP records SSO configuration and the remaining user checks.
+The updated intake requires a final decision for every record before another intake. Identical normalized content is blocked for two hours; Admins/Owners may override duplicates with an audited reason. These rules and screens remain unpublished pending native flow updates and acceptance.
 </details>
 
 ## Phase 2: two production periods
 
-Publication alone does not activate production integration.
-
 | Period | Implementation | Acceptance |
 |---|---|---|
-| **1 — Azure SQL** | Qualify separate Stage/Prod targets, SQL adapter, hosted API, authorization and handoff | SQL freeze resolved; runtime, pilot and recovery tests |
+| **1 — Azure SQL** | Existing Stage/Prod databases; API and gateway on managed organizational network hosts | Confirm hostnames; qualify SQL adapter, authorization, pilot and recovery |
 | **2 — PostgreSQL** | Migrate data, audit history and pending commands; qualify downstream integration | Accepted migration and one writer switch; target December 31, 2026 |
 
 <details markdown="1" class="planning-detail">
 <summary>Production decisions</summary>
 
-Resolve the SQL freeze before writes. Select SQL handoff or Rainbow CSV/FTP; agree hosting, authorization and a receiver receipt. Procedure completion, file creation and SENT are not receipts.
+The API and gateway move off the laptop; Power Apps/Automate remain Microsoft-hosted. After activation, configuration stays in Power Apps. Resolve the SQL freeze and handoff contract before production writes.
 </details>
 
 <details markdown="1" class="diagram-detail">
@@ -164,7 +162,7 @@ Release requires approval, live checks, authorization and a durable command ID. 
 
 ![Proposed PostgreSQL production architecture.](diagrams/06-phase2-postgresql.svg)
 
-Databases on one VM share outages.
+Prepare the PostgreSQL schema and migrate history before changing the connection string. Stage/Prod hostnames remain deployment inputs.
 </details>
 
 <details markdown="1" class="planning-detail">
@@ -183,4 +181,4 @@ Qualify for two months; retain SQL for 30 stable days after PostgreSQL acceptanc
 
 ## About this edition
 
-Version **1.4.0**. September 24 player checks and administration implementation status. App/configuration captures show the currently published workflow and host editor; screens use synthetic data. Production databases were not re-inspected.
+Version **1.5.0**. September 25 draft/hosting update; September 24 player evidence. Synthetic captures show the existing workflow and host editor. Production databases were not re-inspected.

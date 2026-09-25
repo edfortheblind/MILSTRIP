@@ -20,7 +20,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "docs" / "operations-guide"
-VERSION = "1.4.0"
+VERSION = "1.5.0"
 ARCHIVE_NAME = f"MILSTRIP-guide-v{VERSION}.zip"
 PDF_NAME = "MILSTRIP-current-and-phase2.pdf"
 OPTIONAL_PDF_NAME = "MILSTRIP-quick-sop.pdf"
@@ -53,7 +53,7 @@ PRIVATE_SOURCE_RE = re.compile(
 )
 FIXED_ZIP_TIME = (2026, 9, 23, 0, 0, 0)
 README = f"""MILSTRIP operating guide - documentation release {VERSION}
-Evidence date: September 24, 2026
+Evidence date: September 25, 2026
 
 START HERE
 Open https://edfortheblind.github.io/milstrip-guide/
@@ -168,8 +168,8 @@ def validate_html(payload: bytes) -> None:
     for required in ("published", "stage", "prod", "disabled", "licens"):
         if required not in visible:
             raise PackageError("index.html: must state publication, environments, disabled Prod and licensing limits")
-    if not re.search(r"september\s+24,?\s+2026|2026-09-24", visible):
-        raise PackageError("index.html: must identify the September 24, 2026 evidence date")
+    if not re.search(r"september\s+25,?\s+2026|2026-09-25", visible):
+        raise PackageError("index.html: must identify the September 25, 2026 evidence date")
 
 
 def validate_svg(payload: bytes, name: str) -> None:

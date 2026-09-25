@@ -1,14 +1,16 @@
-# MILSTRIP operator guide — edition 1.4.0
+# MILSTRIP operator guide — edition 1.5.0
 
 **Share:** [MILSTRIP operator guide](https://edfortheblind.github.io/milstrip-guide/).
 The webpage opens without a download or login. App access is separate.
 
-Stage and Prod are published and licensing is resolved. Stage passed connection
-and saved-results checks in the published player; Prod opens with its database
-profile disabled. In-app user/database administration is implemented but awaits
-native deployment acceptance. The guide retains the current host configuration
-procedure and existing Studio captures. Azure SQL runtime acceptance, production
-handoff and downstream receipts remain outstanding.
+The existing Stage and Prod players remain published; licensing is resolved.
+September 24 player checks verified Stage connection and saved results; Prod
+database remains disabled. September 25 native drafts add database initialization, intake
+completion checks and two-hour duplicate prevention. They remain unpublished
+pending native flow, sharing and access-enforcement acceptance. The guide retains
+the current procedure and dated Studio captures, and records the managed TAB
+network hosting plan. Azure SQL runtime, production handoff and downstream
+receipts remain unaccepted.
 
 - [Guide source](guide.md), [styles](theme.css), [interactions](guide.js).
 - [Full app and database SOP](../../sop/powerapps-setup.md).

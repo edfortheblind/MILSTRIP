@@ -124,9 +124,11 @@ September 25 owner clarification restores this database sequence while moving
 the API and gateway onto TAB-managed infrastructure. Database hostnames, migration
 sequencing and cutover acceptance remain pending.
 Earlier increment sections are historical snapshots. The public visual guide
-**1.4.0** is published and verified; it describes the current four-screen release
-and clearly leaves administration acceptance pending. This status supplies the
-more detailed implementation and blocker evidence.
+**1.5.0** is published and verified at the existing guide URL. It retains the
+current four-screen procedure and adds the saved-draft rules and managed TAB
+hosting roadmap, with administration acceptance explicitly pending. Public
+commit `0c54fdc` passed independent editorial review and exact anonymous-HTTP
+readback. This status supplies the detailed implementation and blocker evidence.
 
 The September 23 [acknowledgement update](delivery/ACKNOWLEDGEMENT_DESIGN_2026-09-23.md)
 added the persistent intake receipt now included in Stage. The

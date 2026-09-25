@@ -1,4 +1,16 @@
-# Web edition 1.4.0 ? September 24, 2026
+# Web edition 1.5.0 — September 25, 2026
+
+The [operator guide](https://edfortheblind.github.io/milstrip-guide/) now records
+the saved intake/administration drafts, two-hour duplicate rule and managed TAB
+network hosting roadmap. Existing player instructions remain current; the new
+app behavior is explicitly unpublished. Power Apps/Automate remain Microsoft-hosted.
+
+Separate editorial review passed at 994 reading words. Browser, PDF and public
+identifier checks passed. Public commit: `0c54fdc0e2d6779954ed799974ad7eccd4fe5afa`.
+Anonymous HTTPS returned 200 with an exact committed-HTML match. This publication
+does not activate the pending app or database release.
+
+## Web edition 1.4.0 — September 24, 2026
 
 Read the [operator guide](https://edfortheblind.github.io/milstrip-guide/) directly
 in a browser. This published edition records resolved licensing, verified Stage
