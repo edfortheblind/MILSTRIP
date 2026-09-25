@@ -4,10 +4,17 @@
 
 **Date:** September 24, 2026
 
-**Current IT action: none.** TAB's existing Microsoft Entra sign-in and the
+**Current SSO action for IT: none.** TAB's existing Microsoft Entra sign-in and the
 required OAuth connections work. The remaining app-sharing acceptance issue is
 being investigated by the developer; it is not an established SSO or policy
 failure.
+
+**Hosting action for IT, confirmed September 25:** allocate central TAB network
+hosting for the API, all Stage/Prod databases and the existing gateway runtime.
+The deployed service must work with every personal laptop switched off. DNS,
+private IPs, TLS and host requirements are in the
+[network hosting plan](RUNTIME_CONFIGURATION.md#tab-network-hosting-target).
+This hosting work is separate from the working SSO configuration.
 
 ## Current state
 

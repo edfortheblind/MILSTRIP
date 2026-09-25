@@ -1,11 +1,23 @@
 # New-session prompt
 
-## Current continuation - September 24, 2026
+## Current continuation - September 25, 2026
 
 Read `AGENTS.md`, `docs/master.md` and `OWNER_PROFILE.md`, then inspect Git status
 before changing files. The working tree contains the verified-user administration
 increment. Reuse the backend, generated flows and six-screen Canvas source; do
 not rebuild the earlier authentication or runtime-profile work.
+
+Owner clarification on September 25: the complete backend must move to
+always-on IT-managed servers inside TAB's network: API/HTTPS, all Stage/Prod
+databases and the existing gateway runtime. Personal laptops are development
+machines only. Power Apps/Power Automate remain Microsoft-hosted. Internal API
+names are `milstrip.austinlighthouse.org` and `stage-milstrip.austinlighthouse.org`;
+they supersede the earlier optional app-redirect naming draft. No target IPs,
+server placement or certificates are assigned in this record. Read
+`docs/RUNTIME_CONFIGURATION.md#tab-network-hosting-target`. Preserve the existing
+Power Platform resources and use supported gateway migration. The existing
+single connector host/profile design still needs an explicit routing/isolation
+design before two API hostnames can be used. No migration or cutover has run.
 
 Read these current references:
 

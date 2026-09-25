@@ -12,12 +12,17 @@ They are not yet accepted in the published apps. This SOP distinguishes their
 source behavior from the currently available host configuration tool. See the
 [current evidence](delivery/IDENTITY_ADMIN_STATUS_2026-09-24.md) for the release boundary.
 
-The existing Stage app now has six native draft screens, zero formula errors
-and two literal-predicate warnings. The observed Stage broker calls succeeded,
-and Configuration loaded its expected provider, label and revision. The direct
-API data source was removed from that draft. Ed alone has active application
-membership; the other five initial memberships remain pending. Prod draft
-acceptance, broader sharing, broker-only cutover and new publication remain open.
+The September 24 evidence records both six-screen native drafts, with zero
+formula errors and two literal-predicate warnings each. Both drafts use their
+broker rather than the direct API data source. Claude and Mike have active
+protected Owner memberships; Ed has active Admin membership. Kristen, Thomas
+and Shawn remain pending. Sharing reconciliation, broker-only cutover and new
+publication remain open. These draft memberships do not establish per-user API
+enforcement in the currently published apps.
+
+The [TAB network hosting target](#tab-network-hosting-target), confirmed on
+September 25, moves the complete backend off personal laptops. The local tools
+described below document the current development deployment until that move.
 
 ## Access and responsibilities
 
@@ -213,24 +218,65 @@ are rejected, including inherited `PGHOSTADDR`, `PGSERVICE`, `PGSERVICEFILE`,
 `PGOPTIONS` and `PGPASSFILE`. SQL Server requires Microsoft ODBC Driver 17 or 18,
 encryption and certificate validation. Live Azure SQL acceptance remains pending.
 
-## Optional request to the domain administrator ? draft only
+## TAB network hosting target
 
-> Please provide these optional HTTPS redirects:
->
-> - `milstrip.austinlighthouse.org` to [MILSTRIP Prod](https://apps.powerapps.com/play/e/default-9f5c0ace-0780-4b48-8c24-b08bb5149210/a/0aa02d8b-c7fa-42cc-87e8-6d287bd4c897).
-> - `milstrip-stage.austinlighthouse.org` to [MILSTRIP Stage](https://apps.powerapps.com/play/e/default-9f5c0ace-0780-4b48-8c24-b08bb5149210/a/7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82).
->
-> Please confirm certificate ownership and the service
-> that will perform the redirects; a DNS record alone cannot redirect to the
-> app's full path. Keep sign-in with our existing managed Entra tenant. No new
-> SSO provider, federation or application password is requested. At the later
-> approved VM move, please also reserve a separate internal API hostname and
-> confirm its routing, certificate and gateway access. That API name is distinct
-> from the user-facing redirect names.
+**Owner-confirmed target, September 25, 2026; not yet deployed.** MILSTRIP's
+complete backend will run on always-on, IT-managed servers inside TAB's network.
+No personal laptop may be required for normal operation. Power Apps and Power
+Automate remain in Microsoft's cloud, using the existing TAB sign-in.
 
-This is a prepared request, not a submitted change. No DNS, redirect, hostname
-or SSO-provider changes have been performed. Friendly links do not activate the
-Prod database or establish production readiness.
+| Component | Required location |
+|---|---|
+| MILSTRIP API and HTTPS service | Central TAB network server(s), managed as services that start without an interactive user session |
+| Stage and Prod databases | Internal TAB VMs, with separate approved database targets and permissions |
+| Existing Power Platform gateway runtime | IT-managed Windows server inside TAB's network; preserve the existing gateway registration |
+| User interface and flows | Existing Microsoft Power Apps and Power Automate resources |
+
+IT will determine whether the API and databases share a VM or use separate
+servers. Both placements satisfy the network requirement; neither has been
+selected here. SQL Server hosted on a TAB VM is distinct from Azure SQL Database.
+The internal-VM requirement supersedes the earlier Azure-hosted planning
+assumption, without authorizing a database engine change or cutover.
+
+### DNS and network request
+
+| Internal API name | DNS destination | Listener |
+|---|---|---|
+| `milstrip.austinlighthouse.org` | IT-assigned private IP or internal alias for the Production API/HTTPS service | HTTPS TCP 443 |
+| `stage-milstrip.austinlighthouse.org` | IT-assigned private IP or internal alias for the Stage API/HTTPS service | HTTPS TCP 443 |
+
+These names are API endpoints, superseding the earlier optional browser-redirect
+draft. The Power Apps player URLs remain unchanged. No public DNS or public
+inbound access is requested. The gateway host must resolve the names and trust
+certificates covering them. The API service needs access to each selected
+database's private host: PostgreSQL TCP 5432 or SQL Server's configured TCP port
+(normally 1433). Restrict those database connections to approved service hosts.
+Keep the gateway's required outbound Microsoft connectivity.
+
+### Migration boundary and acceptance
+
+The current development API listens on laptop loopback port 8000. For the
+network deployment, an HTTPS reverse proxy on the API server can forward to the
+API locally; port 8000 need not be exposed across TAB's network. This local
+service binding does not make the deployed application laptop-dependent.
+
+The connector currently has one fixed host and uses separate broker credentials
+to select Stage/Prod profiles. Two DNS records alone do not change that routing
+or create runtime isolation. Define and review host routing and environment
+isolation while preserving the existing connector before switching its endpoint.
+
+Move the gateway runtime using Microsoft's
+[existing-gateway migration procedure](https://learn.microsoft.com/en-us/data-integration/gateway/service-gateway-migrate).
+IT must have the existing recovery key available privately and schedule the
+service interruption. No key belongs in this document or the repository.
+
+Before cutover, IT must supply the server placement, private IPs, certificate
+ownership, service identities, backup/recovery ownership and maintenance window.
+Acceptance must prove Stage/Prod routing, TLS, database access, authorized-user
+behavior and continued operation with the development laptop switched off.
+Existing sharing/security acceptance blockers still apply. No DNS changes,
+service migration, database provisioning or cutover were performed by this
+documentation update.
 
 Sources: [ADR 0006](adr/0006-user-identity-and-administration.md),
 [broker flow source](../powerapps/flows/README.md),

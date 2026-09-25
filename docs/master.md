@@ -10,6 +10,17 @@ results reads in the actual published player. MILSTRIP Prod
 Stage continues to use local PostgreSQL and the existing solution, connector and
 gateway. No new Canvas version has been published for the administration work.
 
+**Hosting target confirmed September 25, 2026:** Move the entire MILSTRIP
+backend off personal laptops. The API/HTTPS service, all Stage/Prod databases
+and gateway runtime belong on always-on, IT-managed servers inside TAB's network.
+Power Apps and Power Automate remain Microsoft-hosted. Reuse the existing
+solution, connector and gateway registration; relocate the gateway runtime through
+the supported migration procedure. The internal API names are
+`milstrip.austinlighthouse.org` and `stage-milstrip.austinlighthouse.org`.
+IT must assign the service hosts, private IPs and certificates. This is the
+deployment target, not a completed migration or database cutover. See the
+[network hosting requirements](RUNTIME_CONFIGURATION.md#tab-network-hosting-target).
+
 **Administration rollout:** Both six-screen v2 drafts are saved and natively
 exported, with no direct API data source. Independent executable comparison
 verified six screens, 81 controls and 679 source properties in each draft. The
@@ -78,9 +89,13 @@ not established. Shared API releases and restarts affect both apps. The earlier
 
 Use the [visual operating package](operations-guide/index.html) for the functional
 flow, architecture, end-user SOP and evidence limits.
-The [Phase 2 plan](operations-guide/guide.md#phase-2-two-production-periods)
-assumes publication, uses existing Azure SQL first, then accepted production
-PostgreSQL with an end-Q4 2026 target. It is planning, not deployment approval.
+The earlier [Phase 2 plan](operations-guide/guide.md#phase-2-two-production-periods)
+assumed existing Azure SQL first, then accepted production PostgreSQL with an
+end-Q4 2026 target. Its hosting assumption is superseded by the September 25
+requirement that all target databases reside on internal TAB VMs. SQL Server and
+PostgreSQL support remains relevant; engine/version, migration sequencing and
+Stage/Prod placement still require confirmation. Historical guide material is
+not approval for an Azure-hosted target or a database cutover.
 Earlier increment sections are historical snapshots. The public visual guide
 **1.4.0** is published and verified; it describes the current four-screen release
 and clearly leaves administration acceptance pending. This status supplies the
