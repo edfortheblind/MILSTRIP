@@ -1,100 +1,57 @@
-# Next Session Prompt
+# Restart prompt ? September 25, 2026
 
-Use [the current copy-and-paste restart prompt](../sop/restart-prompt.md).
-The [successful PowerApps setup SOP](../sop/powerapps-setup.md) and
-[conversation record](../sop/conversation-record.md) capture the completed
-Default-environment and gateway setup. The remaining notes below retain backend
-evidence and operating boundaries.
+Copy this into the next session in this repository:
 
-Continue from the 2026-09-23 backend correction evidence in
-`docs/delivery/BACKEND_CORRECTION_2026-09-23.md`.
+```text
+Resume MILSTRIP from the owner-requested September 25 release cut.
+Read AGENTS.md, OWNER_PROFILE.md, docs/master.md,
+docs/delivery/RELEASE_CUT_2026-09-25.md and
+docs/delivery/FINITE_PERMISSION_READ_DESIGN_2026-09-25.md first.
+Verify current Git/runtime/tenant state before relying on the checkpoint.
 
-Latest increment: `docs/delivery/OPERATOR_API_IMPLEMENTATION_2026-09-23.md`.
-The approved local operator API is implemented; use
-`docs/OPERATOR_API_CONTRACT.md` and `docs/operator-api.openapi.json` as its contract.
+The objective remains: finish, verify and publish both Stage/Prod Power Apps
+and the public guide; commit and push. This prompt resumes the explicit pause.
+Prior implementation, browser/mouse/keyboard, normal TAB sign-in and publication
+approvals persist. Keep progress brief and preserve independent design/review.
 
-The owner completed laptop-first Power Apps connectivity using the organization's
-existing Default environment. API/PostgreSQL remain on the laptop. Read
-`local-discovery/powerapps-dev-handoff.md` if supplied, but do not treat it as a
-prerequisite to local implementation. Next: verify automated environment access,
-implement API authentication and extend the existing OpenAPI 2.0 connector.
-The backend OpenAPI 3.1 export remains reference material.
+Core and guide commits are pushed. Guide 1.5.0 is live:
+https://edfortheblind.github.io/milstrip-guide/
+Both new Canvas drafts are saved/exported but UNPUBLISHED. Broker flows still
+run older definitions. Latest full local suite: 747 passed, 0 skipped. This is
+source evidence, not native release acceptance.
 
-## Current state
+Immediate blocker: native Stage permissions page 1 returns 2 rows plus nextLink;
+the earlier host result 3 was an aggregate. Native nextLink matches the fixed
+host/path and has ordered keys api-version,%24filter,%24skiptoken. The current
+single-page source fails closed but is insufficient. DO NOT import the private
+single-page package or retry sharing with it.
 
-- PostgreSQL 18.6 local target: `trav3pl-psqldb-stage` on `localhost:5432`.
-- SQL Server remains authoritative and must not be decommissioned yet.
-- The owner-run SQL was recovered in `inbox/MILSTRIP helper NewMultiple_Protoype 1.sql`.
-- Correct legacy flow: raw `staging_download_shipMILS` -> direct `download_ship940` insert.
-- `staging_download_ship940` is not part of the MILSTRIP owner-run path.
-- `milstrip_app` stores new intake, parser results, validation issues, review and audit metadata.
-- Migration 004 is installed locally. Parser parity passed 18 cases and all
-  14 exposed PostgreSQL fields; SQL extraction is not semantic validation.
-- Migration 005 adds review versions, command IDs and supporting indexes.
-- Full suite with local database tests enabled: 139 passed, including HTTP
-  behavior and two-session review conflict checks.
-- Validation rejects malformed DICs, blank stock and non-ASCII/control input.
-- Fifteen-character input stock values are preserved; legacy mapping blocks
-  populated positions 21-22 instead of truncating them.
-- Read-only handoff dry run passed duplicate protection for `SL470162240DCV`.
-- The owner-approved temporary-table handoff passed all 38 mapped fields,
-  duplicate checks across DICs, rollback and retry. The temporary target was
-  removed; the synthetic order remained absent from the operational table.
-- No legacy write has been enabled.
+Finalize/review the unfinished three-page design and strict cursor validator, then
+implement bounded protected traversal with cumulative uniqueness, terminal
+completeness, deadlines and write suppression. No cursor/row variables or
+automatic pagination. Test limits and failure paths; independently review.
+Prove protected native traversal for BOTH apps before updating broker flows.
+Then finish pending memberships, actual second-user identity checks,
+security/runtime activation, Studio Formula-error diagnosis and native workflow
+acceptance. Publish accepted drafts and update/verify the guide accurately.
+The historical canceled run was already recovered: do not repeat recovery or
+clear leases. Last control state: 3 active, 3 pending, zero leases, security/runtime
+inactive. Do not disable pending users to bypass activation.
 
-## Next implementation
+Requirements remain: TAB SSO plus app-configured membership; Admin/Owner-only
+Configuration and in-app DB Test/Apply/Initialize; every record needs a final
+review decision before another intake; normalized duplicates blocked for 2 hours,
+with explicit audited Admin/Owner override but no unfinished-review override.
+Initial DB targets will be Azure SQL Stage/Prod, later PostgreSQL via connection
+string/provider detection after schema/data readiness. API/gateway eventually
+move to always-on TAB network hosts; Power Apps/Automate remain Microsoft-hosted.
+Current work stays local: Stage PostgreSQL, Prod DB disabled, hostnames pending.
+No operational SQL Server writes, DNS change or production DB cutover here.
 
-Power Apps setup has since progressed: the owner created the MILSTRIP solution
-in the existing organization Default environment, registered the standard
-MILSTRIP-DEV-LAPTOP gateway, and verified GetHealth through the connector with
-HTTP 200. The gateway must call HTTP, not HTTPS, on loopback port 8000.
-The unchanged OpenAPI 2.0 connector export is at
-`powerapps/connectors/MILSTRIP-Local-Dev-API.swagger.json`; the app icon is
-`assets/milstrip-app.png`. Only a temporary health-only process was exposed for
-this test. It does not enforce Basic authentication or expose application routes.
-Next: implement dedicated local API authentication and server-derived reviewer
-identity, extend the connector operations, then build the canvas screens.
-PAC authentication and automated tenant access have not been verified. Do not
-recreate the existing environment, solution or gateway. Logs and credentials
-remain outside Git.
-
-The owner accepted the backend and approved the subsequent implementation.
-All four interfaces in `docs/delivery/IMPLEMENTATION_PLAN.md` are implemented
-locally: request list, record details, review decisions and audit history.
-Continue connected Power Apps integration from the setup recorded above;
-identity/role mapping remains to be implemented. No new independent
-Audit has been performed; implementation tests must not be described as one.
-
-## Repeatable handoff evidence
-
-The owner approved the following fixture and temporary target on
-2026-09-23, and the controlled test passed:
-NSN `8405016819440`, DODAAC `SC0141`, quantity `1`, synthetic requisition
-`ZZ999926600001`. The target is `pg_temp.milstrip_handoff_test`; all writes roll
-back and the temporary table is removed. Run
-`.venv/Scripts/python.exe scripts/run_controlled_handoff_test.py --execute`
-to repeat the same approved experiment. Running without `--execute` repeats
-read-only preparation. Approval persists for this fixture and temporary target;
-no additional approval is needed to repeat the same test.
-
-Completed experiment requirements:
-
-1. Use an owner-approved synthetic/test MILSTRIP record.
-2. Confirm NSN exists in `dbo.ItemMaster` and effective DODAAC in
-   `dbo.cfg_dodaac_active`.
-3. Insert only into a disposable or explicitly approved PostgreSQL legacy test
-   target, never the live SQL Server database.
-4. Verify the mapped `download_ship940` row and all required legacy fields.
-5. Verify rollback and duplicate behavior.
-6. Keep SQL Server operational and unchanged.
-
-The historical August audit does not
-cover this implementation. A future writer needs separately approved atomic
-duplicate/retry and staging/SENT semantics; the current mapper performs no
-operational writes. Commit and push are authorized for the corrected backend
-and implementation-preparation documents.
-
-Power Apps preparation may proceed against the accepted local contract;
-automated environment access and identity are still needed for shared implementation.
-Resolve the Rainbow-versus-legacy delivery boundary before operational writes.
-Do not decommission SQL Server or introduce dual writes.
+Reuse existing resources and private artifacts named in the checkpoint.
+Rediscover browser handles/tab order and foreground the browser before mouse
+clicks. Avoid generic Close selectors. Never export tokens or unmask protected
+permission rows. Do not retry the rejected SDK lookup; native UI already found
+the diagnostic flow. Continue without repeating completed work or asking again
+for already-granted approvals.
+```

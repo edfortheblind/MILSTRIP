@@ -5,6 +5,11 @@ boundary. Stage and Prod use separate flows and private broker connections to th
 existing MILSTRIP custom connector and gateway. The generator does not deploy,
 share, start a flow, send mail, or change a database.
 
+**September 25 release cut:** do not import the current single-page candidate
+for sharing acceptance. Native Stage returns two rows plus a continuation;
+bounded traversal remains unimplemented. See the
+[paused checkpoint](../../docs/delivery/RELEASE_CUT_2026-09-25.md).
+
 ## Build and bind
 
 ```powershell
@@ -40,6 +45,13 @@ must exist in the same solution before the flow is activated.
 | broker | Private connection, distinct per app | Calls only `InvokeBroker`; server fixes tenant and Stage/Prod profile |
 | makers | Private deployment connection | Grants/removes CanView on the two fixed apps |
 | management | Private deployment connection | Grants/removes run-only access on the two fixed flows |
+| permissions | Private deployment connection | `shared_webcontents` / `InvokeHttp`; reads only the fixed app-permission URLs |
+
+The permission reader uses **HTTP with Microsoft Entra ID (preauthorized)** with
+base URL `https://api.powerapps.com` and resource URI
+`https://service.powerapps.com/`. Its connection is embedded; it is not an app
+data source or a run-only user's connection. The solution package contains seven
+connection references: five shared references and two private broker references.
 
 The app passes only `operation` and `payload_json`. The flow never trusts a passed
 actor, object ID, role assertion or trigger header. `AcquireSharingLease`,
@@ -91,13 +103,23 @@ does not match the requested state. They contain no principal, URL or response
 body. Deploy the API's expanded error-code allowlist before the updated flow;
 otherwise its callback will fail validation. This instrumentation preserves the
 existing verification gates. A native retry identified
-`READBACK_PAGINATED_STAGE_APP`. App permission reads now use the Makers
-connector's documented `2017-06-01` default; edits retain `2016-11-01` and the
-fixed deployment-environment filter. That version change did not resolve the
-native continuation marker. The September 24 native pagination trial stalled
-and was canceled. Current generated source removes that aggregation policy;
-a single-page read still requires fewer than 1,000 rows and no continuation
-marker. Incomplete reads remain unverified. The historical canceled execution
+`READBACK_PAGINATED_STAGE_APP`. The earlier Makers read used its documented
+`2017-06-01` default; that version change did not resolve the native continuation
+marker. The September 24 native pagination trial stalled and was canceled.
+The candidate source now replaces each of the eight app reads per flow with a
+single fixed, environment-filtered `InvokeHttp` GET. Makers edits retain
+`2016-11-01` and the fixed deployment-environment filter.
+
+The protected parser requires a direct JSON object or JSON text containing a
+`value` array. An unexpected response wrapper, error envelope, failed parser,
+malformed assignment, cross-app ID, wrong tenant or duplicate assignment or
+principal makes the page unverified. A page must contain fewer than 1,000 rows
+and neither continuation marker. Target grants must belong to a User; CanEdit
+and unpinned Owner grants keep cleanup pending instead of becoming verified
+absence. No automatic pagination or retry is enabled. The native response shape
+and route still require acceptance before deployment; see the
+[finite-reader design](../../docs/delivery/FINITE_PERMISSION_READ_DESIGN_2026-09-25.md).
+The historical canceled execution
 has been reconciled and its matching lease released, without adding permissions.
 Do not retry sharing until a finite, complete interactive permission-read path
 is accepted. See the [historical pagination evidence](../../docs/delivery/MAKERS_PERMISSION_PAGINATION_2026-09-24.md)
@@ -129,7 +151,7 @@ does not replace service import validation or a real flow run.
 Before exposing either app, verify all of these in the tenant:
 
 1. Run-only settings use the invoker's Office 365 Users connection and private
-   connections for the other four references. Verify with a second authorized
+   connections for the other five references. Verify with a second authorized
    user; the returned actor must change with the caller.
 2. Directory reads return `accountEnabled`, `userType`, ID, UPN and display name.
    Missing fields or lookup failure must deny access.
@@ -152,6 +174,7 @@ Before exposing either app, verify all of these in the tenant:
 Microsoft references: [run-only connections](https://learn.microsoft.com/en-us/power-automate/create-team-flows),
 [Office 365 Users](https://learn.microsoft.com/en-us/connectors/office365users/),
 [Power Apps for Makers](https://learn.microsoft.com/en-us/connectors/powerappsforappmakers/),
+[HTTP with Microsoft Entra ID](https://learn.microsoft.com/en-us/connectors/webcontents/),
 [Power Automate Management](https://learn.microsoft.com/en-us/connectors/flowmanagement/),
 [secure run history](https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-securing-a-logic-app),
 [Wait Until action](https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-workflow-actions-triggers#wait-action),

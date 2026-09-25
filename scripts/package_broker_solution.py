@@ -58,8 +58,8 @@ def binding_rows(bindings):
         entry = bindings["profiles"][profile]
         rows.append({"LogicalName": entry["broker_reference"], "ConnectionId": entry["broker_connection"],
                      "ConnectorId": bindings["connector_api_id"], "display_name": "MILSTRIP " + profile.title() + " Broker"})
-    if len({row["LogicalName"].casefold() for row in rows}) != 6:
-        raise ValueError("All six connection references must have distinct logical names")
+    if len({row["LogicalName"].casefold() for row in rows}) != len(APIS) + 2:
+        raise ValueError("All connection references must have distinct logical names")
     if any(not row["LogicalName"].lower().startswith("tab_") for row in rows):
         raise ValueError("Connection references must use the existing TAB publisher prefix")
     return sorted(rows, key=lambda row: row["LogicalName"])
@@ -177,7 +177,7 @@ def write_package(baseline, bindings, output):
     evidence = {"status": "PACKAGED_OFF_NOT_IMPORTED", "solution": "MILSTRIP", "publisher": "TAB",
         "package_sha256": hashlib.sha256(content).hexdigest(),
         "baseline_sha256": hashlib.sha256(Path(baseline).read_bytes()).hexdigest(),
-        "flow_count": 2, "connection_reference_count": 6, "initial_state": "Off",
+        "flow_count": 2, "connection_reference_count": len(settings["ConnectionReferences"]), "initial_state": "Off",
         "excluded": ["CanvasApps", "Connectors"],
         "members": {key: hashlib.sha256(value).hexdigest() for key, value in sorted(entries.items())}}
     (output / "package-evidence.json").write_bytes(json_bytes(evidence))
@@ -196,7 +196,8 @@ def main():
     except (OSError, ValueError, KeyError, ET.ParseError, zipfile.BadZipFile):
         print("Package not created. Verify the native baseline, reviewed bindings and private output directory.")
         return 1
-    print("Packaged two Off workflows and six connection references; no deployment performed.")
+    print(f"Packaged {evidence['flow_count']} Off workflows and "
+          f"{evidence['connection_reference_count']} connection references; no deployment performed.")
     print("SHA256: " + evidence["package_sha256"])
     return 0
 

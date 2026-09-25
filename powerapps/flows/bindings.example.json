@@ -33,6 +33,10 @@
     "management": {
       "connection_name": "__MANAGEMENT_CONNECTION__",
       "logical_name": "__MANAGEMENT_REFERENCE__"
+    },
+    "permissions": {
+      "connection_name": "__PERMISSIONS_CONNECTION__",
+      "logical_name": "__PERMISSIONS_REFERENCE__"
     }
   },
   "tenant_id": "__TENANT_ID__"

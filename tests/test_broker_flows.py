@@ -4,12 +4,13 @@ import json
 import subprocess
 import sys
 from typing import get_args
+from urllib.parse import parse_qs, urlparse
 
 import jsonschema
 import pytest
 
 from scripts.build_broker_flows import (
-    APP_IDS, OPERATIONS, OUT, build, default_bindings, validate_bindings, walk_actions,
+    APP_IDS, OPERATIONS, OUT, build, default_bindings, permission_read_url, validate_bindings, walk_actions,
 )
 from api.broker_models import BrokerEnvelope, Operation
 
@@ -75,7 +76,8 @@ def test_invoker_identity_cannot_be_selected_by_canvas(flow):
         assert required in gate
     refs = flow["properties"]["connectionReferences"]
     assert refs["invoker"]["runtimeSource"] == "invoker"
-    assert all(refs[key]["runtimeSource"] == "embedded" for key in ("directory", "broker", "makers", "management"))
+    assert all(refs[key]["runtimeSource"] == "embedded" for key in ("directory", "broker", "makers", "management", "permissions"))
+    assert refs["permissions"]["api"]["name"] == "shared_webcontents"
 
 
 def test_internal_sharing_callback_cannot_be_selected_by_canvas(flow):
@@ -191,21 +193,15 @@ def test_app_permission_calls_use_official_versions_and_fixed_write_environment(
             metadata = {p["name"]: p for p in contract[operation]["parameters"]}
             assert params["api-version"] == metadata["api-version"]["default"]
             assert params["app"] in APP_IDS.values()
-            if operation == "Get-AppRoleAssignment":
-                # The Makers GET action exposes no environment filter; select
-                # its documented GET version and fixed app ID instead.
-                assert contract[operation]["method"] == "get"
-                assert "$filter" not in metadata and "$filter" not in params
-                assert params["$top"] == 1000
-            else:
-                assert contract[operation]["method"] == "post"
-                assert metadata["$filter"]["in"] == "query"
-                assert params["$filter"] == f"environment eq '{deployment['environment_name']}'"
+            assert operation == "Edit-AppRoleAssignment"
+            assert contract[operation]["method"] == "post"
+            assert metadata["$filter"]["in"] == "query"
+            assert params["$filter"] == f"environment eq '{deployment['environment_name']}'"
             assert "triggerBody" not in json.dumps(params)
-    assert counts == {"Get-AppRoleAssignment": 16, "Edit-AppRoleAssignment": 16}
+    assert counts == {"Get-AppRoleAssignment": 0, "Edit-AppRoleAssignment": 16}
 
 
-def test_makers_permission_reads_do_not_aggregate_and_keep_completeness_guards():
+def test_http_permission_reads_do_not_aggregate_and_keep_completeness_guards():
     contract = json.loads((OUT / "schema/app-role-assignment-contract.json").read_text())["operations"]
     assert contract["Get-AppRoleAssignment"]["x-ms-pageable"] == {"nextLinkName": "nextLink"}
     for flow in build().values():
@@ -217,7 +213,7 @@ def test_makers_permission_reads_do_not_aggregate_and_keep_completeness_guards()
                 assert "paginationPolicy" not in runtime
                 continue
             host = item["inputs"]["host"]
-            eligible = host["connectionName"] == "makers" and host["operationId"] == "Get-AppRoleAssignment"
+            eligible = host["connectionName"] == "permissions" and host["operationId"] == "InvokeHttp"
             if not eligible:
                 assert "paginationPolicy" not in runtime
                 continue
@@ -225,6 +221,12 @@ def test_makers_permission_reads_do_not_aggregate_and_keep_completeness_guards()
             assert runtime == {"secureData": {"properties": ["inputs", "outputs"]}}
             assert item["inputs"]["retryPolicy"] == {"type": "none"}
             assert "uri" not in item["inputs"] and "url" not in item["inputs"]
+            params = item["inputs"]["parameters"]
+            assert set(params) == {"request/method", "request/url"}
+            assert params["request/method"] == "GET"
+            assert params["request/url"].startswith("https://api.powerapps.com/providers/Microsoft.PowerApps/apps/")
+            assert "?api-version=2017-06-01&%24filter=environment%20eq%20%27" in params["request/url"]
+            assert all(value not in params["request/url"] for value in ("$top", "$skip", "@", "triggerBody", "outputs("))
         assert set(paginated) == {
             f"{phase}_{mode}_{profile}_app" for phase in ("Before", "Readback")
             for mode in ("add", "remove") for profile in ("stage", "prod")}
@@ -234,16 +236,55 @@ def test_makers_permission_reads_do_not_aggregate_and_keep_completeness_guards()
             for profile in ("stage", "prod"):
                 key = f"{mode}_{profile}_app"
                 for name, expression, read in (
-                    (f"Mutate_{key}", actions[f"Mutate_{key}"]["expression"], f"Before_{key}"),
-                    (f"Observed_{key}", actions[f"Observed_{key}"]["inputs"]["verified"], f"Readback_{key}"),
+                    (f"Mutate_{key}", actions[f"Mutate_{key}"]["expression"], f"Parsed_Before_{key}"),
+                    (f"Observed_{key}", actions[f"Observed_{key}"]["inputs"]["verified"], f"Parsed_Readback_{key}"),
                 ):
                     assert f"empty(body('{read}')?['nextLink'])" in expression, name
                     assert f"empty(body('{read}')?['@odata.nextLink'])" in expression, name
                     assert f"less(length(coalesce(body('{read}')?['value'], json('[]'))), 1000)" in expression, name
+                    assert f"equals(outputs('Validated_{read.removeprefix('Parsed_')}'), true)" in expression, name
                 verified = actions[f"Observed_{key}"]["inputs"]["verified"]
                 assert f"equals(actions('Readback_{key}')?['status'], 'Succeeded')" in verified
                 assert f"equals(actions('Found_{key}')?['status'], 'Succeeded')" in verified
                 assert f"equals(length(coalesce(body('Plan_{key}'), json('[]'))), 1)" in verified
+
+
+@pytest.mark.parametrize("profile", ["stage", "prod"])
+def test_permission_route_has_only_fixed_service_app_environment_and_version(profile):
+    chosen = bindings()
+    route = urlparse(permission_read_url(APP_IDS[profile], chosen["environment_name"]))
+    assert (route.scheme, route.netloc, route.fragment) == ("https", "api.powerapps.com", "")
+    assert route.path == f"/providers/Microsoft.PowerApps/apps/{APP_IDS[profile]}/permissions"
+    assert parse_qs(route.query) == {"api-version": ["2017-06-01"],
+                                   "$filter": [f"environment eq '{chosen['environment_name']}'"]}
+    for flow in build(chosen).values():
+        actions = dict(named_actions(flow))
+        for mode in ("add", "remove"):
+            for phase in ("Before", "Readback"):
+                name = f"{phase}_{mode}_{profile}_app"
+                assert actions[name]["inputs"]["parameters"]["request/url"] == route.geturl()
+
+
+def test_permission_validation_pipeline_is_protected_and_fail_closed(flow):
+    actions = dict(named_actions(flow))
+    for mode in ("add", "remove"):
+        for profile in ("stage", "prod"):
+            key = f"{mode}_{profile}_app"
+            for phase in ("Before", "Readback"):
+                read = f"{phase}_{key}"
+                parsed, validated = actions[f"Parsed_{read}"], actions[f"Validated_{read}"]
+                assert parsed["type"] == "ParseJson"
+                assert parsed["runAfter"] == {read: ["Succeeded"]}
+                assert parsed["inputs"]["schema"]["required"] == ["value"]
+                assert parsed["inputs"]["schema"]["properties"]["value"]["type"] == "array"
+                assert validated["runAfter"] == {f"Principals_{read}": ["Succeeded", "Failed", "Skipped", "TimedOut"]}
+                for step in (read, f"Parsed_{read}", f"Invalid_{read}", f"Ids_{read}", f"Principals_{read}"):
+                    assert f"equals(actions('{step}')?['status'], 'Succeeded')" in validated["inputs"]
+                assert f"empty(body('Invalid_{read}'))" in validated["inputs"]
+                assert validated["inputs"].count("length(union(") == 2
+                assert APP_IDS[profile] in actions[f"Invalid_{read}"]["inputs"]["where"]
+                consumer = f"Matched_{key}" if phase == "Before" else f"Found_{key}"
+                assert actions[consumer]["runAfter"] == {f"Validated_{read}": ["Succeeded"]}
 
 
 def test_broker_body_uses_nine_native_designer_parameter_leaves(flow):
@@ -305,9 +346,10 @@ def test_readback_diagnostics_distinguish_guard_failures_without_disclosing_cont
                 assert f"not(equals(length(coalesce(body('Plan_{key}'), json('[]'))), 1))" in expression
                 assert f"actions('Readback_{key}')?['status']" in expression
                 assert f"actions('Found_{key}')?['status']" in expression
-                assert f"not(empty(body('Readback_{key}')?['nextLink']))" in expression
-                assert f"not(empty(body('Readback_{key}')?['@odata.nextLink']))" in expression
-                assert f"length(coalesce(body('Readback_{key}')?['value'], json('[]'))), 1000" in expression
+                page = f"Parsed_Readback_{key}" if kind == "app" else f"Readback_{key}"
+                assert f"not(empty(body('{page}')?['nextLink']))" in expression
+                assert f"not(empty(body('{page}')?['@odata.nextLink']))" in expression
+                assert f"length(coalesce(body('{page}')?['value'], json('[]'))), 1000" in expression
                 assert f"outputs('Observed_{key}')?['present']" in expression
                 assert "triggerBody" not in expression and "principal" not in expression and "target" not in expression
                 # Every return arm is a closed code or null, never the source
@@ -404,6 +446,8 @@ def test_binding_requires_resolved_resources_and_distinct_trust_connections():
         lambda x: x["profiles"]["prod"].update(broker_connection=x["profiles"]["stage"]["broker_connection"]),
         lambda x: x["profiles"]["prod"].update(broker_reference=x["profiles"]["stage"]["broker_reference"]),
         lambda x: x["shared_connections"]["directory"].update(logical_name=x["shared_connections"]["invoker"]["logical_name"]),
+        lambda x: x["shared_connections"]["permissions"].update(logical_name=x["shared_connections"]["invoker"]["logical_name"].upper()),
+        lambda x: x["shared_connections"]["permissions"].update(logical_name=x["profiles"]["stage"]["broker_reference"]),
     ):
         invalid = deepcopy(value)
         mutator(invalid)

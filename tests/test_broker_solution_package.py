@@ -62,9 +62,33 @@ def test_delta_reuses_solution_and_stage_id_and_contains_only_off_flows(native):
         node=next(node for node in workflows if profile.title() in node.get("Name"))
         assert json.loads(entries[node.findtext("JsonFileName").lstrip("/")])==build(chosen)[profile]
     refs=custom.findall("connectionreferences/connectionreference")
-    assert len(refs)==len(settings["ConnectionReferences"])==6
+    assert len(refs)==len(settings["ConnectionReferences"])==len(APIS)+2
     assert {node.get("connectionreferencelogicalname") for node in refs}=={row["LogicalName"] for row in settings["ConnectionReferences"]}
     assert all(set(row)=={"LogicalName","ConnectionId","ConnectorId"} for row in settings["ConnectionReferences"])
+
+
+def test_permissions_connection_is_embedded_and_included_in_package_settings(native):
+    chosen=bindings()
+    entries,settings=prepare_entries(native,chosen)
+    permission=chosen["shared_connections"]["permissions"]
+    assert APIS["permissions"]=="shared_webcontents"
+    assert next(row for row in settings["ConnectionReferences"] if row["LogicalName"]==permission["logical_name"])=={
+        "LogicalName":permission["logical_name"],
+        "ConnectionId":permission["connection_name"],
+        "ConnectorId":"/providers/Microsoft.PowerApps/apis/shared_webcontents",
+    }
+    custom=ET.fromstring(entries["customizations.xml"])
+    references=custom.findall("connectionreferences/connectionreference")
+    packaged=next(node for node in references if node.get("connectionreferencelogicalname")==permission["logical_name"])
+    assert packaged.findtext("connectorid")=="/providers/Microsoft.PowerApps/apis/shared_webcontents"
+    for name,content in entries.items():
+        if name.startswith("Workflows/"):
+            reference=json.loads(content)["properties"]["connectionReferences"]["permissions"]
+            assert reference=={
+                "runtimeSource":"embedded",
+                "connection":{"connectionReferenceLogicalName":permission["logical_name"],"name":permission["connection_name"]},
+                "api":{"name":"shared_webcontents"},
+            }
 
 
 def test_identical_inputs_make_identical_zip_bytes(native):
@@ -83,6 +107,8 @@ def test_package_writes_only_under_explicit_private_directory(native,tmp_path):
     output=tmp_path/".cred"/"package"
     result=write_package(native,chosen,output)
     assert result["status"]=="PACKAGED_OFF_NOT_IMPORTED"
+    assert result["connection_reference_count"]==len(APIS)+2
+    assert result["flow_count"]==2 and result["initial_state"]=="Off"
     assert set(path.name for path in output.iterdir())=={"MILSTRIP-broker-flows.zip","deployment-settings.json","package-evidence.json"}
 
 
@@ -97,10 +123,20 @@ def test_wrong_stage_id_or_reference_collision_is_rejected(native):
         prepare_entries(native,chosen)
 
 
+@pytest.mark.parametrize("collision",["shared","broker"])
+def test_permissions_reference_collision_is_rejected_case_insensitively(native,collision):
+    chosen=bindings()
+    name=(chosen["shared_connections"]["makers"]["logical_name"] if collision=="shared"
+          else chosen["profiles"]["prod"]["broker_reference"])
+    chosen["shared_connections"]["permissions"]["logical_name"]=name.upper()
+    with pytest.raises(ValueError,match="distinct"):
+        prepare_entries(native,chosen)
+
+
 def test_available_real_native_export_can_be_projected_without_altering_it():
     if not os.environ.get("LOCALAPPDATA") or not baseline_path().is_file():
         pytest.skip("Native local export is not present")
     before=baseline_path().read_bytes()
     entries,settings=prepare_entries(baseline_path(),bindings())
-    assert len(entries)==5 and len(settings["ConnectionReferences"])==6
+    assert len(entries)==5 and len(settings["ConnectionReferences"])==len(APIS)+2
     assert baseline_path().read_bytes()==before

@@ -12,6 +12,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+from urllib.parse import quote
 from uuid import UUID, NAMESPACE_URL, uuid5
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,7 +29,8 @@ OPERATIONS = (
 TERMINAL = ["Succeeded", "Failed", "Skipped", "TimedOut"]
 API_PREFIX = "/providers/Microsoft.PowerApps/apis/"
 APIS = {"invoker": "shared_office365users", "directory": "shared_office365users",
-        "makers": "shared_powerappsforappmakers", "management": "shared_flowmanagement"}
+        "makers": "shared_powerappsforappmakers", "management": "shared_flowmanagement",
+        "permissions": "shared_webcontents"}
 PROFILE_FIELDS = "id,userPrincipalName,displayName,accountEnabled,userType"
 APP_IDS = {"stage": "7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82",
            "prod": "0aa02d8b-c7fa-42cc-87e8-6d287bd4c897"}
@@ -96,16 +98,52 @@ def query(source, predicate, previous=None):
     return action("Query", {"from": source, "where": predicate}, previous)
 
 
-def readback_reason(key, plan, readback, found, observation):
+def permission_page_schema(app_id):
+    """Validate the response shape before any missing value can become absence."""
+    guid = {"type": "string", "minLength": 36, "maxLength": 36,
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"}
+    token = "[A-Za-z0-9_.-]{1,128}"
+    principal = {"type": "object", "required": ["id", "type", "tenantId"], "properties": {
+        "id": guid, "tenantId": guid, "type": {"type": "string", "enum": ["User", "Group", "Tenant"]}}}
+    row = {"type": "object", "required": ["id", "name", "properties"], "properties": {
+        "id": {"type": "string", "maxLength": 512,
+               "pattern": "^" + re.escape("/providers/Microsoft.PowerApps/apps/" + app_id + "/permissions/") + token + "$",
+               "not": {"pattern": "[^A-Za-z0-9_./-]|\\.\\."}},
+        "name": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^" + token + "$",
+                 "not": {"anyOf": [{"enum": ["."]}, {"pattern": "[^A-Za-z0-9_.-]|\\.\\."}]}},
+        "properties": {"type": "object", "required": ["roleName", "principal"], "properties": {
+            "roleName": {"type": "string", "enum": ["CanView", "CanEdit", "Owner"]}, "principal": principal}}}}
+    return {"type": "object", "required": ["value"], "not": {"required": ["error"]}, "properties": {
+        "value": {"type": "array", "items": row},
+        "nextLink": {"type": ["string", "null"]}, "@odata.nextLink": {"type": ["string", "null"]}}}
+
+
+def permission_read_url(app_id, environment):
+    return ("https://api.powerapps.com/providers/Microsoft.PowerApps/apps/" + app_id
+            + "/permissions?api-version=2017-06-01&%24filter="
+            + quote("environment eq '" + environment + "'", safe=""))
+
+
+def permission_page_complete(page, validated):
+    return (f"equals(outputs('{validated}'), true), empty(body('{page}')?['nextLink']), "
+            f"empty(body('{page}')?['@odata.nextLink']), "
+            f"less(length(coalesce(body('{page}')?['value'], json('[]'))), 1000)")
+
+
+def readback_reason(key, plan, readback, found, observation, page=None, validated=None):
     """Return only a fixed reason code; never return rows or continuation URLs."""
     resource = key.split("_", 1)[1].upper()
+    page = page or readback
+    filter_failed = f"not(equals(actions('{found}')?['status'], 'Succeeded'))"
+    if validated:
+        filter_failed = f"or({filter_failed}, not(equals(outputs('{validated}'), true)))"
     checks = (
         (f"not(equals(length(coalesce(body('{plan}'), json('[]'))), 1))", "PLAN_MISMATCH"),
         (f"not(equals(actions('{readback}')?['status'], 'Succeeded'))", "CALL_FAILED"),
-        (f"not(equals(actions('{found}')?['status'], 'Succeeded'))", "FILTER_FAILED"),
-        (f"or(not(empty(body('{readback}')?['nextLink'])), not(empty(body('{readback}')?['@odata.nextLink'])))", "PAGINATED"),
-        (f"not(less(length(coalesce(body('{readback}')?['value'], json('[]'))), 1000))", "ROW_LIMIT"),
-        (f"not(equals(outputs('{observation}')?['present'], first(union(coalesce(body('{plan}'), json('[]')), createArray(json('{{}}'))))?['present']))", "PERMISSION_MISMATCH"),
+        (filter_failed, "FILTER_FAILED"),
+        (f"or(not(empty(body('{page}')?['nextLink'])), not(empty(body('{page}')?['@odata.nextLink'])))", "PAGINATED"),
+        (f"not(less(length(coalesce(body('{page}')?['value'], json('[]'))), 1000))", "ROW_LIMIT"),
+        (f"or(not(equals(outputs('{observation}')?['present'], first(union(coalesce(body('{plan}'), json('[]')), createArray(json('{{}}'))))?['present'])), not(equals(outputs('{observation}')?['verified'], true)))", "PERMISSION_MISMATCH"),
     )
     result = "null"
     for predicate, code in reversed(checks):
@@ -129,6 +167,31 @@ class Builder:
         # indefinitely. A continuation on a single page remains unverified;
         # host diagnostics are not an alternative authorization path.
         return result
+
+    def permission_page(self, read, app_id, content):
+        """Protect one response using the caller's explicit content expression."""
+        parsed, invalid, ids, principals, validated = (
+            f"{prefix}_{read}" for prefix in ("Parsed", "Invalid", "Ids", "Principals", "Validated"))
+        rows = f"@body('{parsed}')?['value']"
+        prefix = "/providers/Microsoft.PowerApps/apps/" + app_id + "/permissions/"
+        actions = {parsed: action("ParseJson", {"content": content,
+            "schema": permission_page_schema(app_id)}, read)}
+        actions[invalid] = query(rows,
+            f"@or(not(equals(item()?['id'], concat('{prefix}', item()?['name']))), not(equals(toLower(item()?['properties']?['principal']?['tenantId']), '{self.bindings['tenant_id'].lower()}')))", parsed)
+        actions[ids] = action("Select", {"from": rows,
+            "select": {"id": "@toLower(item()?['id'])"}}, invalid)
+        actions[principals] = action("Select", {"from": rows,
+            "select": {"id": "@toLower(item()?['properties']?['principal']?['id'])"}}, ids)
+        # Projection equality rejects duplicate IDs even when the other row
+        # fields differ, and multiple assignments for one principal. Never
+        # infer a valid empty page from any failed or skipped parser/projection.
+        succeeded = ", ".join(f"equals(actions('{name}')?['status'], 'Succeeded')"
+                              for name in (read, parsed, invalid, ids, principals))
+        unique = ", ".join(f"equals(length(coalesce(body('{name}'), json('[]'))), length(union(coalesce(body('{name}'), json('[]')), coalesce(body('{name}'), json('[]')))))"
+                           for name in (ids, principals))
+        actions[validated] = compose(f"@and({succeeded}, empty(body('{invalid}')), {unique})")
+        actions[validated]["runAfter"] = after(principals, TERMINAL)
+        return actions, parsed, validated
 
     def invoke(self, operation, payload, previous=None):
         # Native designer serializes the required body leaves as parameter paths.
@@ -276,14 +339,25 @@ class Builder:
                     f"{x}_{key}" for x in ("Plan", "Before", "Matched", "Mutate", "Readback", "Found", "Observed"))
                 actions[plan] = query("@" + resources,
                     f"@and(equals(item()?['kind'], '{kind}'), equals(item()?['resource_id'], '{resource_id}'), equals(item()?['permission'], '{permission}'), equals(item()?['environment'], '{environment}'))", previous)
-                params = {"app": resource_id, "api-version": "2017-06-01", "$top": 1000} if kind == "app" else {
+                params = {"request/method": "GET", "request/url": permission_read_url(resource_id, self.bindings["environment_name"])} if kind == "app" else {
                     "environmentName": self.bindings["environment_name"], "flowName": resource_id}
-                connector, get_op = ("makers", "Get-AppRoleAssignment") if kind == "app" else ("management", "ListFlowUsers")
-                actions[before] = self.connection(connector, get_op, params, plan)
+                read_connector, get_op = ("permissions", "InvokeHttp") if kind == "app" else ("management", "ListFlowUsers")
+                connector = "makers" if kind == "app" else "management"
+                actions[before] = self.connection(read_connector, get_op, params, plan)
+                before_page, before_ready = before, before
+                if kind == "app":
+                    # Candidate direct response contract: an unexpected wrapper
+                    # fails the schema. Native acceptance remains a release gate.
+                    page_actions, before_page, before_ready = self.permission_page(
+                        before, resource_id, f"@json(string(body('{before}')))")
+                    actions.update(page_actions)
                 predicate = f"@equals(toLower(coalesce(item()?['properties']?['principal']?['id'], '')), toLower({target}))"
-                actions[matched] = query(f"@coalesce(body('{before}')?['value'], json('[]'))", predicate, before)
+                actions[matched] = query(f"@coalesce(body('{before_page}')?['value'], json('[]'))", predicate, before_ready)
                 # Fixed IDs and exact API-issued plan are checked before any mutation.
-                valid = f"@and(equals(length(body('{plan}')), 1), equals({saved}?['sharing_plan']?['target']?['tenant_id'], '{self.bindings['tenant_id']}'), not(empty({target})), empty(body('{before}')?['nextLink']), empty(body('{before}')?['@odata.nextLink']), less(length(coalesce(body('{before}')?['value'], json('[]'))), 1000))"
+                plan_valid = f"equals(length(coalesce(body('{plan}'), json('[]'))), 1), equals({saved}?['sharing_plan']?['target']?['tenant_id'], '{self.bindings['tenant_id']}'), not(empty({target}))"
+                before_complete = permission_page_complete(before_page, before_ready) if kind == "app" else (
+                    f"empty(body('{before}')?['nextLink']), empty(body('{before}')?['@odata.nextLink']), less(length(coalesce(body('{before}')?['value'], json('[]'))), 1000)")
+                valid = f"@and({plan_valid}, {before_complete})"
                 principal = {"id": "@" + target, "type": "User"}
                 if kind == "app":
                     edit_scope = {"app": resource_id, "api-version": "2016-11-01",
@@ -294,7 +368,8 @@ class Builder:
                     remove_params = {**edit_scope, "body/put": [],
                                      "body/delete": f"@body('Assignment_ids_{key}')"}
                     edit_op = "Edit-AppRoleAssignment"
-                    may_edit = f"@or(empty(body('{matched}')), and(equals(length(body('{matched}')), 1), equals(first(union(body('{matched}'), createArray(json('{{}}'))))?['properties']?['roleName'], 'CanView')))"
+                    matched_row = f"first(union(body('{matched}'), createArray(json('{{}}'))))?['properties']"
+                    may_edit = f"@or(empty(body('{matched}')), and(equals(length(body('{matched}')), 1), equals({matched_row}?['roleName'], 'CanView'), equals({matched_row}?['principal']?['type'], 'User')))"
                 else:
                     add_params = {**params, "permissions/put": [{"properties": {"principal": principal}}], "permissions/delete": []}
                     remove_params = {**params, "permissions/put": [], "permissions/delete": [{"properties": {"principal": principal}}]}
@@ -312,23 +387,35 @@ class Builder:
                 needs_write = f"or(and(equals({desired}, true), empty(body('{matched}'))), and(equals({desired}, false), not(empty(body('{matched}')))))"
                 actions[mutate] = condition(f"@and({valid[1:]}, {may_edit[1:]}, {needs_write})",
                     {f"Desired_{key}": mutation}, previous=matched)
-                actions[readback] = self.connection(connector, get_op, params)
+                actions[readback] = self.connection(read_connector, get_op, params)
                 actions[readback]["runAfter"] = after(mutate, TERMINAL)
-                actions[found] = query(f"@coalesce(body('{readback}')?['value'], json('[]'))", predicate, readback)
-                verified = f"@and(equals(actions('{readback}')?['status'], 'Succeeded'), equals(actions('{found}')?['status'], 'Succeeded'), equals(length(coalesce(body('{plan}'), json('[]'))), 1), empty(body('{readback}')?['nextLink']), empty(body('{readback}')?['@odata.nextLink']), less(length(coalesce(body('{readback}')?['value'], json('[]'))), 1000))"
+                readback_page, readback_ready = readback, readback
+                if kind == "app":
+                    page_actions, readback_page, readback_ready = self.permission_page(
+                        readback, resource_id, f"@json(string(body('{readback}')))")
+                    actions.update(page_actions)
+                actions[found] = query(f"@coalesce(body('{readback_page}')?['value'], json('[]'))", predicate, readback_ready)
+                readback_complete = permission_page_complete(readback_page, readback_ready) if kind == "app" else (
+                    f"empty(body('{readback}')?['nextLink']), empty(body('{readback}')?['@odata.nextLink']), less(length(coalesce(body('{readback}')?['value'], json('[]'))), 1000)")
+                verified = f"@and(equals(actions('{readback}')?['status'], 'Succeeded'), equals(actions('{found}')?['status'], 'Succeeded'), {plan_valid}, {readback_complete})"
                 present = f"@greater(length(coalesce(body('{found}'), json('[]'))), 0)"
                 if kind == "app":
                     # The one verified deployment Owner already has view access.
                     # Never grant/downgrade ownership or accept other edit grants.
                     role = f"first(union(coalesce(body('{found}'), json('[]')), createArray(json('{{}}'))))?['properties']?['roleName']"
+                    principal_type = f"first(union(coalesce(body('{found}'), json('[]')), createArray(json('{{}}'))))?['properties']?['principal']?['type']"
                     owner = self.bindings["deployed_owner_object_id"]
-                    present = f"@and(equals(length(coalesce(body('{found}'), json('[]'))), 1), or(equals({role}, 'CanView'), and(equals({role}, 'Owner'), equals(toLower({target}), '{owner}'))))"
+                    present = f"@and(equals(length(coalesce(body('{found}'), json('[]'))), 1), equals({principal_type}, 'User'), or(equals({role}, 'CanView'), and(equals({role}, 'Owner'), equals(toLower({target}), toLower('{owner}')))))"
+                    # An elevated or ambiguous target grant is not verified
+                    # absence during removal. Keep cleanup pending instead.
+                    verified = f"@and({verified[1:]}, or(empty(body('{found}')), {present[1:]}))"
                 actions[observation] = compose({"kind": kind, "resource_id": resource_id,
                     "permission": permission, "present": present, "verified": verified})
                 actions[observation]["runAfter"] = after(found, TERMINAL)
                 observations.append("@outputs('" + observation + "')")
                 diagnostic = f"Readback_reason_{key}"
-                actions[diagnostic] = compose(readback_reason(key, plan, readback, found, observation), observation)
+                actions[diagnostic] = compose(readback_reason(key, plan, readback, found, observation,
+                    page=readback_page, validated=readback_ready if kind == "app" else None), observation)
                 diagnostics.append(f"outputs('{diagnostic}')")
                 previous = diagnostic
         payload = {"plan_id": "@" + saved + "?['sharing_plan']?['plan_id']",
@@ -414,7 +501,9 @@ class Builder:
 
 def add_metadata(value, profile, path=""):
     if isinstance(value, dict):
-        if value.get("type") in {"Request", "OpenApiConnection", "Response", "If", "Compose", "Query", "Select", "ParseJson", "Wait"}:
+        if (isinstance(value.get("type"), str)
+                and value["type"] in {"Request", "OpenApiConnection", "Response", "If", "Compose", "Query", "Select", "ParseJson", "Wait"}
+                and ("runAfter" in value or value["type"] == "Request")):
             value["metadata"] = {"operationMetadataId": str(uuid5(NAMESPACE_URL, f"milstrip/{profile}/{path}"))}
         for key, child in list(value.items()):
             if key != "metadata":
@@ -468,10 +557,10 @@ def validate_bindings(bindings):
         raise ValueError("Stage and Prod require distinct broker flows")
     if bindings["profiles"]["stage"]["broker_connection"] == bindings["profiles"]["prod"]["broker_connection"]:
         raise ValueError("Stage and Prod require distinct broker connections")
-    if bindings["shared_connections"]["invoker"]["logical_name"] == bindings["shared_connections"]["directory"]["logical_name"]:
-        raise ValueError("Invoker and directory must be separate connection references")
-    if bindings["profiles"]["stage"]["broker_reference"] == bindings["profiles"]["prod"]["broker_reference"]:
-        raise ValueError("Stage and Prod require distinct broker connection references")
+    references = [entry["logical_name"].casefold() for entry in bindings["shared_connections"].values()]
+    references.extend(entry["broker_reference"].casefold() for entry in bindings["profiles"].values())
+    if len(set(references)) != len(references):
+        raise ValueError("All trust connections require distinct connection references")
 
 
 def source_manifest(flows, bindings=None):
@@ -489,6 +578,7 @@ def source_manifest(flows, bindings=None):
             for profile, value in flows.items()},
         "requires": ["Distinct private Stage/Prod broker credentials and connection references",
                      "Invoker-owned Office 365 Users connection; private fixed-tenant directory/management connections",
+                     "Embedded HTTP with Microsoft Entra ID permissions connection; fixed Power Apps GET route acceptance",
                      "Live caller identity, write-only history, sharing readback and failure-path acceptance",
                      "Server broker-only cutover before exposing either app"],
     }

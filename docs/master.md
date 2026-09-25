@@ -2,6 +2,15 @@
 
 **Version:** 1.3 **Date:** 2026-09-25 **Status:** PLAYERS_VERIFIED_ADMINISTRATION_BLOCKED_PROD_DISABLED
 
+**Owner-requested cut, September 25 at 17:02 UTC:** Work is paused. Guide 1.5.0
+is published; core and guide commits are pushed. Updated Canvas drafts remain
+unpublished. The final local suite passed **747 tests, none skipped**, with two
+upstream warnings in 150.62 seconds. Native HTTP permission reading succeeded
+but returned two Stage rows plus continuation; the tested single-page source
+cannot satisfy sharing acceptance. Three-page traversal is proposed and
+unimplemented. Read the [checkpoint](delivery/RELEASE_CUT_2026-09-25.md) and
+[restart prompt](NEXT_SESSION_PROMPT.md). Earlier counts below are historical.
+
 **Published apps:** Licensing is resolved for the verified player sessions.
 MILSTRIP Stage (`7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82`) passed health and retained
 results reads in the actual published player. MILSTRIP Prod

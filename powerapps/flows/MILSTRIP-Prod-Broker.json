@@ -49,6 +49,16 @@
           "name": "__MANAGEMENT_CONNECTION__"
         },
         "runtimeSource": "embedded"
+      },
+      "permissions": {
+        "api": {
+          "name": "shared_webcontents"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "__PERMISSIONS_REFERENCE__",
+          "name": "__PERMISSIONS_CONNECTION__"
+        },
+        "runtimeSource": "embedded"
       }
     },
     "definition": {
@@ -450,14 +460,13 @@
                                   "inputs": {
                                     "authentication": "@parameters('$authentication')",
                                     "host": {
-                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerappsforappmakers",
-                                      "connectionName": "makers",
-                                      "operationId": "Get-AppRoleAssignment"
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_webcontents",
+                                      "connectionName": "permissions",
+                                      "operationId": "InvokeHttp"
                                     },
                                     "parameters": {
-                                      "$top": 1000,
-                                      "api-version": "2017-06-01",
-                                      "app": "0aa02d8b-c7fa-42cc-87e8-6d287bd4c897"
+                                      "request/method": "GET",
+                                      "request/url": "https://api.powerapps.com/providers/Microsoft.PowerApps/apps/0aa02d8b-c7fa-42cc-87e8-6d287bd4c897/permissions?api-version=2017-06-01&%24filter=environment%20eq%20%27__POWER_PLATFORM_ENVIRONMENT__%27"
                                     },
                                     "retryPolicy": {
                                       "type": "none"
@@ -519,14 +528,13 @@
                                   "inputs": {
                                     "authentication": "@parameters('$authentication')",
                                     "host": {
-                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerappsforappmakers",
-                                      "connectionName": "makers",
-                                      "operationId": "Get-AppRoleAssignment"
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_webcontents",
+                                      "connectionName": "permissions",
+                                      "operationId": "InvokeHttp"
                                     },
                                     "parameters": {
-                                      "$top": 1000,
-                                      "api-version": "2017-06-01",
-                                      "app": "7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82"
+                                      "request/method": "GET",
+                                      "request/url": "https://api.powerapps.com/providers/Microsoft.PowerApps/apps/7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82/permissions?api-version=2017-06-01&%24filter=environment%20eq%20%27__POWER_PLATFORM_ENVIRONMENT__%27"
                                     },
                                     "retryPolicy": {
                                       "type": "none"
@@ -586,14 +594,14 @@
                                 },
                                 "Found_add_prod_app": {
                                   "inputs": {
-                                    "from": "@coalesce(body('Readback_add_prod_app')?['value'], json('[]'))",
+                                    "from": "@coalesce(body('Parsed_Readback_add_prod_app')?['value'], json('[]'))",
                                     "where": "@equals(toLower(coalesce(item()?['properties']?['principal']?['id'], '')), toLower(outputs('Leased_add')?['sharing_plan']?['target']?['object_id']))"
                                   },
                                   "metadata": {
                                     "operationMetadataId": "ddbbab04-e582-5d3a-918b-f7a562d30d17"
                                   },
                                   "runAfter": {
-                                    "Readback_add_prod_app": [
+                                    "Validated_Readback_add_prod_app": [
                                       "Succeeded"
                                     ]
                                   },
@@ -635,14 +643,14 @@
                                 },
                                 "Found_add_stage_app": {
                                   "inputs": {
-                                    "from": "@coalesce(body('Readback_add_stage_app')?['value'], json('[]'))",
+                                    "from": "@coalesce(body('Parsed_Readback_add_stage_app')?['value'], json('[]'))",
                                     "where": "@equals(toLower(coalesce(item()?['properties']?['principal']?['id'], '')), toLower(outputs('Leased_add')?['sharing_plan']?['target']?['object_id']))"
                                   },
                                   "metadata": {
                                     "operationMetadataId": "68f05ea2-b58f-57b2-b3a7-fd58da01a295"
                                   },
                                   "runAfter": {
-                                    "Readback_add_stage_app": [
+                                    "Validated_Readback_add_stage_app": [
                                       "Succeeded"
                                     ]
                                   },
@@ -669,6 +677,198 @@
                                       "Succeeded"
                                     ],
                                     "Record_permit_Readback_add_stage_flow": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs",
+                                        "outputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Query"
+                                },
+                                "Ids_Before_add_prod_app": {
+                                  "inputs": {
+                                    "from": "@body('Parsed_Before_add_prod_app')?['value']",
+                                    "select": {
+                                      "id": "@toLower(item()?['id'])"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "4afac39b-f1e1-535f-9e0c-aac577a6f977"
+                                  },
+                                  "runAfter": {
+                                    "Invalid_Before_add_prod_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs",
+                                        "outputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Select"
+                                },
+                                "Ids_Before_add_stage_app": {
+                                  "inputs": {
+                                    "from": "@body('Parsed_Before_add_stage_app')?['value']",
+                                    "select": {
+                                      "id": "@toLower(item()?['id'])"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "86400c34-9809-521a-8e69-1df2ce975866"
+                                  },
+                                  "runAfter": {
+                                    "Invalid_Before_add_stage_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs",
+                                        "outputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Select"
+                                },
+                                "Ids_Readback_add_prod_app": {
+                                  "inputs": {
+                                    "from": "@body('Parsed_Readback_add_prod_app')?['value']",
+                                    "select": {
+                                      "id": "@toLower(item()?['id'])"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "04f2b245-b678-5f03-ad42-370378021f4c"
+                                  },
+                                  "runAfter": {
+                                    "Invalid_Readback_add_prod_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs",
+                                        "outputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Select"
+                                },
+                                "Ids_Readback_add_stage_app": {
+                                  "inputs": {
+                                    "from": "@body('Parsed_Readback_add_stage_app')?['value']",
+                                    "select": {
+                                      "id": "@toLower(item()?['id'])"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "3e510af7-34f0-5344-bc62-13ca87e6201d"
+                                  },
+                                  "runAfter": {
+                                    "Invalid_Readback_add_stage_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs",
+                                        "outputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Select"
+                                },
+                                "Invalid_Before_add_prod_app": {
+                                  "inputs": {
+                                    "from": "@body('Parsed_Before_add_prod_app')?['value']",
+                                    "where": "@or(not(equals(item()?['id'], concat('/providers/Microsoft.PowerApps/apps/0aa02d8b-c7fa-42cc-87e8-6d287bd4c897/permissions/', item()?['name']))), not(equals(toLower(item()?['properties']?['principal']?['tenantId']), '__tenant_id__')))"
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "5cc72fd9-625e-5bd2-a713-e729f9002e0e"
+                                  },
+                                  "runAfter": {
+                                    "Parsed_Before_add_prod_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs",
+                                        "outputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Query"
+                                },
+                                "Invalid_Before_add_stage_app": {
+                                  "inputs": {
+                                    "from": "@body('Parsed_Before_add_stage_app')?['value']",
+                                    "where": "@or(not(equals(item()?['id'], concat('/providers/Microsoft.PowerApps/apps/7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82/permissions/', item()?['name']))), not(equals(toLower(item()?['properties']?['principal']?['tenantId']), '__tenant_id__')))"
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "b04e9747-93a1-5fc1-91fa-62cb6ff01fd6"
+                                  },
+                                  "runAfter": {
+                                    "Parsed_Before_add_stage_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs",
+                                        "outputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Query"
+                                },
+                                "Invalid_Readback_add_prod_app": {
+                                  "inputs": {
+                                    "from": "@body('Parsed_Readback_add_prod_app')?['value']",
+                                    "where": "@or(not(equals(item()?['id'], concat('/providers/Microsoft.PowerApps/apps/0aa02d8b-c7fa-42cc-87e8-6d287bd4c897/permissions/', item()?['name']))), not(equals(toLower(item()?['properties']?['principal']?['tenantId']), '__tenant_id__')))"
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "2245bf2b-7122-5400-8e20-5908492943e8"
+                                  },
+                                  "runAfter": {
+                                    "Parsed_Readback_add_prod_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs",
+                                        "outputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Query"
+                                },
+                                "Invalid_Readback_add_stage_app": {
+                                  "inputs": {
+                                    "from": "@body('Parsed_Readback_add_stage_app')?['value']",
+                                    "where": "@or(not(equals(item()?['id'], concat('/providers/Microsoft.PowerApps/apps/7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82/permissions/', item()?['name']))), not(equals(toLower(item()?['properties']?['principal']?['tenantId']), '__tenant_id__')))"
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "672c92ca-9c7d-5321-a732-aa223e206aae"
+                                  },
+                                  "runAfter": {
+                                    "Parsed_Readback_add_stage_app": [
                                       "Succeeded"
                                     ]
                                   },
@@ -835,14 +1035,14 @@
                                 },
                                 "Matched_add_prod_app": {
                                   "inputs": {
-                                    "from": "@coalesce(body('Before_add_prod_app')?['value'], json('[]'))",
+                                    "from": "@coalesce(body('Parsed_Before_add_prod_app')?['value'], json('[]'))",
                                     "where": "@equals(toLower(coalesce(item()?['properties']?['principal']?['id'], '')), toLower(outputs('Leased_add')?['sharing_plan']?['target']?['object_id']))"
                                   },
                                   "metadata": {
                                     "operationMetadataId": "03e0c148-e07f-5135-8922-62b8099596ba"
                                   },
                                   "runAfter": {
-                                    "Before_add_prod_app": [
+                                    "Validated_Before_add_prod_app": [
                                       "Succeeded"
                                     ]
                                   },
@@ -884,14 +1084,14 @@
                                 },
                                 "Matched_add_stage_app": {
                                   "inputs": {
-                                    "from": "@coalesce(body('Before_add_stage_app')?['value'], json('[]'))",
+                                    "from": "@coalesce(body('Parsed_Before_add_stage_app')?['value'], json('[]'))",
                                     "where": "@equals(toLower(coalesce(item()?['properties']?['principal']?['id'], '')), toLower(outputs('Leased_add')?['sharing_plan']?['target']?['object_id']))"
                                   },
                                   "metadata": {
                                     "operationMetadataId": "aa4f9a9d-538e-5970-9ac4-89fc6f67c979"
                                   },
                                   "runAfter": {
-                                    "Before_add_stage_app": [
+                                    "Validated_Before_add_stage_app": [
                                       "Succeeded"
                                     ]
                                   },
@@ -1054,7 +1254,7 @@
                                   "else": {
                                     "actions": {}
                                   },
-                                  "expression": "@and(and(equals(length(body('Plan_add_prod_app')), 1), equals(outputs('Leased_add')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_add')?['sharing_plan']?['target']?['object_id'])), empty(body('Before_add_prod_app')?['nextLink']), empty(body('Before_add_prod_app')?['@odata.nextLink']), less(length(coalesce(body('Before_add_prod_app')?['value'], json('[]'))), 1000)), or(empty(body('Matched_add_prod_app')), and(equals(length(body('Matched_add_prod_app')), 1), equals(first(union(body('Matched_add_prod_app'), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'))), or(and(equals(first(union(body('Plan_add_prod_app'), createArray(json('{}'))))?['present'], true), empty(body('Matched_add_prod_app'))), and(equals(first(union(body('Plan_add_prod_app'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_add_prod_app'))))))",
+                                  "expression": "@and(and(equals(length(coalesce(body('Plan_add_prod_app'), json('[]'))), 1), equals(outputs('Leased_add')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_add')?['sharing_plan']?['target']?['object_id'])), equals(outputs('Validated_Before_add_prod_app'), true), empty(body('Parsed_Before_add_prod_app')?['nextLink']), empty(body('Parsed_Before_add_prod_app')?['@odata.nextLink']), less(length(coalesce(body('Parsed_Before_add_prod_app')?['value'], json('[]'))), 1000)), or(empty(body('Matched_add_prod_app')), and(equals(length(body('Matched_add_prod_app')), 1), equals(first(union(body('Matched_add_prod_app'), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), equals(first(union(body('Matched_add_prod_app'), createArray(json('{}'))))?['properties']?['principal']?['type'], 'User'))), or(and(equals(first(union(body('Plan_add_prod_app'), createArray(json('{}'))))?['present'], true), empty(body('Matched_add_prod_app'))), and(equals(first(union(body('Plan_add_prod_app'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_add_prod_app'))))))",
                                   "metadata": {
                                     "operationMetadataId": "0b83ae37-925f-5b58-a04e-7d76aa7aa1f0"
                                   },
@@ -1479,7 +1679,7 @@
                                   "else": {
                                     "actions": {}
                                   },
-                                  "expression": "@and(and(equals(length(body('Plan_add_prod_flow')), 1), equals(outputs('Leased_add')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_add')?['sharing_plan']?['target']?['object_id'])), empty(body('Before_add_prod_flow')?['nextLink']), empty(body('Before_add_prod_flow')?['@odata.nextLink']), less(length(coalesce(body('Before_add_prod_flow')?['value'], json('[]'))), 1000)), true, or(and(equals(first(union(body('Plan_add_prod_flow'), createArray(json('{}'))))?['present'], true), empty(body('Matched_add_prod_flow'))), and(equals(first(union(body('Plan_add_prod_flow'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_add_prod_flow'))))))",
+                                  "expression": "@and(and(equals(length(coalesce(body('Plan_add_prod_flow'), json('[]'))), 1), equals(outputs('Leased_add')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_add')?['sharing_plan']?['target']?['object_id'])), empty(body('Before_add_prod_flow')?['nextLink']), empty(body('Before_add_prod_flow')?['@odata.nextLink']), less(length(coalesce(body('Before_add_prod_flow')?['value'], json('[]'))), 1000)), true, or(and(equals(first(union(body('Plan_add_prod_flow'), createArray(json('{}'))))?['present'], true), empty(body('Matched_add_prod_flow'))), and(equals(first(union(body('Plan_add_prod_flow'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_add_prod_flow'))))))",
                                   "metadata": {
                                     "operationMetadataId": "672aacc3-fefa-5041-b100-719cb3961072"
                                   },
@@ -1613,7 +1813,7 @@
                                   "else": {
                                     "actions": {}
                                   },
-                                  "expression": "@and(and(equals(length(body('Plan_add_stage_app')), 1), equals(outputs('Leased_add')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_add')?['sharing_plan']?['target']?['object_id'])), empty(body('Before_add_stage_app')?['nextLink']), empty(body('Before_add_stage_app')?['@odata.nextLink']), less(length(coalesce(body('Before_add_stage_app')?['value'], json('[]'))), 1000)), or(empty(body('Matched_add_stage_app')), and(equals(length(body('Matched_add_stage_app')), 1), equals(first(union(body('Matched_add_stage_app'), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'))), or(and(equals(first(union(body('Plan_add_stage_app'), createArray(json('{}'))))?['present'], true), empty(body('Matched_add_stage_app'))), and(equals(first(union(body('Plan_add_stage_app'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_add_stage_app'))))))",
+                                  "expression": "@and(and(equals(length(coalesce(body('Plan_add_stage_app'), json('[]'))), 1), equals(outputs('Leased_add')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_add')?['sharing_plan']?['target']?['object_id'])), equals(outputs('Validated_Before_add_stage_app'), true), empty(body('Parsed_Before_add_stage_app')?['nextLink']), empty(body('Parsed_Before_add_stage_app')?['@odata.nextLink']), less(length(coalesce(body('Parsed_Before_add_stage_app')?['value'], json('[]'))), 1000)), or(empty(body('Matched_add_stage_app')), and(equals(length(body('Matched_add_stage_app')), 1), equals(first(union(body('Matched_add_stage_app'), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), equals(first(union(body('Matched_add_stage_app'), createArray(json('{}'))))?['properties']?['principal']?['type'], 'User'))), or(and(equals(first(union(body('Plan_add_stage_app'), createArray(json('{}'))))?['present'], true), empty(body('Matched_add_stage_app'))), and(equals(first(union(body('Plan_add_stage_app'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_add_stage_app'))))))",
                                   "metadata": {
                                     "operationMetadataId": "02c8db67-7fc1-5627-9650-f2b231cb57c1"
                                   },
@@ -2038,7 +2238,7 @@
                                   "else": {
                                     "actions": {}
                                   },
-                                  "expression": "@and(and(equals(length(body('Plan_add_stage_flow')), 1), equals(outputs('Leased_add')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_add')?['sharing_plan']?['target']?['object_id'])), empty(body('Before_add_stage_flow')?['nextLink']), empty(body('Before_add_stage_flow')?['@odata.nextLink']), less(length(coalesce(body('Before_add_stage_flow')?['value'], json('[]'))), 1000)), true, or(and(equals(first(union(body('Plan_add_stage_flow'), createArray(json('{}'))))?['present'], true), empty(body('Matched_add_stage_flow'))), and(equals(first(union(body('Plan_add_stage_flow'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_add_stage_flow'))))))",
+                                  "expression": "@and(and(equals(length(coalesce(body('Plan_add_stage_flow'), json('[]'))), 1), equals(outputs('Leased_add')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_add')?['sharing_plan']?['target']?['object_id'])), empty(body('Before_add_stage_flow')?['nextLink']), empty(body('Before_add_stage_flow')?['@odata.nextLink']), less(length(coalesce(body('Before_add_stage_flow')?['value'], json('[]'))), 1000)), true, or(and(equals(first(union(body('Plan_add_stage_flow'), createArray(json('{}'))))?['present'], true), empty(body('Matched_add_stage_flow'))), and(equals(first(union(body('Plan_add_stage_flow'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_add_stage_flow'))))))",
                                   "metadata": {
                                     "operationMetadataId": "1b7ba154-d510-5861-b3d3-bf73a3722ea2"
                                   },
@@ -2053,9 +2253,9 @@
                                   "inputs": {
                                     "kind": "app",
                                     "permission": "CanView",
-                                    "present": "@and(equals(length(coalesce(body('Found_add_prod_app'), json('[]'))), 1), or(equals(first(union(coalesce(body('Found_add_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), and(equals(first(union(coalesce(body('Found_add_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'Owner'), equals(toLower(outputs('Leased_add')?['sharing_plan']?['target']?['object_id']), '__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__'))))",
+                                    "present": "@and(equals(length(coalesce(body('Found_add_prod_app'), json('[]'))), 1), equals(first(union(coalesce(body('Found_add_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['principal']?['type'], 'User'), or(equals(first(union(coalesce(body('Found_add_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), and(equals(first(union(coalesce(body('Found_add_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'Owner'), equals(toLower(outputs('Leased_add')?['sharing_plan']?['target']?['object_id']), toLower('__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__')))))",
                                     "resource_id": "0aa02d8b-c7fa-42cc-87e8-6d287bd4c897",
-                                    "verified": "@and(equals(actions('Readback_add_prod_app')?['status'], 'Succeeded'), equals(actions('Found_add_prod_app')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_add_prod_app'), json('[]'))), 1), empty(body('Readback_add_prod_app')?['nextLink']), empty(body('Readback_add_prod_app')?['@odata.nextLink']), less(length(coalesce(body('Readback_add_prod_app')?['value'], json('[]'))), 1000))"
+                                    "verified": "@and(and(equals(actions('Readback_add_prod_app')?['status'], 'Succeeded'), equals(actions('Found_add_prod_app')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_add_prod_app'), json('[]'))), 1), equals(outputs('Leased_add')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_add')?['sharing_plan']?['target']?['object_id'])), equals(outputs('Validated_Readback_add_prod_app'), true), empty(body('Parsed_Readback_add_prod_app')?['nextLink']), empty(body('Parsed_Readback_add_prod_app')?['@odata.nextLink']), less(length(coalesce(body('Parsed_Readback_add_prod_app')?['value'], json('[]'))), 1000)), or(empty(body('Found_add_prod_app')), and(equals(length(coalesce(body('Found_add_prod_app'), json('[]'))), 1), equals(first(union(coalesce(body('Found_add_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['principal']?['type'], 'User'), or(equals(first(union(coalesce(body('Found_add_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), and(equals(first(union(coalesce(body('Found_add_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'Owner'), equals(toLower(outputs('Leased_add')?['sharing_plan']?['target']?['object_id']), toLower('__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__')))))))"
                                   },
                                   "metadata": {
                                     "operationMetadataId": "42f38d3b-44e0-5f3b-b3a6-310d0375c91a"
@@ -2083,7 +2283,7 @@
                                     "permission": "run-only",
                                     "present": "@greater(length(coalesce(body('Found_add_prod_flow'), json('[]'))), 0)",
                                     "resource_id": "__PROD_FLOW_ID__",
-                                    "verified": "@and(equals(actions('Readback_add_prod_flow')?['status'], 'Succeeded'), equals(actions('Found_add_prod_flow')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_add_prod_flow'), json('[]'))), 1), empty(body('Readback_add_prod_flow')?['nextLink']), empty(body('Readback_add_prod_flow')?['@odata.nextLink']), less(length(coalesce(body('Readback_add_prod_flow')?['value'], json('[]'))), 1000))"
+                                    "verified": "@and(equals(actions('Readback_add_prod_flow')?['status'], 'Succeeded'), equals(actions('Found_add_prod_flow')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_add_prod_flow'), json('[]'))), 1), equals(outputs('Leased_add')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_add')?['sharing_plan']?['target']?['object_id'])), empty(body('Readback_add_prod_flow')?['nextLink']), empty(body('Readback_add_prod_flow')?['@odata.nextLink']), less(length(coalesce(body('Readback_add_prod_flow')?['value'], json('[]'))), 1000))"
                                   },
                                   "metadata": {
                                     "operationMetadataId": "22a6fa00-5cb6-59e4-8b8a-217d3a2fe2b7"
@@ -2109,9 +2309,9 @@
                                   "inputs": {
                                     "kind": "app",
                                     "permission": "CanView",
-                                    "present": "@and(equals(length(coalesce(body('Found_add_stage_app'), json('[]'))), 1), or(equals(first(union(coalesce(body('Found_add_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), and(equals(first(union(coalesce(body('Found_add_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'Owner'), equals(toLower(outputs('Leased_add')?['sharing_plan']?['target']?['object_id']), '__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__'))))",
+                                    "present": "@and(equals(length(coalesce(body('Found_add_stage_app'), json('[]'))), 1), equals(first(union(coalesce(body('Found_add_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['principal']?['type'], 'User'), or(equals(first(union(coalesce(body('Found_add_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), and(equals(first(union(coalesce(body('Found_add_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'Owner'), equals(toLower(outputs('Leased_add')?['sharing_plan']?['target']?['object_id']), toLower('__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__')))))",
                                     "resource_id": "7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82",
-                                    "verified": "@and(equals(actions('Readback_add_stage_app')?['status'], 'Succeeded'), equals(actions('Found_add_stage_app')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_add_stage_app'), json('[]'))), 1), empty(body('Readback_add_stage_app')?['nextLink']), empty(body('Readback_add_stage_app')?['@odata.nextLink']), less(length(coalesce(body('Readback_add_stage_app')?['value'], json('[]'))), 1000))"
+                                    "verified": "@and(and(equals(actions('Readback_add_stage_app')?['status'], 'Succeeded'), equals(actions('Found_add_stage_app')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_add_stage_app'), json('[]'))), 1), equals(outputs('Leased_add')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_add')?['sharing_plan']?['target']?['object_id'])), equals(outputs('Validated_Readback_add_stage_app'), true), empty(body('Parsed_Readback_add_stage_app')?['nextLink']), empty(body('Parsed_Readback_add_stage_app')?['@odata.nextLink']), less(length(coalesce(body('Parsed_Readback_add_stage_app')?['value'], json('[]'))), 1000)), or(empty(body('Found_add_stage_app')), and(equals(length(coalesce(body('Found_add_stage_app'), json('[]'))), 1), equals(first(union(coalesce(body('Found_add_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['principal']?['type'], 'User'), or(equals(first(union(coalesce(body('Found_add_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), and(equals(first(union(coalesce(body('Found_add_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'Owner'), equals(toLower(outputs('Leased_add')?['sharing_plan']?['target']?['object_id']), toLower('__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__')))))))"
                                   },
                                   "metadata": {
                                     "operationMetadataId": "df5e5e32-f2e7-5560-8b5e-f6e0fa5de1f4"
@@ -2139,7 +2339,7 @@
                                     "permission": "run-only",
                                     "present": "@greater(length(coalesce(body('Found_add_stage_flow'), json('[]'))), 0)",
                                     "resource_id": "__STAGE_FLOW_ID__",
-                                    "verified": "@and(equals(actions('Readback_add_stage_flow')?['status'], 'Succeeded'), equals(actions('Found_add_stage_flow')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_add_stage_flow'), json('[]'))), 1), empty(body('Readback_add_stage_flow')?['nextLink']), empty(body('Readback_add_stage_flow')?['@odata.nextLink']), less(length(coalesce(body('Readback_add_stage_flow')?['value'], json('[]'))), 1000))"
+                                    "verified": "@and(equals(actions('Readback_add_stage_flow')?['status'], 'Succeeded'), equals(actions('Found_add_stage_flow')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_add_stage_flow'), json('[]'))), 1), equals(outputs('Leased_add')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_add')?['sharing_plan']?['target']?['object_id'])), empty(body('Readback_add_stage_flow')?['nextLink']), empty(body('Readback_add_stage_flow')?['@odata.nextLink']), less(length(coalesce(body('Readback_add_stage_flow')?['value'], json('[]'))), 1000))"
                                   },
                                   "metadata": {
                                     "operationMetadataId": "7bb41e30-538a-5c71-809d-5aea4c13f23a"
@@ -2160,6 +2360,534 @@
                                     }
                                   },
                                   "type": "Compose"
+                                },
+                                "Parsed_Before_add_prod_app": {
+                                  "inputs": {
+                                    "content": "@json(string(body('Before_add_prod_app')))",
+                                    "schema": {
+                                      "not": {
+                                        "required": [
+                                          "error"
+                                        ]
+                                      },
+                                      "properties": {
+                                        "@odata.nextLink": {
+                                          "type": [
+                                            "string",
+                                            "null"
+                                          ]
+                                        },
+                                        "nextLink": {
+                                          "type": [
+                                            "string",
+                                            "null"
+                                          ]
+                                        },
+                                        "value": {
+                                          "items": {
+                                            "properties": {
+                                              "id": {
+                                                "maxLength": 512,
+                                                "not": {
+                                                  "pattern": "[^A-Za-z0-9_./-]|\\.\\."
+                                                },
+                                                "pattern": "^/providers/Microsoft\\.PowerApps/apps/0aa02d8b\\-c7fa\\-42cc\\-87e8\\-6d287bd4c897/permissions/[A-Za-z0-9_.-]{1,128}$",
+                                                "type": "string"
+                                              },
+                                              "name": {
+                                                "maxLength": 128,
+                                                "minLength": 1,
+                                                "not": {
+                                                  "anyOf": [
+                                                    {
+                                                      "enum": [
+                                                        "."
+                                                      ]
+                                                    },
+                                                    {
+                                                      "pattern": "[^A-Za-z0-9_.-]|\\.\\."
+                                                    }
+                                                  ]
+                                                },
+                                                "pattern": "^[A-Za-z0-9_.-]{1,128}$",
+                                                "type": "string"
+                                              },
+                                              "properties": {
+                                                "properties": {
+                                                  "principal": {
+                                                    "properties": {
+                                                      "id": {
+                                                        "maxLength": 36,
+                                                        "minLength": 36,
+                                                        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                        "type": "string"
+                                                      },
+                                                      "tenantId": {
+                                                        "maxLength": 36,
+                                                        "minLength": 36,
+                                                        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                        "type": "string"
+                                                      },
+                                                      "type": {
+                                                        "enum": [
+                                                          "User",
+                                                          "Group",
+                                                          "Tenant"
+                                                        ],
+                                                        "type": "string"
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "id",
+                                                      "type",
+                                                      "tenantId"
+                                                    ],
+                                                    "type": "object"
+                                                  },
+                                                  "roleName": {
+                                                    "enum": [
+                                                      "CanView",
+                                                      "CanEdit",
+                                                      "Owner"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "roleName",
+                                                  "principal"
+                                                ],
+                                                "type": "object"
+                                              }
+                                            },
+                                            "required": [
+                                              "id",
+                                              "name",
+                                              "properties"
+                                            ],
+                                            "type": "object"
+                                          },
+                                          "type": "array"
+                                        }
+                                      },
+                                      "required": [
+                                        "value"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "ed3ea354-dcbd-5500-ac30-a056c5a97726"
+                                  },
+                                  "runAfter": {
+                                    "Before_add_prod_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "ParseJson"
+                                },
+                                "Parsed_Before_add_stage_app": {
+                                  "inputs": {
+                                    "content": "@json(string(body('Before_add_stage_app')))",
+                                    "schema": {
+                                      "not": {
+                                        "required": [
+                                          "error"
+                                        ]
+                                      },
+                                      "properties": {
+                                        "@odata.nextLink": {
+                                          "type": [
+                                            "string",
+                                            "null"
+                                          ]
+                                        },
+                                        "nextLink": {
+                                          "type": [
+                                            "string",
+                                            "null"
+                                          ]
+                                        },
+                                        "value": {
+                                          "items": {
+                                            "properties": {
+                                              "id": {
+                                                "maxLength": 512,
+                                                "not": {
+                                                  "pattern": "[^A-Za-z0-9_./-]|\\.\\."
+                                                },
+                                                "pattern": "^/providers/Microsoft\\.PowerApps/apps/7f1b64d0\\-d51a\\-4ec8\\-84ad\\-2b18fe8c2f82/permissions/[A-Za-z0-9_.-]{1,128}$",
+                                                "type": "string"
+                                              },
+                                              "name": {
+                                                "maxLength": 128,
+                                                "minLength": 1,
+                                                "not": {
+                                                  "anyOf": [
+                                                    {
+                                                      "enum": [
+                                                        "."
+                                                      ]
+                                                    },
+                                                    {
+                                                      "pattern": "[^A-Za-z0-9_.-]|\\.\\."
+                                                    }
+                                                  ]
+                                                },
+                                                "pattern": "^[A-Za-z0-9_.-]{1,128}$",
+                                                "type": "string"
+                                              },
+                                              "properties": {
+                                                "properties": {
+                                                  "principal": {
+                                                    "properties": {
+                                                      "id": {
+                                                        "maxLength": 36,
+                                                        "minLength": 36,
+                                                        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                        "type": "string"
+                                                      },
+                                                      "tenantId": {
+                                                        "maxLength": 36,
+                                                        "minLength": 36,
+                                                        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                        "type": "string"
+                                                      },
+                                                      "type": {
+                                                        "enum": [
+                                                          "User",
+                                                          "Group",
+                                                          "Tenant"
+                                                        ],
+                                                        "type": "string"
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "id",
+                                                      "type",
+                                                      "tenantId"
+                                                    ],
+                                                    "type": "object"
+                                                  },
+                                                  "roleName": {
+                                                    "enum": [
+                                                      "CanView",
+                                                      "CanEdit",
+                                                      "Owner"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "roleName",
+                                                  "principal"
+                                                ],
+                                                "type": "object"
+                                              }
+                                            },
+                                            "required": [
+                                              "id",
+                                              "name",
+                                              "properties"
+                                            ],
+                                            "type": "object"
+                                          },
+                                          "type": "array"
+                                        }
+                                      },
+                                      "required": [
+                                        "value"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "c3fadf5e-faa4-5b51-b0a6-155adb3fd33a"
+                                  },
+                                  "runAfter": {
+                                    "Before_add_stage_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "ParseJson"
+                                },
+                                "Parsed_Readback_add_prod_app": {
+                                  "inputs": {
+                                    "content": "@json(string(body('Readback_add_prod_app')))",
+                                    "schema": {
+                                      "not": {
+                                        "required": [
+                                          "error"
+                                        ]
+                                      },
+                                      "properties": {
+                                        "@odata.nextLink": {
+                                          "type": [
+                                            "string",
+                                            "null"
+                                          ]
+                                        },
+                                        "nextLink": {
+                                          "type": [
+                                            "string",
+                                            "null"
+                                          ]
+                                        },
+                                        "value": {
+                                          "items": {
+                                            "properties": {
+                                              "id": {
+                                                "maxLength": 512,
+                                                "not": {
+                                                  "pattern": "[^A-Za-z0-9_./-]|\\.\\."
+                                                },
+                                                "pattern": "^/providers/Microsoft\\.PowerApps/apps/0aa02d8b\\-c7fa\\-42cc\\-87e8\\-6d287bd4c897/permissions/[A-Za-z0-9_.-]{1,128}$",
+                                                "type": "string"
+                                              },
+                                              "name": {
+                                                "maxLength": 128,
+                                                "minLength": 1,
+                                                "not": {
+                                                  "anyOf": [
+                                                    {
+                                                      "enum": [
+                                                        "."
+                                                      ]
+                                                    },
+                                                    {
+                                                      "pattern": "[^A-Za-z0-9_.-]|\\.\\."
+                                                    }
+                                                  ]
+                                                },
+                                                "pattern": "^[A-Za-z0-9_.-]{1,128}$",
+                                                "type": "string"
+                                              },
+                                              "properties": {
+                                                "properties": {
+                                                  "principal": {
+                                                    "properties": {
+                                                      "id": {
+                                                        "maxLength": 36,
+                                                        "minLength": 36,
+                                                        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                        "type": "string"
+                                                      },
+                                                      "tenantId": {
+                                                        "maxLength": 36,
+                                                        "minLength": 36,
+                                                        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                        "type": "string"
+                                                      },
+                                                      "type": {
+                                                        "enum": [
+                                                          "User",
+                                                          "Group",
+                                                          "Tenant"
+                                                        ],
+                                                        "type": "string"
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "id",
+                                                      "type",
+                                                      "tenantId"
+                                                    ],
+                                                    "type": "object"
+                                                  },
+                                                  "roleName": {
+                                                    "enum": [
+                                                      "CanView",
+                                                      "CanEdit",
+                                                      "Owner"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "roleName",
+                                                  "principal"
+                                                ],
+                                                "type": "object"
+                                              }
+                                            },
+                                            "required": [
+                                              "id",
+                                              "name",
+                                              "properties"
+                                            ],
+                                            "type": "object"
+                                          },
+                                          "type": "array"
+                                        }
+                                      },
+                                      "required": [
+                                        "value"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "6a0d7bd0-a060-5ef6-86c6-38ecd44dd567"
+                                  },
+                                  "runAfter": {
+                                    "Readback_add_prod_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "ParseJson"
+                                },
+                                "Parsed_Readback_add_stage_app": {
+                                  "inputs": {
+                                    "content": "@json(string(body('Readback_add_stage_app')))",
+                                    "schema": {
+                                      "not": {
+                                        "required": [
+                                          "error"
+                                        ]
+                                      },
+                                      "properties": {
+                                        "@odata.nextLink": {
+                                          "type": [
+                                            "string",
+                                            "null"
+                                          ]
+                                        },
+                                        "nextLink": {
+                                          "type": [
+                                            "string",
+                                            "null"
+                                          ]
+                                        },
+                                        "value": {
+                                          "items": {
+                                            "properties": {
+                                              "id": {
+                                                "maxLength": 512,
+                                                "not": {
+                                                  "pattern": "[^A-Za-z0-9_./-]|\\.\\."
+                                                },
+                                                "pattern": "^/providers/Microsoft\\.PowerApps/apps/7f1b64d0\\-d51a\\-4ec8\\-84ad\\-2b18fe8c2f82/permissions/[A-Za-z0-9_.-]{1,128}$",
+                                                "type": "string"
+                                              },
+                                              "name": {
+                                                "maxLength": 128,
+                                                "minLength": 1,
+                                                "not": {
+                                                  "anyOf": [
+                                                    {
+                                                      "enum": [
+                                                        "."
+                                                      ]
+                                                    },
+                                                    {
+                                                      "pattern": "[^A-Za-z0-9_.-]|\\.\\."
+                                                    }
+                                                  ]
+                                                },
+                                                "pattern": "^[A-Za-z0-9_.-]{1,128}$",
+                                                "type": "string"
+                                              },
+                                              "properties": {
+                                                "properties": {
+                                                  "principal": {
+                                                    "properties": {
+                                                      "id": {
+                                                        "maxLength": 36,
+                                                        "minLength": 36,
+                                                        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                        "type": "string"
+                                                      },
+                                                      "tenantId": {
+                                                        "maxLength": 36,
+                                                        "minLength": 36,
+                                                        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                        "type": "string"
+                                                      },
+                                                      "type": {
+                                                        "enum": [
+                                                          "User",
+                                                          "Group",
+                                                          "Tenant"
+                                                        ],
+                                                        "type": "string"
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "id",
+                                                      "type",
+                                                      "tenantId"
+                                                    ],
+                                                    "type": "object"
+                                                  },
+                                                  "roleName": {
+                                                    "enum": [
+                                                      "CanView",
+                                                      "CanEdit",
+                                                      "Owner"
+                                                    ],
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "roleName",
+                                                  "principal"
+                                                ],
+                                                "type": "object"
+                                              }
+                                            },
+                                            "required": [
+                                              "id",
+                                              "name",
+                                              "properties"
+                                            ],
+                                            "type": "object"
+                                          },
+                                          "type": "array"
+                                        }
+                                      },
+                                      "required": [
+                                        "value"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "95a20b34-5a32-584d-9511-c1aa03588a71"
+                                  },
+                                  "runAfter": {
+                                    "Readback_add_stage_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "ParseJson"
                                 },
                                 "Permit_payload_Before_add_prod_flow": {
                                   "inputs": {
@@ -2491,18 +3219,117 @@
                                   },
                                   "type": "Query"
                                 },
+                                "Principals_Before_add_prod_app": {
+                                  "inputs": {
+                                    "from": "@body('Parsed_Before_add_prod_app')?['value']",
+                                    "select": {
+                                      "id": "@toLower(item()?['properties']?['principal']?['id'])"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "ee091fad-1f40-5615-992d-018cee031382"
+                                  },
+                                  "runAfter": {
+                                    "Ids_Before_add_prod_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs",
+                                        "outputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Select"
+                                },
+                                "Principals_Before_add_stage_app": {
+                                  "inputs": {
+                                    "from": "@body('Parsed_Before_add_stage_app')?['value']",
+                                    "select": {
+                                      "id": "@toLower(item()?['properties']?['principal']?['id'])"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "3a50779e-6bbb-58a9-b26c-969537155050"
+                                  },
+                                  "runAfter": {
+                                    "Ids_Before_add_stage_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs",
+                                        "outputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Select"
+                                },
+                                "Principals_Readback_add_prod_app": {
+                                  "inputs": {
+                                    "from": "@body('Parsed_Readback_add_prod_app')?['value']",
+                                    "select": {
+                                      "id": "@toLower(item()?['properties']?['principal']?['id'])"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "3a113825-3231-594b-9fb0-ef696463c7dd"
+                                  },
+                                  "runAfter": {
+                                    "Ids_Readback_add_prod_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs",
+                                        "outputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Select"
+                                },
+                                "Principals_Readback_add_stage_app": {
+                                  "inputs": {
+                                    "from": "@body('Parsed_Readback_add_stage_app')?['value']",
+                                    "select": {
+                                      "id": "@toLower(item()?['properties']?['principal']?['id'])"
+                                    }
+                                  },
+                                  "metadata": {
+                                    "operationMetadataId": "8bfce681-8a92-5c1b-ad08-cb01843eaa27"
+                                  },
+                                  "runAfter": {
+                                    "Ids_Readback_add_stage_app": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs",
+                                        "outputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Select"
+                                },
                                 "Readback_add_prod_app": {
                                   "inputs": {
                                     "authentication": "@parameters('$authentication')",
                                     "host": {
-                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerappsforappmakers",
-                                      "connectionName": "makers",
-                                      "operationId": "Get-AppRoleAssignment"
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_webcontents",
+                                      "connectionName": "permissions",
+                                      "operationId": "InvokeHttp"
                                     },
                                     "parameters": {
-                                      "$top": 1000,
-                                      "api-version": "2017-06-01",
-                                      "app": "0aa02d8b-c7fa-42cc-87e8-6d287bd4c897"
+                                      "request/method": "GET",
+                                      "request/url": "https://api.powerapps.com/providers/Microsoft.PowerApps/apps/0aa02d8b-c7fa-42cc-87e8-6d287bd4c897/permissions?api-version=2017-06-01&%24filter=environment%20eq%20%27__POWER_PLATFORM_ENVIRONMENT__%27"
                                     },
                                     "retryPolicy": {
                                       "type": "none"
@@ -2567,14 +3394,13 @@
                                   "inputs": {
                                     "authentication": "@parameters('$authentication')",
                                     "host": {
-                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerappsforappmakers",
-                                      "connectionName": "makers",
-                                      "operationId": "Get-AppRoleAssignment"
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_webcontents",
+                                      "connectionName": "permissions",
+                                      "operationId": "InvokeHttp"
                                     },
                                     "parameters": {
-                                      "$top": 1000,
-                                      "api-version": "2017-06-01",
-                                      "app": "7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82"
+                                      "request/method": "GET",
+                                      "request/url": "https://api.powerapps.com/providers/Microsoft.PowerApps/apps/7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82/permissions?api-version=2017-06-01&%24filter=environment%20eq%20%27__POWER_PLATFORM_ENVIRONMENT__%27"
                                     },
                                     "retryPolicy": {
                                       "type": "none"
@@ -2636,7 +3462,7 @@
                                   "type": "OpenApiConnection"
                                 },
                                 "Readback_reason_add_prod_app": {
-                                  "inputs": "@if(not(equals(length(coalesce(body('Plan_add_prod_app'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_PROD_APP', if(not(equals(actions('Readback_add_prod_app')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_PROD_APP', if(not(equals(actions('Found_add_prod_app')?['status'], 'Succeeded')), 'READBACK_FILTER_FAILED_PROD_APP', if(or(not(empty(body('Readback_add_prod_app')?['nextLink'])), not(empty(body('Readback_add_prod_app')?['@odata.nextLink']))), 'READBACK_PAGINATED_PROD_APP', if(not(less(length(coalesce(body('Readback_add_prod_app')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_PROD_APP', if(not(equals(outputs('Observed_add_prod_app')?['present'], first(union(coalesce(body('Plan_add_prod_app'), json('[]')), createArray(json('{}'))))?['present'])), 'READBACK_PERMISSION_MISMATCH_PROD_APP', null))))))",
+                                  "inputs": "@if(not(equals(length(coalesce(body('Plan_add_prod_app'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_PROD_APP', if(not(equals(actions('Readback_add_prod_app')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_PROD_APP', if(or(not(equals(actions('Found_add_prod_app')?['status'], 'Succeeded')), not(equals(outputs('Validated_Readback_add_prod_app'), true))), 'READBACK_FILTER_FAILED_PROD_APP', if(or(not(empty(body('Parsed_Readback_add_prod_app')?['nextLink'])), not(empty(body('Parsed_Readback_add_prod_app')?['@odata.nextLink']))), 'READBACK_PAGINATED_PROD_APP', if(not(less(length(coalesce(body('Parsed_Readback_add_prod_app')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_PROD_APP', if(or(not(equals(outputs('Observed_add_prod_app')?['present'], first(union(coalesce(body('Plan_add_prod_app'), json('[]')), createArray(json('{}'))))?['present'])), not(equals(outputs('Observed_add_prod_app')?['verified'], true))), 'READBACK_PERMISSION_MISMATCH_PROD_APP', null))))))",
                                   "metadata": {
                                     "operationMetadataId": "4e53a16c-7b3f-579b-91e9-500a01a1cdf3"
                                   },
@@ -2655,7 +3481,7 @@
                                   "type": "Compose"
                                 },
                                 "Readback_reason_add_prod_flow": {
-                                  "inputs": "@if(not(equals(length(coalesce(body('Plan_add_prod_flow'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_PROD_FLOW', if(not(equals(actions('Readback_add_prod_flow')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_PROD_FLOW', if(not(equals(actions('Found_add_prod_flow')?['status'], 'Succeeded')), 'READBACK_FILTER_FAILED_PROD_FLOW', if(or(not(empty(body('Readback_add_prod_flow')?['nextLink'])), not(empty(body('Readback_add_prod_flow')?['@odata.nextLink']))), 'READBACK_PAGINATED_PROD_FLOW', if(not(less(length(coalesce(body('Readback_add_prod_flow')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_PROD_FLOW', if(not(equals(outputs('Observed_add_prod_flow')?['present'], first(union(coalesce(body('Plan_add_prod_flow'), json('[]')), createArray(json('{}'))))?['present'])), 'READBACK_PERMISSION_MISMATCH_PROD_FLOW', null))))))",
+                                  "inputs": "@if(not(equals(length(coalesce(body('Plan_add_prod_flow'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_PROD_FLOW', if(not(equals(actions('Readback_add_prod_flow')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_PROD_FLOW', if(not(equals(actions('Found_add_prod_flow')?['status'], 'Succeeded')), 'READBACK_FILTER_FAILED_PROD_FLOW', if(or(not(empty(body('Readback_add_prod_flow')?['nextLink'])), not(empty(body('Readback_add_prod_flow')?['@odata.nextLink']))), 'READBACK_PAGINATED_PROD_FLOW', if(not(less(length(coalesce(body('Readback_add_prod_flow')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_PROD_FLOW', if(or(not(equals(outputs('Observed_add_prod_flow')?['present'], first(union(coalesce(body('Plan_add_prod_flow'), json('[]')), createArray(json('{}'))))?['present'])), not(equals(outputs('Observed_add_prod_flow')?['verified'], true))), 'READBACK_PERMISSION_MISMATCH_PROD_FLOW', null))))))",
                                   "metadata": {
                                     "operationMetadataId": "c95e60a4-e0a2-5835-a005-c7934739cc55"
                                   },
@@ -2674,7 +3500,7 @@
                                   "type": "Compose"
                                 },
                                 "Readback_reason_add_stage_app": {
-                                  "inputs": "@if(not(equals(length(coalesce(body('Plan_add_stage_app'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_STAGE_APP', if(not(equals(actions('Readback_add_stage_app')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_STAGE_APP', if(not(equals(actions('Found_add_stage_app')?['status'], 'Succeeded')), 'READBACK_FILTER_FAILED_STAGE_APP', if(or(not(empty(body('Readback_add_stage_app')?['nextLink'])), not(empty(body('Readback_add_stage_app')?['@odata.nextLink']))), 'READBACK_PAGINATED_STAGE_APP', if(not(less(length(coalesce(body('Readback_add_stage_app')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_STAGE_APP', if(not(equals(outputs('Observed_add_stage_app')?['present'], first(union(coalesce(body('Plan_add_stage_app'), json('[]')), createArray(json('{}'))))?['present'])), 'READBACK_PERMISSION_MISMATCH_STAGE_APP', null))))))",
+                                  "inputs": "@if(not(equals(length(coalesce(body('Plan_add_stage_app'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_STAGE_APP', if(not(equals(actions('Readback_add_stage_app')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_STAGE_APP', if(or(not(equals(actions('Found_add_stage_app')?['status'], 'Succeeded')), not(equals(outputs('Validated_Readback_add_stage_app'), true))), 'READBACK_FILTER_FAILED_STAGE_APP', if(or(not(empty(body('Parsed_Readback_add_stage_app')?['nextLink'])), not(empty(body('Parsed_Readback_add_stage_app')?['@odata.nextLink']))), 'READBACK_PAGINATED_STAGE_APP', if(not(less(length(coalesce(body('Parsed_Readback_add_stage_app')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_STAGE_APP', if(or(not(equals(outputs('Observed_add_stage_app')?['present'], first(union(coalesce(body('Plan_add_stage_app'), json('[]')), createArray(json('{}'))))?['present'])), not(equals(outputs('Observed_add_stage_app')?['verified'], true))), 'READBACK_PERMISSION_MISMATCH_STAGE_APP', null))))))",
                                   "metadata": {
                                     "operationMetadataId": "1f602cb3-8b96-5e9e-819f-0d83c3de086f"
                                   },
@@ -2693,7 +3519,7 @@
                                   "type": "Compose"
                                 },
                                 "Readback_reason_add_stage_flow": {
-                                  "inputs": "@if(not(equals(length(coalesce(body('Plan_add_stage_flow'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_STAGE_FLOW', if(not(equals(actions('Readback_add_stage_flow')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_STAGE_FLOW', if(not(equals(actions('Found_add_stage_flow')?['status'], 'Succeeded')), 'READBACK_FILTER_FAILED_STAGE_FLOW', if(or(not(empty(body('Readback_add_stage_flow')?['nextLink'])), not(empty(body('Readback_add_stage_flow')?['@odata.nextLink']))), 'READBACK_PAGINATED_STAGE_FLOW', if(not(less(length(coalesce(body('Readback_add_stage_flow')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_STAGE_FLOW', if(not(equals(outputs('Observed_add_stage_flow')?['present'], first(union(coalesce(body('Plan_add_stage_flow'), json('[]')), createArray(json('{}'))))?['present'])), 'READBACK_PERMISSION_MISMATCH_STAGE_FLOW', null))))))",
+                                  "inputs": "@if(not(equals(length(coalesce(body('Plan_add_stage_flow'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_STAGE_FLOW', if(not(equals(actions('Readback_add_stage_flow')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_STAGE_FLOW', if(not(equals(actions('Found_add_stage_flow')?['status'], 'Succeeded')), 'READBACK_FILTER_FAILED_STAGE_FLOW', if(or(not(empty(body('Readback_add_stage_flow')?['nextLink'])), not(empty(body('Readback_add_stage_flow')?['@odata.nextLink']))), 'READBACK_PAGINATED_STAGE_FLOW', if(not(less(length(coalesce(body('Readback_add_stage_flow')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_STAGE_FLOW', if(or(not(equals(outputs('Observed_add_stage_flow')?['present'], first(union(coalesce(body('Plan_add_stage_flow'), json('[]')), createArray(json('{}'))))?['present'])), not(equals(outputs('Observed_add_stage_flow')?['verified'], true))), 'READBACK_PERMISSION_MISMATCH_STAGE_FLOW', null))))))",
                                   "metadata": {
                                     "operationMetadataId": "1e7ebfa8-2e48-578f-843d-03f8266bf45f"
                                   },
@@ -3243,6 +4069,94 @@
                                   },
                                   "type": "Compose"
                                 },
+                                "Validated_Before_add_prod_app": {
+                                  "inputs": "@and(equals(actions('Before_add_prod_app')?['status'], 'Succeeded'), equals(actions('Parsed_Before_add_prod_app')?['status'], 'Succeeded'), equals(actions('Invalid_Before_add_prod_app')?['status'], 'Succeeded'), equals(actions('Ids_Before_add_prod_app')?['status'], 'Succeeded'), equals(actions('Principals_Before_add_prod_app')?['status'], 'Succeeded'), empty(body('Invalid_Before_add_prod_app')), equals(length(coalesce(body('Ids_Before_add_prod_app'), json('[]'))), length(union(coalesce(body('Ids_Before_add_prod_app'), json('[]')), coalesce(body('Ids_Before_add_prod_app'), json('[]'))))), equals(length(coalesce(body('Principals_Before_add_prod_app'), json('[]'))), length(union(coalesce(body('Principals_Before_add_prod_app'), json('[]')), coalesce(body('Principals_Before_add_prod_app'), json('[]'))))))",
+                                  "metadata": {
+                                    "operationMetadataId": "a428476e-3913-5309-b2fc-e3b8b8aeeb78"
+                                  },
+                                  "runAfter": {
+                                    "Principals_Before_add_prod_app": [
+                                      "Succeeded",
+                                      "Failed",
+                                      "Skipped",
+                                      "TimedOut"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Compose"
+                                },
+                                "Validated_Before_add_stage_app": {
+                                  "inputs": "@and(equals(actions('Before_add_stage_app')?['status'], 'Succeeded'), equals(actions('Parsed_Before_add_stage_app')?['status'], 'Succeeded'), equals(actions('Invalid_Before_add_stage_app')?['status'], 'Succeeded'), equals(actions('Ids_Before_add_stage_app')?['status'], 'Succeeded'), equals(actions('Principals_Before_add_stage_app')?['status'], 'Succeeded'), empty(body('Invalid_Before_add_stage_app')), equals(length(coalesce(body('Ids_Before_add_stage_app'), json('[]'))), length(union(coalesce(body('Ids_Before_add_stage_app'), json('[]')), coalesce(body('Ids_Before_add_stage_app'), json('[]'))))), equals(length(coalesce(body('Principals_Before_add_stage_app'), json('[]'))), length(union(coalesce(body('Principals_Before_add_stage_app'), json('[]')), coalesce(body('Principals_Before_add_stage_app'), json('[]'))))))",
+                                  "metadata": {
+                                    "operationMetadataId": "9a86c4fd-bcef-507f-9a23-c93b47bb5bdd"
+                                  },
+                                  "runAfter": {
+                                    "Principals_Before_add_stage_app": [
+                                      "Succeeded",
+                                      "Failed",
+                                      "Skipped",
+                                      "TimedOut"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Compose"
+                                },
+                                "Validated_Readback_add_prod_app": {
+                                  "inputs": "@and(equals(actions('Readback_add_prod_app')?['status'], 'Succeeded'), equals(actions('Parsed_Readback_add_prod_app')?['status'], 'Succeeded'), equals(actions('Invalid_Readback_add_prod_app')?['status'], 'Succeeded'), equals(actions('Ids_Readback_add_prod_app')?['status'], 'Succeeded'), equals(actions('Principals_Readback_add_prod_app')?['status'], 'Succeeded'), empty(body('Invalid_Readback_add_prod_app')), equals(length(coalesce(body('Ids_Readback_add_prod_app'), json('[]'))), length(union(coalesce(body('Ids_Readback_add_prod_app'), json('[]')), coalesce(body('Ids_Readback_add_prod_app'), json('[]'))))), equals(length(coalesce(body('Principals_Readback_add_prod_app'), json('[]'))), length(union(coalesce(body('Principals_Readback_add_prod_app'), json('[]')), coalesce(body('Principals_Readback_add_prod_app'), json('[]'))))))",
+                                  "metadata": {
+                                    "operationMetadataId": "0ccce7eb-4c6d-5221-973a-bca968b4897e"
+                                  },
+                                  "runAfter": {
+                                    "Principals_Readback_add_prod_app": [
+                                      "Succeeded",
+                                      "Failed",
+                                      "Skipped",
+                                      "TimedOut"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Compose"
+                                },
+                                "Validated_Readback_add_stage_app": {
+                                  "inputs": "@and(equals(actions('Readback_add_stage_app')?['status'], 'Succeeded'), equals(actions('Parsed_Readback_add_stage_app')?['status'], 'Succeeded'), equals(actions('Invalid_Readback_add_stage_app')?['status'], 'Succeeded'), equals(actions('Ids_Readback_add_stage_app')?['status'], 'Succeeded'), equals(actions('Principals_Readback_add_stage_app')?['status'], 'Succeeded'), empty(body('Invalid_Readback_add_stage_app')), equals(length(coalesce(body('Ids_Readback_add_stage_app'), json('[]'))), length(union(coalesce(body('Ids_Readback_add_stage_app'), json('[]')), coalesce(body('Ids_Readback_add_stage_app'), json('[]'))))), equals(length(coalesce(body('Principals_Readback_add_stage_app'), json('[]'))), length(union(coalesce(body('Principals_Readback_add_stage_app'), json('[]')), coalesce(body('Principals_Readback_add_stage_app'), json('[]'))))))",
+                                  "metadata": {
+                                    "operationMetadataId": "5e71f125-32a4-5d52-988b-bbe70b4a674a"
+                                  },
+                                  "runAfter": {
+                                    "Principals_Readback_add_stage_app": [
+                                      "Succeeded",
+                                      "Failed",
+                                      "Skipped",
+                                      "TimedOut"
+                                    ]
+                                  },
+                                  "runtimeConfiguration": {
+                                    "secureData": {
+                                      "properties": [
+                                        "inputs"
+                                      ]
+                                    }
+                                  },
+                                  "type": "Compose"
+                                },
                                 "Wait_Before_add_prod_flow": {
                                   "inputs": {
                                     "until": {
@@ -3748,14 +4662,13 @@
                                 "inputs": {
                                   "authentication": "@parameters('$authentication')",
                                   "host": {
-                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerappsforappmakers",
-                                    "connectionName": "makers",
-                                    "operationId": "Get-AppRoleAssignment"
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_webcontents",
+                                    "connectionName": "permissions",
+                                    "operationId": "InvokeHttp"
                                   },
                                   "parameters": {
-                                    "$top": 1000,
-                                    "api-version": "2017-06-01",
-                                    "app": "0aa02d8b-c7fa-42cc-87e8-6d287bd4c897"
+                                    "request/method": "GET",
+                                    "request/url": "https://api.powerapps.com/providers/Microsoft.PowerApps/apps/0aa02d8b-c7fa-42cc-87e8-6d287bd4c897/permissions?api-version=2017-06-01&%24filter=environment%20eq%20%27__POWER_PLATFORM_ENVIRONMENT__%27"
                                   },
                                   "retryPolicy": {
                                     "type": "none"
@@ -3817,14 +4730,13 @@
                                 "inputs": {
                                   "authentication": "@parameters('$authentication')",
                                   "host": {
-                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerappsforappmakers",
-                                    "connectionName": "makers",
-                                    "operationId": "Get-AppRoleAssignment"
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_webcontents",
+                                    "connectionName": "permissions",
+                                    "operationId": "InvokeHttp"
                                   },
                                   "parameters": {
-                                    "$top": 1000,
-                                    "api-version": "2017-06-01",
-                                    "app": "7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82"
+                                    "request/method": "GET",
+                                    "request/url": "https://api.powerapps.com/providers/Microsoft.PowerApps/apps/7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82/permissions?api-version=2017-06-01&%24filter=environment%20eq%20%27__POWER_PLATFORM_ENVIRONMENT__%27"
                                   },
                                   "retryPolicy": {
                                     "type": "none"
@@ -3884,14 +4796,14 @@
                               },
                               "Found_remove_prod_app": {
                                 "inputs": {
-                                  "from": "@coalesce(body('Readback_remove_prod_app')?['value'], json('[]'))",
+                                  "from": "@coalesce(body('Parsed_Readback_remove_prod_app')?['value'], json('[]'))",
                                   "where": "@equals(toLower(coalesce(item()?['properties']?['principal']?['id'], '')), toLower(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id']))"
                                 },
                                 "metadata": {
                                   "operationMetadataId": "1c743882-11e4-5bd1-9762-f9ae60c5e65d"
                                 },
                                 "runAfter": {
-                                  "Readback_remove_prod_app": [
+                                  "Validated_Readback_remove_prod_app": [
                                     "Succeeded"
                                   ]
                                 },
@@ -3933,14 +4845,14 @@
                               },
                               "Found_remove_stage_app": {
                                 "inputs": {
-                                  "from": "@coalesce(body('Readback_remove_stage_app')?['value'], json('[]'))",
+                                  "from": "@coalesce(body('Parsed_Readback_remove_stage_app')?['value'], json('[]'))",
                                   "where": "@equals(toLower(coalesce(item()?['properties']?['principal']?['id'], '')), toLower(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id']))"
                                 },
                                 "metadata": {
                                   "operationMetadataId": "f03b310c-98aa-5a9b-86c0-1aa395524d0c"
                                 },
                                 "runAfter": {
-                                  "Readback_remove_stage_app": [
+                                  "Validated_Readback_remove_stage_app": [
                                     "Succeeded"
                                   ]
                                 },
@@ -3967,6 +4879,198 @@
                                     "Succeeded"
                                   ],
                                   "Record_permit_Readback_remove_stage_flow": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs",
+                                      "outputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Query"
+                              },
+                              "Ids_Before_remove_prod_app": {
+                                "inputs": {
+                                  "from": "@body('Parsed_Before_remove_prod_app')?['value']",
+                                  "select": {
+                                    "id": "@toLower(item()?['id'])"
+                                  }
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "eaa50827-db33-5c92-815f-f571724e3ff5"
+                                },
+                                "runAfter": {
+                                  "Invalid_Before_remove_prod_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs",
+                                      "outputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Select"
+                              },
+                              "Ids_Before_remove_stage_app": {
+                                "inputs": {
+                                  "from": "@body('Parsed_Before_remove_stage_app')?['value']",
+                                  "select": {
+                                    "id": "@toLower(item()?['id'])"
+                                  }
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "4af9fcad-3a45-5c4c-accd-60395eeefbf5"
+                                },
+                                "runAfter": {
+                                  "Invalid_Before_remove_stage_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs",
+                                      "outputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Select"
+                              },
+                              "Ids_Readback_remove_prod_app": {
+                                "inputs": {
+                                  "from": "@body('Parsed_Readback_remove_prod_app')?['value']",
+                                  "select": {
+                                    "id": "@toLower(item()?['id'])"
+                                  }
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "e7ab4a4d-31e6-522e-b3e9-860a2ff38c66"
+                                },
+                                "runAfter": {
+                                  "Invalid_Readback_remove_prod_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs",
+                                      "outputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Select"
+                              },
+                              "Ids_Readback_remove_stage_app": {
+                                "inputs": {
+                                  "from": "@body('Parsed_Readback_remove_stage_app')?['value']",
+                                  "select": {
+                                    "id": "@toLower(item()?['id'])"
+                                  }
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "6b09c1a8-21ca-520e-a94b-a5c9e3764c65"
+                                },
+                                "runAfter": {
+                                  "Invalid_Readback_remove_stage_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs",
+                                      "outputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Select"
+                              },
+                              "Invalid_Before_remove_prod_app": {
+                                "inputs": {
+                                  "from": "@body('Parsed_Before_remove_prod_app')?['value']",
+                                  "where": "@or(not(equals(item()?['id'], concat('/providers/Microsoft.PowerApps/apps/0aa02d8b-c7fa-42cc-87e8-6d287bd4c897/permissions/', item()?['name']))), not(equals(toLower(item()?['properties']?['principal']?['tenantId']), '__tenant_id__')))"
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "1c89ca50-e68d-5acc-b246-672358c38544"
+                                },
+                                "runAfter": {
+                                  "Parsed_Before_remove_prod_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs",
+                                      "outputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Query"
+                              },
+                              "Invalid_Before_remove_stage_app": {
+                                "inputs": {
+                                  "from": "@body('Parsed_Before_remove_stage_app')?['value']",
+                                  "where": "@or(not(equals(item()?['id'], concat('/providers/Microsoft.PowerApps/apps/7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82/permissions/', item()?['name']))), not(equals(toLower(item()?['properties']?['principal']?['tenantId']), '__tenant_id__')))"
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "b4f8b7ad-b0e4-5ec0-897b-214a51fefa87"
+                                },
+                                "runAfter": {
+                                  "Parsed_Before_remove_stage_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs",
+                                      "outputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Query"
+                              },
+                              "Invalid_Readback_remove_prod_app": {
+                                "inputs": {
+                                  "from": "@body('Parsed_Readback_remove_prod_app')?['value']",
+                                  "where": "@or(not(equals(item()?['id'], concat('/providers/Microsoft.PowerApps/apps/0aa02d8b-c7fa-42cc-87e8-6d287bd4c897/permissions/', item()?['name']))), not(equals(toLower(item()?['properties']?['principal']?['tenantId']), '__tenant_id__')))"
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "a893fd35-c153-5d36-926e-8b833efa523e"
+                                },
+                                "runAfter": {
+                                  "Parsed_Readback_remove_prod_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs",
+                                      "outputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Query"
+                              },
+                              "Invalid_Readback_remove_stage_app": {
+                                "inputs": {
+                                  "from": "@body('Parsed_Readback_remove_stage_app')?['value']",
+                                  "where": "@or(not(equals(item()?['id'], concat('/providers/Microsoft.PowerApps/apps/7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82/permissions/', item()?['name']))), not(equals(toLower(item()?['properties']?['principal']?['tenantId']), '__tenant_id__')))"
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "6ec491c7-3b62-5f9e-85a0-4d54e93a6b80"
+                                },
+                                "runAfter": {
+                                  "Parsed_Readback_remove_stage_app": [
                                     "Succeeded"
                                   ]
                                 },
@@ -4133,14 +5237,14 @@
                               },
                               "Matched_remove_prod_app": {
                                 "inputs": {
-                                  "from": "@coalesce(body('Before_remove_prod_app')?['value'], json('[]'))",
+                                  "from": "@coalesce(body('Parsed_Before_remove_prod_app')?['value'], json('[]'))",
                                   "where": "@equals(toLower(coalesce(item()?['properties']?['principal']?['id'], '')), toLower(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id']))"
                                 },
                                 "metadata": {
                                   "operationMetadataId": "0aff52df-a63e-5fb8-abe9-f839b68bebb4"
                                 },
                                 "runAfter": {
-                                  "Before_remove_prod_app": [
+                                  "Validated_Before_remove_prod_app": [
                                     "Succeeded"
                                   ]
                                 },
@@ -4182,14 +5286,14 @@
                               },
                               "Matched_remove_stage_app": {
                                 "inputs": {
-                                  "from": "@coalesce(body('Before_remove_stage_app')?['value'], json('[]'))",
+                                  "from": "@coalesce(body('Parsed_Before_remove_stage_app')?['value'], json('[]'))",
                                   "where": "@equals(toLower(coalesce(item()?['properties']?['principal']?['id'], '')), toLower(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id']))"
                                 },
                                 "metadata": {
                                   "operationMetadataId": "c3870ebc-4133-5ad6-b63a-49ccf3fdbb13"
                                 },
                                 "runAfter": {
-                                  "Before_remove_stage_app": [
+                                  "Validated_Before_remove_stage_app": [
                                     "Succeeded"
                                   ]
                                 },
@@ -4352,7 +5456,7 @@
                                 "else": {
                                   "actions": {}
                                 },
-                                "expression": "@and(and(equals(length(body('Plan_remove_prod_app')), 1), equals(outputs('Leased_remove')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id'])), empty(body('Before_remove_prod_app')?['nextLink']), empty(body('Before_remove_prod_app')?['@odata.nextLink']), less(length(coalesce(body('Before_remove_prod_app')?['value'], json('[]'))), 1000)), or(empty(body('Matched_remove_prod_app')), and(equals(length(body('Matched_remove_prod_app')), 1), equals(first(union(body('Matched_remove_prod_app'), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'))), or(and(equals(first(union(body('Plan_remove_prod_app'), createArray(json('{}'))))?['present'], true), empty(body('Matched_remove_prod_app'))), and(equals(first(union(body('Plan_remove_prod_app'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_remove_prod_app'))))))",
+                                "expression": "@and(and(equals(length(coalesce(body('Plan_remove_prod_app'), json('[]'))), 1), equals(outputs('Leased_remove')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id'])), equals(outputs('Validated_Before_remove_prod_app'), true), empty(body('Parsed_Before_remove_prod_app')?['nextLink']), empty(body('Parsed_Before_remove_prod_app')?['@odata.nextLink']), less(length(coalesce(body('Parsed_Before_remove_prod_app')?['value'], json('[]'))), 1000)), or(empty(body('Matched_remove_prod_app')), and(equals(length(body('Matched_remove_prod_app')), 1), equals(first(union(body('Matched_remove_prod_app'), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), equals(first(union(body('Matched_remove_prod_app'), createArray(json('{}'))))?['properties']?['principal']?['type'], 'User'))), or(and(equals(first(union(body('Plan_remove_prod_app'), createArray(json('{}'))))?['present'], true), empty(body('Matched_remove_prod_app'))), and(equals(first(union(body('Plan_remove_prod_app'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_remove_prod_app'))))))",
                                 "metadata": {
                                   "operationMetadataId": "139f7c52-846f-5e2b-afc4-fb0da9935dbc"
                                 },
@@ -4777,7 +5881,7 @@
                                 "else": {
                                   "actions": {}
                                 },
-                                "expression": "@and(and(equals(length(body('Plan_remove_prod_flow')), 1), equals(outputs('Leased_remove')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id'])), empty(body('Before_remove_prod_flow')?['nextLink']), empty(body('Before_remove_prod_flow')?['@odata.nextLink']), less(length(coalesce(body('Before_remove_prod_flow')?['value'], json('[]'))), 1000)), true, or(and(equals(first(union(body('Plan_remove_prod_flow'), createArray(json('{}'))))?['present'], true), empty(body('Matched_remove_prod_flow'))), and(equals(first(union(body('Plan_remove_prod_flow'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_remove_prod_flow'))))))",
+                                "expression": "@and(and(equals(length(coalesce(body('Plan_remove_prod_flow'), json('[]'))), 1), equals(outputs('Leased_remove')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id'])), empty(body('Before_remove_prod_flow')?['nextLink']), empty(body('Before_remove_prod_flow')?['@odata.nextLink']), less(length(coalesce(body('Before_remove_prod_flow')?['value'], json('[]'))), 1000)), true, or(and(equals(first(union(body('Plan_remove_prod_flow'), createArray(json('{}'))))?['present'], true), empty(body('Matched_remove_prod_flow'))), and(equals(first(union(body('Plan_remove_prod_flow'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_remove_prod_flow'))))))",
                                 "metadata": {
                                   "operationMetadataId": "64e6cf9f-066e-55ac-a4d8-92074c954e02"
                                 },
@@ -4911,7 +6015,7 @@
                                 "else": {
                                   "actions": {}
                                 },
-                                "expression": "@and(and(equals(length(body('Plan_remove_stage_app')), 1), equals(outputs('Leased_remove')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id'])), empty(body('Before_remove_stage_app')?['nextLink']), empty(body('Before_remove_stage_app')?['@odata.nextLink']), less(length(coalesce(body('Before_remove_stage_app')?['value'], json('[]'))), 1000)), or(empty(body('Matched_remove_stage_app')), and(equals(length(body('Matched_remove_stage_app')), 1), equals(first(union(body('Matched_remove_stage_app'), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'))), or(and(equals(first(union(body('Plan_remove_stage_app'), createArray(json('{}'))))?['present'], true), empty(body('Matched_remove_stage_app'))), and(equals(first(union(body('Plan_remove_stage_app'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_remove_stage_app'))))))",
+                                "expression": "@and(and(equals(length(coalesce(body('Plan_remove_stage_app'), json('[]'))), 1), equals(outputs('Leased_remove')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id'])), equals(outputs('Validated_Before_remove_stage_app'), true), empty(body('Parsed_Before_remove_stage_app')?['nextLink']), empty(body('Parsed_Before_remove_stage_app')?['@odata.nextLink']), less(length(coalesce(body('Parsed_Before_remove_stage_app')?['value'], json('[]'))), 1000)), or(empty(body('Matched_remove_stage_app')), and(equals(length(body('Matched_remove_stage_app')), 1), equals(first(union(body('Matched_remove_stage_app'), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), equals(first(union(body('Matched_remove_stage_app'), createArray(json('{}'))))?['properties']?['principal']?['type'], 'User'))), or(and(equals(first(union(body('Plan_remove_stage_app'), createArray(json('{}'))))?['present'], true), empty(body('Matched_remove_stage_app'))), and(equals(first(union(body('Plan_remove_stage_app'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_remove_stage_app'))))))",
                                 "metadata": {
                                   "operationMetadataId": "f7884dee-79c9-505d-b756-1be731f07e15"
                                 },
@@ -5336,7 +6440,7 @@
                                 "else": {
                                   "actions": {}
                                 },
-                                "expression": "@and(and(equals(length(body('Plan_remove_stage_flow')), 1), equals(outputs('Leased_remove')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id'])), empty(body('Before_remove_stage_flow')?['nextLink']), empty(body('Before_remove_stage_flow')?['@odata.nextLink']), less(length(coalesce(body('Before_remove_stage_flow')?['value'], json('[]'))), 1000)), true, or(and(equals(first(union(body('Plan_remove_stage_flow'), createArray(json('{}'))))?['present'], true), empty(body('Matched_remove_stage_flow'))), and(equals(first(union(body('Plan_remove_stage_flow'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_remove_stage_flow'))))))",
+                                "expression": "@and(and(equals(length(coalesce(body('Plan_remove_stage_flow'), json('[]'))), 1), equals(outputs('Leased_remove')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id'])), empty(body('Before_remove_stage_flow')?['nextLink']), empty(body('Before_remove_stage_flow')?['@odata.nextLink']), less(length(coalesce(body('Before_remove_stage_flow')?['value'], json('[]'))), 1000)), true, or(and(equals(first(union(body('Plan_remove_stage_flow'), createArray(json('{}'))))?['present'], true), empty(body('Matched_remove_stage_flow'))), and(equals(first(union(body('Plan_remove_stage_flow'), createArray(json('{}'))))?['present'], false), not(empty(body('Matched_remove_stage_flow'))))))",
                                 "metadata": {
                                   "operationMetadataId": "1bdc4f45-8981-572f-8efc-021e7c54d328"
                                 },
@@ -5351,9 +6455,9 @@
                                 "inputs": {
                                   "kind": "app",
                                   "permission": "CanView",
-                                  "present": "@and(equals(length(coalesce(body('Found_remove_prod_app'), json('[]'))), 1), or(equals(first(union(coalesce(body('Found_remove_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), and(equals(first(union(coalesce(body('Found_remove_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'Owner'), equals(toLower(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id']), '__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__'))))",
+                                  "present": "@and(equals(length(coalesce(body('Found_remove_prod_app'), json('[]'))), 1), equals(first(union(coalesce(body('Found_remove_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['principal']?['type'], 'User'), or(equals(first(union(coalesce(body('Found_remove_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), and(equals(first(union(coalesce(body('Found_remove_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'Owner'), equals(toLower(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id']), toLower('__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__')))))",
                                   "resource_id": "0aa02d8b-c7fa-42cc-87e8-6d287bd4c897",
-                                  "verified": "@and(equals(actions('Readback_remove_prod_app')?['status'], 'Succeeded'), equals(actions('Found_remove_prod_app')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_remove_prod_app'), json('[]'))), 1), empty(body('Readback_remove_prod_app')?['nextLink']), empty(body('Readback_remove_prod_app')?['@odata.nextLink']), less(length(coalesce(body('Readback_remove_prod_app')?['value'], json('[]'))), 1000))"
+                                  "verified": "@and(and(equals(actions('Readback_remove_prod_app')?['status'], 'Succeeded'), equals(actions('Found_remove_prod_app')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_remove_prod_app'), json('[]'))), 1), equals(outputs('Leased_remove')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id'])), equals(outputs('Validated_Readback_remove_prod_app'), true), empty(body('Parsed_Readback_remove_prod_app')?['nextLink']), empty(body('Parsed_Readback_remove_prod_app')?['@odata.nextLink']), less(length(coalesce(body('Parsed_Readback_remove_prod_app')?['value'], json('[]'))), 1000)), or(empty(body('Found_remove_prod_app')), and(equals(length(coalesce(body('Found_remove_prod_app'), json('[]'))), 1), equals(first(union(coalesce(body('Found_remove_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['principal']?['type'], 'User'), or(equals(first(union(coalesce(body('Found_remove_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), and(equals(first(union(coalesce(body('Found_remove_prod_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'Owner'), equals(toLower(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id']), toLower('__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__')))))))"
                                 },
                                 "metadata": {
                                   "operationMetadataId": "69f57d4e-24ad-5259-9c7c-8317eed53a01"
@@ -5381,7 +6485,7 @@
                                   "permission": "run-only",
                                   "present": "@greater(length(coalesce(body('Found_remove_prod_flow'), json('[]'))), 0)",
                                   "resource_id": "__PROD_FLOW_ID__",
-                                  "verified": "@and(equals(actions('Readback_remove_prod_flow')?['status'], 'Succeeded'), equals(actions('Found_remove_prod_flow')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_remove_prod_flow'), json('[]'))), 1), empty(body('Readback_remove_prod_flow')?['nextLink']), empty(body('Readback_remove_prod_flow')?['@odata.nextLink']), less(length(coalesce(body('Readback_remove_prod_flow')?['value'], json('[]'))), 1000))"
+                                  "verified": "@and(equals(actions('Readback_remove_prod_flow')?['status'], 'Succeeded'), equals(actions('Found_remove_prod_flow')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_remove_prod_flow'), json('[]'))), 1), equals(outputs('Leased_remove')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id'])), empty(body('Readback_remove_prod_flow')?['nextLink']), empty(body('Readback_remove_prod_flow')?['@odata.nextLink']), less(length(coalesce(body('Readback_remove_prod_flow')?['value'], json('[]'))), 1000))"
                                 },
                                 "metadata": {
                                   "operationMetadataId": "23aa15df-5b70-5571-acd1-479f19381843"
@@ -5407,9 +6511,9 @@
                                 "inputs": {
                                   "kind": "app",
                                   "permission": "CanView",
-                                  "present": "@and(equals(length(coalesce(body('Found_remove_stage_app'), json('[]'))), 1), or(equals(first(union(coalesce(body('Found_remove_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), and(equals(first(union(coalesce(body('Found_remove_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'Owner'), equals(toLower(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id']), '__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__'))))",
+                                  "present": "@and(equals(length(coalesce(body('Found_remove_stage_app'), json('[]'))), 1), equals(first(union(coalesce(body('Found_remove_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['principal']?['type'], 'User'), or(equals(first(union(coalesce(body('Found_remove_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), and(equals(first(union(coalesce(body('Found_remove_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'Owner'), equals(toLower(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id']), toLower('__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__')))))",
                                   "resource_id": "7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82",
-                                  "verified": "@and(equals(actions('Readback_remove_stage_app')?['status'], 'Succeeded'), equals(actions('Found_remove_stage_app')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_remove_stage_app'), json('[]'))), 1), empty(body('Readback_remove_stage_app')?['nextLink']), empty(body('Readback_remove_stage_app')?['@odata.nextLink']), less(length(coalesce(body('Readback_remove_stage_app')?['value'], json('[]'))), 1000))"
+                                  "verified": "@and(and(equals(actions('Readback_remove_stage_app')?['status'], 'Succeeded'), equals(actions('Found_remove_stage_app')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_remove_stage_app'), json('[]'))), 1), equals(outputs('Leased_remove')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id'])), equals(outputs('Validated_Readback_remove_stage_app'), true), empty(body('Parsed_Readback_remove_stage_app')?['nextLink']), empty(body('Parsed_Readback_remove_stage_app')?['@odata.nextLink']), less(length(coalesce(body('Parsed_Readback_remove_stage_app')?['value'], json('[]'))), 1000)), or(empty(body('Found_remove_stage_app')), and(equals(length(coalesce(body('Found_remove_stage_app'), json('[]'))), 1), equals(first(union(coalesce(body('Found_remove_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['principal']?['type'], 'User'), or(equals(first(union(coalesce(body('Found_remove_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'CanView'), and(equals(first(union(coalesce(body('Found_remove_stage_app'), json('[]')), createArray(json('{}'))))?['properties']?['roleName'], 'Owner'), equals(toLower(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id']), toLower('__VERIFIED_DEPLOYMENT_OWNER_OBJECT_ID__')))))))"
                                 },
                                 "metadata": {
                                   "operationMetadataId": "44850aad-4e15-568d-b882-b5f2d46172a7"
@@ -5437,7 +6541,7 @@
                                   "permission": "run-only",
                                   "present": "@greater(length(coalesce(body('Found_remove_stage_flow'), json('[]'))), 0)",
                                   "resource_id": "__STAGE_FLOW_ID__",
-                                  "verified": "@and(equals(actions('Readback_remove_stage_flow')?['status'], 'Succeeded'), equals(actions('Found_remove_stage_flow')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_remove_stage_flow'), json('[]'))), 1), empty(body('Readback_remove_stage_flow')?['nextLink']), empty(body('Readback_remove_stage_flow')?['@odata.nextLink']), less(length(coalesce(body('Readback_remove_stage_flow')?['value'], json('[]'))), 1000))"
+                                  "verified": "@and(equals(actions('Readback_remove_stage_flow')?['status'], 'Succeeded'), equals(actions('Found_remove_stage_flow')?['status'], 'Succeeded'), equals(length(coalesce(body('Plan_remove_stage_flow'), json('[]'))), 1), equals(outputs('Leased_remove')?['sharing_plan']?['target']?['tenant_id'], '__TENANT_ID__'), not(empty(outputs('Leased_remove')?['sharing_plan']?['target']?['object_id'])), empty(body('Readback_remove_stage_flow')?['nextLink']), empty(body('Readback_remove_stage_flow')?['@odata.nextLink']), less(length(coalesce(body('Readback_remove_stage_flow')?['value'], json('[]'))), 1000))"
                                 },
                                 "metadata": {
                                   "operationMetadataId": "e010de88-e64b-5cb8-9b72-1f4dd159107a"
@@ -5458,6 +6562,534 @@
                                   }
                                 },
                                 "type": "Compose"
+                              },
+                              "Parsed_Before_remove_prod_app": {
+                                "inputs": {
+                                  "content": "@json(string(body('Before_remove_prod_app')))",
+                                  "schema": {
+                                    "not": {
+                                      "required": [
+                                        "error"
+                                      ]
+                                    },
+                                    "properties": {
+                                      "@odata.nextLink": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "nextLink": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "value": {
+                                        "items": {
+                                          "properties": {
+                                            "id": {
+                                              "maxLength": 512,
+                                              "not": {
+                                                "pattern": "[^A-Za-z0-9_./-]|\\.\\."
+                                              },
+                                              "pattern": "^/providers/Microsoft\\.PowerApps/apps/0aa02d8b\\-c7fa\\-42cc\\-87e8\\-6d287bd4c897/permissions/[A-Za-z0-9_.-]{1,128}$",
+                                              "type": "string"
+                                            },
+                                            "name": {
+                                              "maxLength": 128,
+                                              "minLength": 1,
+                                              "not": {
+                                                "anyOf": [
+                                                  {
+                                                    "enum": [
+                                                      "."
+                                                    ]
+                                                  },
+                                                  {
+                                                    "pattern": "[^A-Za-z0-9_.-]|\\.\\."
+                                                  }
+                                                ]
+                                              },
+                                              "pattern": "^[A-Za-z0-9_.-]{1,128}$",
+                                              "type": "string"
+                                            },
+                                            "properties": {
+                                              "properties": {
+                                                "principal": {
+                                                  "properties": {
+                                                    "id": {
+                                                      "maxLength": 36,
+                                                      "minLength": 36,
+                                                      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                      "type": "string"
+                                                    },
+                                                    "tenantId": {
+                                                      "maxLength": 36,
+                                                      "minLength": 36,
+                                                      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                      "type": "string"
+                                                    },
+                                                    "type": {
+                                                      "enum": [
+                                                        "User",
+                                                        "Group",
+                                                        "Tenant"
+                                                      ],
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "id",
+                                                    "type",
+                                                    "tenantId"
+                                                  ],
+                                                  "type": "object"
+                                                },
+                                                "roleName": {
+                                                  "enum": [
+                                                    "CanView",
+                                                    "CanEdit",
+                                                    "Owner"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "roleName",
+                                                "principal"
+                                              ],
+                                              "type": "object"
+                                            }
+                                          },
+                                          "required": [
+                                            "id",
+                                            "name",
+                                            "properties"
+                                          ],
+                                          "type": "object"
+                                        },
+                                        "type": "array"
+                                      }
+                                    },
+                                    "required": [
+                                      "value"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "958c5418-4923-52e3-a0af-3249dcef7802"
+                                },
+                                "runAfter": {
+                                  "Before_remove_prod_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs"
+                                    ]
+                                  }
+                                },
+                                "type": "ParseJson"
+                              },
+                              "Parsed_Before_remove_stage_app": {
+                                "inputs": {
+                                  "content": "@json(string(body('Before_remove_stage_app')))",
+                                  "schema": {
+                                    "not": {
+                                      "required": [
+                                        "error"
+                                      ]
+                                    },
+                                    "properties": {
+                                      "@odata.nextLink": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "nextLink": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "value": {
+                                        "items": {
+                                          "properties": {
+                                            "id": {
+                                              "maxLength": 512,
+                                              "not": {
+                                                "pattern": "[^A-Za-z0-9_./-]|\\.\\."
+                                              },
+                                              "pattern": "^/providers/Microsoft\\.PowerApps/apps/7f1b64d0\\-d51a\\-4ec8\\-84ad\\-2b18fe8c2f82/permissions/[A-Za-z0-9_.-]{1,128}$",
+                                              "type": "string"
+                                            },
+                                            "name": {
+                                              "maxLength": 128,
+                                              "minLength": 1,
+                                              "not": {
+                                                "anyOf": [
+                                                  {
+                                                    "enum": [
+                                                      "."
+                                                    ]
+                                                  },
+                                                  {
+                                                    "pattern": "[^A-Za-z0-9_.-]|\\.\\."
+                                                  }
+                                                ]
+                                              },
+                                              "pattern": "^[A-Za-z0-9_.-]{1,128}$",
+                                              "type": "string"
+                                            },
+                                            "properties": {
+                                              "properties": {
+                                                "principal": {
+                                                  "properties": {
+                                                    "id": {
+                                                      "maxLength": 36,
+                                                      "minLength": 36,
+                                                      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                      "type": "string"
+                                                    },
+                                                    "tenantId": {
+                                                      "maxLength": 36,
+                                                      "minLength": 36,
+                                                      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                      "type": "string"
+                                                    },
+                                                    "type": {
+                                                      "enum": [
+                                                        "User",
+                                                        "Group",
+                                                        "Tenant"
+                                                      ],
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "id",
+                                                    "type",
+                                                    "tenantId"
+                                                  ],
+                                                  "type": "object"
+                                                },
+                                                "roleName": {
+                                                  "enum": [
+                                                    "CanView",
+                                                    "CanEdit",
+                                                    "Owner"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "roleName",
+                                                "principal"
+                                              ],
+                                              "type": "object"
+                                            }
+                                          },
+                                          "required": [
+                                            "id",
+                                            "name",
+                                            "properties"
+                                          ],
+                                          "type": "object"
+                                        },
+                                        "type": "array"
+                                      }
+                                    },
+                                    "required": [
+                                      "value"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "5a6b7c1e-67a1-5745-998f-31581054b46e"
+                                },
+                                "runAfter": {
+                                  "Before_remove_stage_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs"
+                                    ]
+                                  }
+                                },
+                                "type": "ParseJson"
+                              },
+                              "Parsed_Readback_remove_prod_app": {
+                                "inputs": {
+                                  "content": "@json(string(body('Readback_remove_prod_app')))",
+                                  "schema": {
+                                    "not": {
+                                      "required": [
+                                        "error"
+                                      ]
+                                    },
+                                    "properties": {
+                                      "@odata.nextLink": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "nextLink": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "value": {
+                                        "items": {
+                                          "properties": {
+                                            "id": {
+                                              "maxLength": 512,
+                                              "not": {
+                                                "pattern": "[^A-Za-z0-9_./-]|\\.\\."
+                                              },
+                                              "pattern": "^/providers/Microsoft\\.PowerApps/apps/0aa02d8b\\-c7fa\\-42cc\\-87e8\\-6d287bd4c897/permissions/[A-Za-z0-9_.-]{1,128}$",
+                                              "type": "string"
+                                            },
+                                            "name": {
+                                              "maxLength": 128,
+                                              "minLength": 1,
+                                              "not": {
+                                                "anyOf": [
+                                                  {
+                                                    "enum": [
+                                                      "."
+                                                    ]
+                                                  },
+                                                  {
+                                                    "pattern": "[^A-Za-z0-9_.-]|\\.\\."
+                                                  }
+                                                ]
+                                              },
+                                              "pattern": "^[A-Za-z0-9_.-]{1,128}$",
+                                              "type": "string"
+                                            },
+                                            "properties": {
+                                              "properties": {
+                                                "principal": {
+                                                  "properties": {
+                                                    "id": {
+                                                      "maxLength": 36,
+                                                      "minLength": 36,
+                                                      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                      "type": "string"
+                                                    },
+                                                    "tenantId": {
+                                                      "maxLength": 36,
+                                                      "minLength": 36,
+                                                      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                      "type": "string"
+                                                    },
+                                                    "type": {
+                                                      "enum": [
+                                                        "User",
+                                                        "Group",
+                                                        "Tenant"
+                                                      ],
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "id",
+                                                    "type",
+                                                    "tenantId"
+                                                  ],
+                                                  "type": "object"
+                                                },
+                                                "roleName": {
+                                                  "enum": [
+                                                    "CanView",
+                                                    "CanEdit",
+                                                    "Owner"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "roleName",
+                                                "principal"
+                                              ],
+                                              "type": "object"
+                                            }
+                                          },
+                                          "required": [
+                                            "id",
+                                            "name",
+                                            "properties"
+                                          ],
+                                          "type": "object"
+                                        },
+                                        "type": "array"
+                                      }
+                                    },
+                                    "required": [
+                                      "value"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "a0eabf88-29fd-57a8-a0c1-f649348d0ed5"
+                                },
+                                "runAfter": {
+                                  "Readback_remove_prod_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs"
+                                    ]
+                                  }
+                                },
+                                "type": "ParseJson"
+                              },
+                              "Parsed_Readback_remove_stage_app": {
+                                "inputs": {
+                                  "content": "@json(string(body('Readback_remove_stage_app')))",
+                                  "schema": {
+                                    "not": {
+                                      "required": [
+                                        "error"
+                                      ]
+                                    },
+                                    "properties": {
+                                      "@odata.nextLink": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "nextLink": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "value": {
+                                        "items": {
+                                          "properties": {
+                                            "id": {
+                                              "maxLength": 512,
+                                              "not": {
+                                                "pattern": "[^A-Za-z0-9_./-]|\\.\\."
+                                              },
+                                              "pattern": "^/providers/Microsoft\\.PowerApps/apps/7f1b64d0\\-d51a\\-4ec8\\-84ad\\-2b18fe8c2f82/permissions/[A-Za-z0-9_.-]{1,128}$",
+                                              "type": "string"
+                                            },
+                                            "name": {
+                                              "maxLength": 128,
+                                              "minLength": 1,
+                                              "not": {
+                                                "anyOf": [
+                                                  {
+                                                    "enum": [
+                                                      "."
+                                                    ]
+                                                  },
+                                                  {
+                                                    "pattern": "[^A-Za-z0-9_.-]|\\.\\."
+                                                  }
+                                                ]
+                                              },
+                                              "pattern": "^[A-Za-z0-9_.-]{1,128}$",
+                                              "type": "string"
+                                            },
+                                            "properties": {
+                                              "properties": {
+                                                "principal": {
+                                                  "properties": {
+                                                    "id": {
+                                                      "maxLength": 36,
+                                                      "minLength": 36,
+                                                      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                      "type": "string"
+                                                    },
+                                                    "tenantId": {
+                                                      "maxLength": 36,
+                                                      "minLength": 36,
+                                                      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                                                      "type": "string"
+                                                    },
+                                                    "type": {
+                                                      "enum": [
+                                                        "User",
+                                                        "Group",
+                                                        "Tenant"
+                                                      ],
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "id",
+                                                    "type",
+                                                    "tenantId"
+                                                  ],
+                                                  "type": "object"
+                                                },
+                                                "roleName": {
+                                                  "enum": [
+                                                    "CanView",
+                                                    "CanEdit",
+                                                    "Owner"
+                                                  ],
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "roleName",
+                                                "principal"
+                                              ],
+                                              "type": "object"
+                                            }
+                                          },
+                                          "required": [
+                                            "id",
+                                            "name",
+                                            "properties"
+                                          ],
+                                          "type": "object"
+                                        },
+                                        "type": "array"
+                                      }
+                                    },
+                                    "required": [
+                                      "value"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "85770b24-a0d3-5c0a-adf3-85db30b5ba4b"
+                                },
+                                "runAfter": {
+                                  "Readback_remove_stage_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs"
+                                    ]
+                                  }
+                                },
+                                "type": "ParseJson"
                               },
                               "Permit_payload_Before_remove_prod_flow": {
                                 "inputs": {
@@ -5789,8 +7421,108 @@
                                 },
                                 "type": "Query"
                               },
+                              "Principals_Before_remove_prod_app": {
+                                "inputs": {
+                                  "from": "@body('Parsed_Before_remove_prod_app')?['value']",
+                                  "select": {
+                                    "id": "@toLower(item()?['properties']?['principal']?['id'])"
+                                  }
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "afa3bfb9-6fd6-519f-b97b-4a2a1babe82c"
+                                },
+                                "runAfter": {
+                                  "Ids_Before_remove_prod_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs",
+                                      "outputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Select"
+                              },
+                              "Principals_Before_remove_stage_app": {
+                                "inputs": {
+                                  "from": "@body('Parsed_Before_remove_stage_app')?['value']",
+                                  "select": {
+                                    "id": "@toLower(item()?['properties']?['principal']?['id'])"
+                                  }
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "1bccc4fb-18ea-5246-a3d0-cac794dd739a"
+                                },
+                                "runAfter": {
+                                  "Ids_Before_remove_stage_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs",
+                                      "outputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Select"
+                              },
+                              "Principals_Readback_remove_prod_app": {
+                                "inputs": {
+                                  "from": "@body('Parsed_Readback_remove_prod_app')?['value']",
+                                  "select": {
+                                    "id": "@toLower(item()?['properties']?['principal']?['id'])"
+                                  }
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "99a82a4a-fb48-5910-ba9f-b69ef37bbfde"
+                                },
+                                "runAfter": {
+                                  "Ids_Readback_remove_prod_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs",
+                                      "outputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Select"
+                              },
+                              "Principals_Readback_remove_stage_app": {
+                                "inputs": {
+                                  "from": "@body('Parsed_Readback_remove_stage_app')?['value']",
+                                  "select": {
+                                    "id": "@toLower(item()?['properties']?['principal']?['id'])"
+                                  }
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "c3c6ded3-e608-5dc7-856a-2f70a2f40c77"
+                                },
+                                "runAfter": {
+                                  "Ids_Readback_remove_stage_app": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs",
+                                      "outputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Select"
+                              },
                               "Readback_reason_remove_prod_app": {
-                                "inputs": "@if(not(equals(length(coalesce(body('Plan_remove_prod_app'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_PROD_APP', if(not(equals(actions('Readback_remove_prod_app')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_PROD_APP', if(not(equals(actions('Found_remove_prod_app')?['status'], 'Succeeded')), 'READBACK_FILTER_FAILED_PROD_APP', if(or(not(empty(body('Readback_remove_prod_app')?['nextLink'])), not(empty(body('Readback_remove_prod_app')?['@odata.nextLink']))), 'READBACK_PAGINATED_PROD_APP', if(not(less(length(coalesce(body('Readback_remove_prod_app')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_PROD_APP', if(not(equals(outputs('Observed_remove_prod_app')?['present'], first(union(coalesce(body('Plan_remove_prod_app'), json('[]')), createArray(json('{}'))))?['present'])), 'READBACK_PERMISSION_MISMATCH_PROD_APP', null))))))",
+                                "inputs": "@if(not(equals(length(coalesce(body('Plan_remove_prod_app'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_PROD_APP', if(not(equals(actions('Readback_remove_prod_app')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_PROD_APP', if(or(not(equals(actions('Found_remove_prod_app')?['status'], 'Succeeded')), not(equals(outputs('Validated_Readback_remove_prod_app'), true))), 'READBACK_FILTER_FAILED_PROD_APP', if(or(not(empty(body('Parsed_Readback_remove_prod_app')?['nextLink'])), not(empty(body('Parsed_Readback_remove_prod_app')?['@odata.nextLink']))), 'READBACK_PAGINATED_PROD_APP', if(not(less(length(coalesce(body('Parsed_Readback_remove_prod_app')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_PROD_APP', if(or(not(equals(outputs('Observed_remove_prod_app')?['present'], first(union(coalesce(body('Plan_remove_prod_app'), json('[]')), createArray(json('{}'))))?['present'])), not(equals(outputs('Observed_remove_prod_app')?['verified'], true))), 'READBACK_PERMISSION_MISMATCH_PROD_APP', null))))))",
                                 "metadata": {
                                   "operationMetadataId": "cb8e062b-1630-573e-8822-3257ef91f64b"
                                 },
@@ -5809,7 +7541,7 @@
                                 "type": "Compose"
                               },
                               "Readback_reason_remove_prod_flow": {
-                                "inputs": "@if(not(equals(length(coalesce(body('Plan_remove_prod_flow'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_PROD_FLOW', if(not(equals(actions('Readback_remove_prod_flow')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_PROD_FLOW', if(not(equals(actions('Found_remove_prod_flow')?['status'], 'Succeeded')), 'READBACK_FILTER_FAILED_PROD_FLOW', if(or(not(empty(body('Readback_remove_prod_flow')?['nextLink'])), not(empty(body('Readback_remove_prod_flow')?['@odata.nextLink']))), 'READBACK_PAGINATED_PROD_FLOW', if(not(less(length(coalesce(body('Readback_remove_prod_flow')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_PROD_FLOW', if(not(equals(outputs('Observed_remove_prod_flow')?['present'], first(union(coalesce(body('Plan_remove_prod_flow'), json('[]')), createArray(json('{}'))))?['present'])), 'READBACK_PERMISSION_MISMATCH_PROD_FLOW', null))))))",
+                                "inputs": "@if(not(equals(length(coalesce(body('Plan_remove_prod_flow'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_PROD_FLOW', if(not(equals(actions('Readback_remove_prod_flow')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_PROD_FLOW', if(not(equals(actions('Found_remove_prod_flow')?['status'], 'Succeeded')), 'READBACK_FILTER_FAILED_PROD_FLOW', if(or(not(empty(body('Readback_remove_prod_flow')?['nextLink'])), not(empty(body('Readback_remove_prod_flow')?['@odata.nextLink']))), 'READBACK_PAGINATED_PROD_FLOW', if(not(less(length(coalesce(body('Readback_remove_prod_flow')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_PROD_FLOW', if(or(not(equals(outputs('Observed_remove_prod_flow')?['present'], first(union(coalesce(body('Plan_remove_prod_flow'), json('[]')), createArray(json('{}'))))?['present'])), not(equals(outputs('Observed_remove_prod_flow')?['verified'], true))), 'READBACK_PERMISSION_MISMATCH_PROD_FLOW', null))))))",
                                 "metadata": {
                                   "operationMetadataId": "461e8352-2248-5cf2-8d6f-17e2556f915c"
                                 },
@@ -5828,7 +7560,7 @@
                                 "type": "Compose"
                               },
                               "Readback_reason_remove_stage_app": {
-                                "inputs": "@if(not(equals(length(coalesce(body('Plan_remove_stage_app'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_STAGE_APP', if(not(equals(actions('Readback_remove_stage_app')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_STAGE_APP', if(not(equals(actions('Found_remove_stage_app')?['status'], 'Succeeded')), 'READBACK_FILTER_FAILED_STAGE_APP', if(or(not(empty(body('Readback_remove_stage_app')?['nextLink'])), not(empty(body('Readback_remove_stage_app')?['@odata.nextLink']))), 'READBACK_PAGINATED_STAGE_APP', if(not(less(length(coalesce(body('Readback_remove_stage_app')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_STAGE_APP', if(not(equals(outputs('Observed_remove_stage_app')?['present'], first(union(coalesce(body('Plan_remove_stage_app'), json('[]')), createArray(json('{}'))))?['present'])), 'READBACK_PERMISSION_MISMATCH_STAGE_APP', null))))))",
+                                "inputs": "@if(not(equals(length(coalesce(body('Plan_remove_stage_app'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_STAGE_APP', if(not(equals(actions('Readback_remove_stage_app')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_STAGE_APP', if(or(not(equals(actions('Found_remove_stage_app')?['status'], 'Succeeded')), not(equals(outputs('Validated_Readback_remove_stage_app'), true))), 'READBACK_FILTER_FAILED_STAGE_APP', if(or(not(empty(body('Parsed_Readback_remove_stage_app')?['nextLink'])), not(empty(body('Parsed_Readback_remove_stage_app')?['@odata.nextLink']))), 'READBACK_PAGINATED_STAGE_APP', if(not(less(length(coalesce(body('Parsed_Readback_remove_stage_app')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_STAGE_APP', if(or(not(equals(outputs('Observed_remove_stage_app')?['present'], first(union(coalesce(body('Plan_remove_stage_app'), json('[]')), createArray(json('{}'))))?['present'])), not(equals(outputs('Observed_remove_stage_app')?['verified'], true))), 'READBACK_PERMISSION_MISMATCH_STAGE_APP', null))))))",
                                 "metadata": {
                                   "operationMetadataId": "da3683e6-13f6-558f-b08c-01ce758ba96a"
                                 },
@@ -5847,7 +7579,7 @@
                                 "type": "Compose"
                               },
                               "Readback_reason_remove_stage_flow": {
-                                "inputs": "@if(not(equals(length(coalesce(body('Plan_remove_stage_flow'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_STAGE_FLOW', if(not(equals(actions('Readback_remove_stage_flow')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_STAGE_FLOW', if(not(equals(actions('Found_remove_stage_flow')?['status'], 'Succeeded')), 'READBACK_FILTER_FAILED_STAGE_FLOW', if(or(not(empty(body('Readback_remove_stage_flow')?['nextLink'])), not(empty(body('Readback_remove_stage_flow')?['@odata.nextLink']))), 'READBACK_PAGINATED_STAGE_FLOW', if(not(less(length(coalesce(body('Readback_remove_stage_flow')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_STAGE_FLOW', if(not(equals(outputs('Observed_remove_stage_flow')?['present'], first(union(coalesce(body('Plan_remove_stage_flow'), json('[]')), createArray(json('{}'))))?['present'])), 'READBACK_PERMISSION_MISMATCH_STAGE_FLOW', null))))))",
+                                "inputs": "@if(not(equals(length(coalesce(body('Plan_remove_stage_flow'), json('[]'))), 1)), 'READBACK_PLAN_MISMATCH_STAGE_FLOW', if(not(equals(actions('Readback_remove_stage_flow')?['status'], 'Succeeded')), 'READBACK_CALL_FAILED_STAGE_FLOW', if(not(equals(actions('Found_remove_stage_flow')?['status'], 'Succeeded')), 'READBACK_FILTER_FAILED_STAGE_FLOW', if(or(not(empty(body('Readback_remove_stage_flow')?['nextLink'])), not(empty(body('Readback_remove_stage_flow')?['@odata.nextLink']))), 'READBACK_PAGINATED_STAGE_FLOW', if(not(less(length(coalesce(body('Readback_remove_stage_flow')?['value'], json('[]'))), 1000)), 'READBACK_ROW_LIMIT_STAGE_FLOW', if(or(not(equals(outputs('Observed_remove_stage_flow')?['present'], first(union(coalesce(body('Plan_remove_stage_flow'), json('[]')), createArray(json('{}'))))?['present'])), not(equals(outputs('Observed_remove_stage_flow')?['verified'], true))), 'READBACK_PERMISSION_MISMATCH_STAGE_FLOW', null))))))",
                                 "metadata": {
                                   "operationMetadataId": "3cd07557-382f-5c45-b89c-5b6a35b22621"
                                 },
@@ -5869,14 +7601,13 @@
                                 "inputs": {
                                   "authentication": "@parameters('$authentication')",
                                   "host": {
-                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerappsforappmakers",
-                                    "connectionName": "makers",
-                                    "operationId": "Get-AppRoleAssignment"
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_webcontents",
+                                    "connectionName": "permissions",
+                                    "operationId": "InvokeHttp"
                                   },
                                   "parameters": {
-                                    "$top": 1000,
-                                    "api-version": "2017-06-01",
-                                    "app": "0aa02d8b-c7fa-42cc-87e8-6d287bd4c897"
+                                    "request/method": "GET",
+                                    "request/url": "https://api.powerapps.com/providers/Microsoft.PowerApps/apps/0aa02d8b-c7fa-42cc-87e8-6d287bd4c897/permissions?api-version=2017-06-01&%24filter=environment%20eq%20%27__POWER_PLATFORM_ENVIRONMENT__%27"
                                   },
                                   "retryPolicy": {
                                     "type": "none"
@@ -5941,14 +7672,13 @@
                                 "inputs": {
                                   "authentication": "@parameters('$authentication')",
                                   "host": {
-                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_powerappsforappmakers",
-                                    "connectionName": "makers",
-                                    "operationId": "Get-AppRoleAssignment"
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_webcontents",
+                                    "connectionName": "permissions",
+                                    "operationId": "InvokeHttp"
                                   },
                                   "parameters": {
-                                    "$top": 1000,
-                                    "api-version": "2017-06-01",
-                                    "app": "7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82"
+                                    "request/method": "GET",
+                                    "request/url": "https://api.powerapps.com/providers/Microsoft.PowerApps/apps/7f1b64d0-d51a-4ec8-84ad-2b18fe8c2f82/permissions?api-version=2017-06-01&%24filter=environment%20eq%20%27__POWER_PLATFORM_ENVIRONMENT__%27"
                                   },
                                   "retryPolicy": {
                                     "type": "none"
@@ -6530,6 +8260,94 @@
                                 "runAfter": {
                                   "Readback_reason_remove_prod_flow": [
                                     "Succeeded"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Compose"
+                              },
+                              "Validated_Before_remove_prod_app": {
+                                "inputs": "@and(equals(actions('Before_remove_prod_app')?['status'], 'Succeeded'), equals(actions('Parsed_Before_remove_prod_app')?['status'], 'Succeeded'), equals(actions('Invalid_Before_remove_prod_app')?['status'], 'Succeeded'), equals(actions('Ids_Before_remove_prod_app')?['status'], 'Succeeded'), equals(actions('Principals_Before_remove_prod_app')?['status'], 'Succeeded'), empty(body('Invalid_Before_remove_prod_app')), equals(length(coalesce(body('Ids_Before_remove_prod_app'), json('[]'))), length(union(coalesce(body('Ids_Before_remove_prod_app'), json('[]')), coalesce(body('Ids_Before_remove_prod_app'), json('[]'))))), equals(length(coalesce(body('Principals_Before_remove_prod_app'), json('[]'))), length(union(coalesce(body('Principals_Before_remove_prod_app'), json('[]')), coalesce(body('Principals_Before_remove_prod_app'), json('[]'))))))",
+                                "metadata": {
+                                  "operationMetadataId": "285fc34d-d54e-5109-89cf-79a15420d2a1"
+                                },
+                                "runAfter": {
+                                  "Principals_Before_remove_prod_app": [
+                                    "Succeeded",
+                                    "Failed",
+                                    "Skipped",
+                                    "TimedOut"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Compose"
+                              },
+                              "Validated_Before_remove_stage_app": {
+                                "inputs": "@and(equals(actions('Before_remove_stage_app')?['status'], 'Succeeded'), equals(actions('Parsed_Before_remove_stage_app')?['status'], 'Succeeded'), equals(actions('Invalid_Before_remove_stage_app')?['status'], 'Succeeded'), equals(actions('Ids_Before_remove_stage_app')?['status'], 'Succeeded'), equals(actions('Principals_Before_remove_stage_app')?['status'], 'Succeeded'), empty(body('Invalid_Before_remove_stage_app')), equals(length(coalesce(body('Ids_Before_remove_stage_app'), json('[]'))), length(union(coalesce(body('Ids_Before_remove_stage_app'), json('[]')), coalesce(body('Ids_Before_remove_stage_app'), json('[]'))))), equals(length(coalesce(body('Principals_Before_remove_stage_app'), json('[]'))), length(union(coalesce(body('Principals_Before_remove_stage_app'), json('[]')), coalesce(body('Principals_Before_remove_stage_app'), json('[]'))))))",
+                                "metadata": {
+                                  "operationMetadataId": "47c94819-d95a-5cb5-a6a9-b6a33d69dce0"
+                                },
+                                "runAfter": {
+                                  "Principals_Before_remove_stage_app": [
+                                    "Succeeded",
+                                    "Failed",
+                                    "Skipped",
+                                    "TimedOut"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Compose"
+                              },
+                              "Validated_Readback_remove_prod_app": {
+                                "inputs": "@and(equals(actions('Readback_remove_prod_app')?['status'], 'Succeeded'), equals(actions('Parsed_Readback_remove_prod_app')?['status'], 'Succeeded'), equals(actions('Invalid_Readback_remove_prod_app')?['status'], 'Succeeded'), equals(actions('Ids_Readback_remove_prod_app')?['status'], 'Succeeded'), equals(actions('Principals_Readback_remove_prod_app')?['status'], 'Succeeded'), empty(body('Invalid_Readback_remove_prod_app')), equals(length(coalesce(body('Ids_Readback_remove_prod_app'), json('[]'))), length(union(coalesce(body('Ids_Readback_remove_prod_app'), json('[]')), coalesce(body('Ids_Readback_remove_prod_app'), json('[]'))))), equals(length(coalesce(body('Principals_Readback_remove_prod_app'), json('[]'))), length(union(coalesce(body('Principals_Readback_remove_prod_app'), json('[]')), coalesce(body('Principals_Readback_remove_prod_app'), json('[]'))))))",
+                                "metadata": {
+                                  "operationMetadataId": "49e8d8b0-c961-5824-aaca-14b229529c19"
+                                },
+                                "runAfter": {
+                                  "Principals_Readback_remove_prod_app": [
+                                    "Succeeded",
+                                    "Failed",
+                                    "Skipped",
+                                    "TimedOut"
+                                  ]
+                                },
+                                "runtimeConfiguration": {
+                                  "secureData": {
+                                    "properties": [
+                                      "inputs"
+                                    ]
+                                  }
+                                },
+                                "type": "Compose"
+                              },
+                              "Validated_Readback_remove_stage_app": {
+                                "inputs": "@and(equals(actions('Readback_remove_stage_app')?['status'], 'Succeeded'), equals(actions('Parsed_Readback_remove_stage_app')?['status'], 'Succeeded'), equals(actions('Invalid_Readback_remove_stage_app')?['status'], 'Succeeded'), equals(actions('Ids_Readback_remove_stage_app')?['status'], 'Succeeded'), equals(actions('Principals_Readback_remove_stage_app')?['status'], 'Succeeded'), empty(body('Invalid_Readback_remove_stage_app')), equals(length(coalesce(body('Ids_Readback_remove_stage_app'), json('[]'))), length(union(coalesce(body('Ids_Readback_remove_stage_app'), json('[]')), coalesce(body('Ids_Readback_remove_stage_app'), json('[]'))))), equals(length(coalesce(body('Principals_Readback_remove_stage_app'), json('[]'))), length(union(coalesce(body('Principals_Readback_remove_stage_app'), json('[]')), coalesce(body('Principals_Readback_remove_stage_app'), json('[]'))))))",
+                                "metadata": {
+                                  "operationMetadataId": "1f77936f-c27e-5b3a-967b-f74833e1f2b2"
+                                },
+                                "runAfter": {
+                                  "Principals_Readback_remove_stage_app": [
+                                    "Succeeded",
+                                    "Failed",
+                                    "Skipped",
+                                    "TimedOut"
                                   ]
                                 },
                                 "runtimeConfiguration": {
